@@ -131,6 +131,17 @@ def trust_report(case: harness.Case, result: agent.AuditResult) -> str:
                 "",
             ]
 
+    if result.inert:
+        lines += [
+            "## Tried, and nothing happened",
+            "",
+            "These sabotages were applied and your feature returned exactly what "
+            "it returned before. Your suite stayed green because there was "
+            "nothing to notice — this is not a hole:",
+            "",
+            *[f"- `{op}`" for op in result.inert],
+            "",
+        ]
     if result.invalid:
         lines += [
             "## Not measured",

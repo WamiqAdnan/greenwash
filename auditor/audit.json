@@ -61,7 +61,8 @@
       "why": "The suite does not validate field values or check for required fields, making null fields and missing fields undetectable.",
       "invented_ids": []
     },
-    "skipped": []
+    "skipped": [],
+    "inert": []
   },
   {
     "case": "02_ticket_classifier",
@@ -104,7 +105,8 @@
       "why": "The suite checks for reasonable routing and confidence, but doesn't verify label accuracy, so a label collapse would go undetected.",
       "invented_ids": []
     },
-    "skipped": []
+    "skipped": [],
+    "inert": []
   },
   {
     "case": "03_rag_citations",
@@ -183,6 +185,39 @@
       "why": "The suite only checks for the presence of citations, not their correctness or validity, so it will miss cases where citations are incorrect or fabricated.",
       "invented_ids": []
     },
-    "skipped": []
+    "skipped": [],
+    "inert": []
+  },
+  {
+    "case": "04_purchase_orders",
+    "kill_rate_before": 1.0,
+    "findings": [],
+    "killed": [
+      "value.null_fields",
+      "value.zero_amounts",
+      "schema.drop_field",
+      "value.transpose_digits",
+      "model.echo"
+    ],
+    "invalid": [],
+    "prior": {
+      "order": [
+        "value.null_fields",
+        "value.zero_amounts",
+        "schema.drop_field",
+        "value.transpose_digits",
+        "model.echo"
+      ],
+      "expect_missed": [
+        "schema.drop_field",
+        "value.null_fields"
+      ],
+      "why": "The suite checks for presence of fields and their types, so missing fields or null values would be caught by type checks, while transposed digits and zero amounts would trigger arithmetic assertions.",
+      "invented_ids": []
+    },
+    "skipped": [],
+    "inert": [
+      "model.downgrade"
+    ]
   }
 ]

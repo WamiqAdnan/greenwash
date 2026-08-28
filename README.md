@@ -84,17 +84,34 @@ harness's job, not the model's.
 
 | | precision | recall | F1 | blind spots found |
 |---|---|---|---|---|
-| the same model, predicting (baseline) | 64% | 58% | 0.61 | 7 / 12 |
-| the same model, predicting (inside the agent, before it ran anything) | 80% | 33% | 0.47 | 4 / 12 |
+| the same model, predicting (baseline) | 41% | 58% | 0.48 | 7 / 12 |
+| the same model, predicting (inside the agent, before it ran anything) | 57% | 33% | 0.42 | 4 / 12 |
 | **the agent, after running them** | **100%** | **100%** | **1.00** | **12 / 12** |
 
 One scorer, one ground truth, three predictors. Reaching 12/12 is not cleverness
 and is not claimed as any — it is what happens when you stop guessing and run
 the thing. The number that took work is the next one.
 
-**Kill rate across the corpus: 28% → 75%**, measured by `evals/uplift.py` from
+**Kill rate across the corpus: 46% → 81%**, measured by `evals/uplift.py` from
 the tests the agent wrote, outside the agent, on a scratch copy — your suite is
-evidence and is never edited.
+evidence and is never edited. Over the three cases that had blind spots to close
+at all: 28% → 75%.
+
+### The control
+
+One case in the corpus has a **good** suite — it checks the arithmetic, the
+formats, the document's own facts, and that what came back is really in the
+source. It is there to catch the tool crying wolf, and it is the reason the
+baseline's precision is 41% rather than 64%: asked about the strong suite, the
+baseline called **all six** sabotages missed, when the suite catches every one.
+A predictor with no way to check cannot tell a good suite from a bad one. The
+agent reports nothing there, because it ran them and watched them die.
+
+That case also turned up something the tool had been getting wrong. Swapping in
+the 13× smaller model left this feature's output **byte-identical**, so the suite
+stayed green with nothing to catch. That is not a blind spot, and Greenwash now
+says so — a mutant whose sabotage changes nothing observable is reported *inert*
+and kept out of the kill rate entirely.
 
 ### What it got wrong, which is the more interesting half
 

@@ -331,6 +331,7 @@ class Tools:
         self.trajectory = trajectory
         self.gate = VerificationGate(case, scratch)
         self._observations: dict[str | None, str] = {}
+        self._clean_raw: list[dict] | None = None
 
     def _log(self, phase: str, name: str, args: dict, result: str) -> None:
         self.trajectory.event(phase, "tool_call", tool=name, args=args)
@@ -361,19 +362,18 @@ class Tools:
         self._log(phase, "observe", {"operator": operator_id}, text)
         return text
 
-    def run_operator(self, operator_id: str, summary: str) -> harness.MutantResult:
-        green, out = self.case.run_suite(operator_id)
-        fault = _fault(out)
-        result = harness.MutantResult(
-            operator=operator_id,
-            summary=summary,
-            killed=not green and fault is None,
-            valid=fault is None,
-            detail=f"harness fault: {fault}" if fault
-                   else ("suite stayed green" if green else harness._first_failure(out)),
+    def run_operator(self, op) -> harness.MutantResult:
+        """Apply one Operator and read what happened, using the eval's own judge.
+
+        Deliberately `harness.evaluate_mutant` rather than the Auditor's own
+        opinion: the agent and the number it is measured against must agree on
+        what a Survivor is.
+        """
+        result, out, self._clean_raw = harness.evaluate_mutant(
+            self.case, op, self._clean_raw
         )
         self._log(
-            "verify", "run_operator", {"operator": operator_id},
+            "verify", "run_operator", {"operator": op.id},
             f"{result.status} — {result.detail}\n{out[-600:]}",
         )
         return result
@@ -418,6 +418,7 @@ class AuditResult:
     invalid: list[str] = field(default_factory=list)
     prior: dict = field(default_factory=dict)
     skipped: list[str] = field(default_factory=list)
+    inert: list[str] = field(default_factory=list)
 
     @property
     def survivors(self) -> list[str]:
@@ -464,10 +465,17 @@ def audit_case(
     )
     scored = []
     for op in ordered:
-        mutant = tools.run_operator(op.id, op.summary)
+        mutant = tools.run_operator(op)
         if not mutant.valid:
             result.invalid.append(op.id)
             log(f"  ! {op.id:28} INVALID — {mutant.detail}")
+            continue
+        if mutant.inert:
+            # The suite stayed green because there was nothing to notice. Not a
+            # finding, and reporting it would be the false alarm that costs the
+            # user their trust in the tool.
+            result.inert.append(op.id)
+            log(f"  - {op.id:28} INERT — {mutant.detail}")
             continue
         scored.append(mutant)
         if mutant.killed:

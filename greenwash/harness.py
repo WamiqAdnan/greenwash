@@ -25,7 +25,7 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from greenwash import operators as ops
+from greenwash import observe, operators as ops
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -49,12 +49,15 @@ class MutantResult:
     summary: str
     killed: bool
     valid: bool = True
+    inert: bool = False
     detail: str = ""
 
     @property
     def status(self) -> str:
         if not self.valid:
             return "INVALID"
+        if self.inert:
+            return "INERT"
         return "killed" if self.killed else "SURVIVED"
 
 
@@ -66,8 +69,13 @@ class CaseResult:
 
     @property
     def scored(self) -> list[MutantResult]:
-        """Only Mutants that actually ran. Invalid ones are a bug in us."""
-        return [m for m in self.mutants if m.valid]
+        """Only Mutants that ran and did something.
+
+        Invalid ones are a bug in us. Inert ones are a sabotage that turned out
+        not to sabotage anything — neither says a word about the Suite, and
+        counting either would move the Kill Rate for no reason.
+        """
+        return [m for m in self.mutants if m.valid and not m.inert]
 
     @property
     def kill_rate(self) -> float:
@@ -83,6 +91,10 @@ class CaseResult:
     def invalid(self) -> list[str]:
         return [m.operator for m in self.mutants if not m.valid]
 
+    @property
+    def inert(self) -> list[str]:
+        return [m.operator for m in self.mutants if m.valid and m.inert]
+
 
 class Case:
     """One Corpus Case: an AI feature, its suite, and its known Blind Spots."""
@@ -95,6 +107,10 @@ class Case:
         self.description: str = meta["description"]
         self.suite_looks_like: str = meta.get("suite_looks_like", "")
         gt = self.path / "blindspots.json"
+        # A case with no confirmed Blind Spots and a case nobody has checked are
+        # both empty sets and mean opposite things. The precision control is the
+        # first kind, and "not checked" would be the wrong thing to print for it.
+        self.has_ground_truth: bool = gt.exists()
         self.known_blind_spots: set[str] = (
             set(json.loads(gt.read_text())["survivors"]) if gt.exists() else set()
         )
@@ -154,28 +170,70 @@ def _stable(output: str) -> str:
     return output
 
 
+def evaluate_mutant(
+    case: Case, op: ops.Operator, clean: list[dict] | None = None
+) -> tuple[MutantResult, str, list[dict] | None]:
+    """Apply one Operator, run the Suite, and work out what actually happened.
+
+    Shared by the eval and the Auditor on purpose. If those two ever disagreed
+    about what counts as a Survivor, one of this project's numbers would be a
+    lie, and it would be the one on the front page.
+
+    Three ways a green suite means nothing:
+
+      the Harness broke      -> INVALID, we learned nothing
+      the sabotage was a
+      no-op on this Feature  -> INERT, there was nothing to catch
+      neither                -> SURVIVED, and that is a Blind Spot
+
+    Inertness is decided by running the case's Record Plan with and without the
+    Operator. The Record Plan is every call the Suite makes, so if all of them
+    come back identical, no assertion could have told the difference — this is
+    the criterion itself, not an approximation of it. (A Suite that asserted on
+    side effects rather than return values would need a different test.)
+    """
+    green, out = case.run_suite(op.id)
+    fault = next((f for f in HARNESS_FAULTS if f in out), None)
+
+    inert = False
+    if green and fault is None:
+        if clean is None:
+            clean = observe.observe(case.path)
+        mutated = observe.observe(case.path, op.id)
+        inert = (
+            not observe.failed(clean)
+            and not observe.failed(mutated)
+            and mutated == clean
+        )
+
+    result = MutantResult(
+        operator=op.id,
+        summary=op.summary,
+        killed=not green and fault is None,
+        valid=fault is None,
+        inert=inert,
+        detail=(
+            f"harness fault: {fault}" if fault
+            else "the feature returned exactly the same thing" if inert
+            else "suite stayed green" if green
+            else _first_failure(out)
+        ),
+    )
+    return result, out, clean
+
+
 def run_case(case: Case, verbose: bool = False) -> CaseResult:
     baseline_green, baseline_out = case.run_suite()
     if not baseline_green and verbose:
         print(f"  ! {case.name} is red before any mutation:\n{baseline_out}")
 
     mutants: list[MutantResult] = []
+    clean: list[dict] | None = None
     for op in case.operators():
-        green, out = case.run_suite(op.id)
-        fault = next((f for f in HARNESS_FAULTS if f in out), None)
-        # Green under sabotage means the suite never noticed: a Survivor.
-        # Red for one of our own reasons means we learned nothing at all.
-        result = MutantResult(
-            operator=op.id,
-            summary=op.summary,
-            killed=not green and fault is None,
-            valid=fault is None,
-            detail=f"harness fault: {fault}" if fault
-                   else ("" if green else _first_failure(out)),
-        )
+        result, _out, clean = evaluate_mutant(case, op, clean)
         mutants.append(result)
         if verbose:
-            mark = "!" if not result.valid else ("." if result.killed else "S")
+            mark = {"INVALID": "!", "INERT": "-", "killed": "."}.get(result.status, "S")
             print(f"  {mark} {op.id:28} {result.status}")
 
     return CaseResult(case=case.name, baseline_green=baseline_green, mutants=mutants)

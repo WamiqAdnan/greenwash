@@ -40,6 +40,14 @@
         "retrieval.shuffle"
       ],
       "reported": true
+    },
+    {
+      "case": "04_purchase_orders",
+      "before": 1.0,
+      "after": 1.0,
+      "closed": [],
+      "reported": true,
+      "note": "no closing tests"
     }
   ]
 }

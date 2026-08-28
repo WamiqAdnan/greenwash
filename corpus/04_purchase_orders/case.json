@@ -1,0 +1,5 @@
+{
+  "description": "Extracts header fields and line items from a purchase order with a local LLM.",
+  "tags": ["llm", "extraction", "amounts", "structured_output"],
+  "suite_looks_like": "The control: a suite that actually checks. Types, formats, the arithmetic, the values against the document, and that the vendor it returned is really in the source."
+}

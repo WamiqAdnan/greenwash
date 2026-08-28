@@ -95,26 +95,24 @@ $ .venv/bin/python evals/run_eval.py
   kill rate: 0% (0/6 mutants killed)
   blind spots: model.downgrade, model.echo, citation.wrong_page, citation.fabricate, retrieval.truncate, retrieval.shuffle
   ground truth: matches
-corpus mean kill rate: 28%  (3 case(s))
+04_purchase_orders  [amounts, extraction, llm, structured_output]
+  kill rate: 100% (5/5 mutants killed)
+  - INERT (the sabotage changed nothing the suite could see, not scored): model.downgrade
+  ground truth: matches — confirmed clean, no blind spots
+corpus mean kill rate: 46%  (4 case(s))
 
 $ .venv/bin/python evals/score_predictions.py baseline/predictions.json
 baseline-oneshot  model=qwen3:8b  verified=False
-
-====================================================
-OVERALL   precision 64%   recall 58%   f1 0.61
+OVERALL   precision 41%   recall 58%   f1 0.48
           found 7/12 confirmed blind spots
 
 $ .venv/bin/python evals/score_predictions.py auditor/prior_predictions.json
 auditor-v1-prior  model=qwen3:8b  verified=False
-
-====================================================
-OVERALL   precision 80%   recall 33%   f1 0.47
+OVERALL   precision 57%   recall 33%   f1 0.42
           found 4/12 confirmed blind spots
 
 $ .venv/bin/python evals/score_predictions.py auditor/predictions.json
 auditor-v1  model=qwen3:8b  verified=True
-
-====================================================
 OVERALL   precision 100%   recall 100%   f1 1.00
           found 12/12 confirmed blind spots
 
@@ -130,14 +128,21 @@ $ .venv/bin/python evals/uplift.py
   kill rate 0% -> 50%   (3 of 6 blind spots closed)
   closed: model.downgrade, model.echo, retrieval.truncate
   still blind: citation.fabricate, citation.wrong_page, retrieval.shuffle
+04_purchase_orders
+  no closing tests — nothing to merge
 ====================================================
-corpus mean kill rate  28% -> 75%   (3 of 3 case(s) reported)
+corpus mean kill rate  46% -> 81%   (4 of 4 case(s) reported)
+  of which had blind spots to close: 28% -> 75%   (3 case(s))
 ```
 
-Three predictors, one scorer, one ground truth: the baseline predicting (0.61),
-the *same model* predicting inside the agent before it ran anything (0.47), and
+Three predictors, one scorer, one ground truth: the baseline predicting (0.48),
+the *same model* predicting inside the agent before it ran anything (0.42), and
 the agent after verification (1.00). The gap between the first two and the third
 is the harness, not the model.
+
+`04_purchase_orders` is the control — a suite that catches everything. The agent
+reports nothing there. The baseline reports all six sabotages as missed, which is
+six false alarms, and that is most of why its precision is 41%.
 
 `evals/uplift.py` closes more blind spots than the agent claimed to close (8
 against 6). That is not a bookkeeping error: a closing test written for one

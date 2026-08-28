@@ -1,0 +1,5 @@
+{
+  "survivors": [],
+  "why": "The precision control. This suite checks types, formats, the arithmetic, the document's own facts, and that what came back is really in the source text. Every sabotage that changes anything is caught, so there is nothing to report. If Greenwash ever reports a Blind Spot here, precision is broken and no other case in the corpus would have caught it. model.downgrade is INERT rather than a Survivor: qwen3:0.6b extracts these purchase orders byte-identically to qwen3:8b, so there is no failure for the suite to miss — confirmed by reading both observations by hand.",
+  "verified_by_hand": "2026-08-29"
+}

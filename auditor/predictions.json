@@ -20,12 +20,14 @@
       "citation.fabricate",
       "retrieval.truncate",
       "retrieval.shuffle"
-    ]
+    ],
+    "04_purchase_orders": []
   },
   "hallucinated_ids": {
     "01_invoice_extractor": [],
     "02_ticket_classifier": [],
-    "03_rag_citations": []
+    "03_rag_citations": [],
+    "04_purchase_orders": []
   },
   "closed": {
     "01_invoice_extractor": [
@@ -39,7 +41,8 @@
     ],
     "03_rag_citations": [
       "model.echo"
-    ]
+    ],
+    "04_purchase_orders": []
   },
   "prior": {
     "01_invoice_extractor": {
@@ -85,6 +88,21 @@
         "citation.fabricate"
       ],
       "why": "The suite only checks for the presence of citations, not their correctness or validity, so it will miss cases where citations are incorrect or fabricated.",
+      "invented_ids": []
+    },
+    "04_purchase_orders": {
+      "order": [
+        "value.null_fields",
+        "value.zero_amounts",
+        "schema.drop_field",
+        "value.transpose_digits",
+        "model.echo"
+      ],
+      "expect_missed": [
+        "schema.drop_field",
+        "value.null_fields"
+      ],
+      "why": "The suite checks for presence of fields and their types, so missing fields or null values would be caught by type checks, while transposed digits and zero amounts would trigger arithmetic assertions.",
       "invented_ids": []
     }
   }

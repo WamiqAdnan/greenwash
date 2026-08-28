@@ -103,6 +103,11 @@ def observe(case_dir: Path, operator_id: str | None = None) -> list[dict]:
     return json.loads(proc.stdout)
 
 
+def failed(observations: list[dict]) -> bool:
+    """Did the observation itself break? Then it says nothing about the Feature."""
+    return any(o["call"] == -1 for o in observations)
+
+
 def as_text(observations: list[dict]) -> str:
     lines = []
     for o in observations:

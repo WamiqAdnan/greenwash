@@ -19,16 +19,26 @@
       "citation.fabricate",
       "retrieval.truncate",
       "retrieval.shuffle"
+    ],
+    "04_purchase_orders": [
+      "model.downgrade",
+      "model.echo",
+      "value.zero_amounts",
+      "value.null_fields",
+      "value.transpose_digits",
+      "schema.drop_field"
     ]
   },
   "hallucinated_ids": {
     "01_invoice_extractor": [],
     "02_ticket_classifier": [],
-    "03_rag_citations": []
+    "03_rag_citations": [],
+    "04_purchase_orders": []
   },
   "raw": {
     "01_invoice_extractor": "{\"missed\": [\"model.downgrade\", \"model.echo\", \"schema.drop_field\"]}",
     "02_ticket_classifier": "{\"missed\": [\"model.downgrade\", \"model.echo\", \"classify.collapse\", \"classify.confidence_pin\"]}",
-    "03_rag_citations": "{\"missed\": [\"citation.wrong_page\", \"citation.fabricate\", \"retrieval.truncate\", \"retrieval.shuffle\"]}"
+    "03_rag_citations": "{\"missed\": [\"citation.wrong_page\", \"citation.fabricate\", \"retrieval.truncate\", \"retrieval.shuffle\"]}",
+    "04_purchase_orders": "{\"missed\": [\"model.downgrade\", \"model.echo\", \"value.zero_amounts\", \"value.null_fields\", \"value.transpose_digits\", \"schema.drop_field\"]}"
   }
 }

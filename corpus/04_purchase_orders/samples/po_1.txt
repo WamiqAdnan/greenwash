@@ -1,0 +1,16 @@
+NORTHWIND TRADING LLC
+Jebel Ali Free Zone, Dubai
+
+PURCHASE ORDER
+
+PO Number: PO-2026-1180
+Date: 2026-03-14
+Currency: AED
+
+Description                          Qty    Unit Price    Line Total
+Standing desk, electric                4       1450.00       5800.00
+Desk mat, felt                        10         85.00        850.00
+
+                                             Subtotal        6650.00
+                                             VAT 5%           332.50
+                                             Total           6982.50

@@ -54,6 +54,11 @@ Mutant is Invalid and must not be scored. `HARNESS_FAULTS` in
 fail in a new way, add its signature there. This bug was real and it inflated
 the headline number by 17 points — see `CHANGELOG.md`.
 
+**A green suite is not automatically a Survivor.** If the sabotage changed
+nothing the Suite could observe, the Mutant is **Inert** and says nothing about
+the Suite either. `evaluate_mutant` decides this by running the Record Plan with
+and without the Operator, which is why a Record Plan has to be complete.
+
 **Ground truth is confirmed by hand, not by the harness.** `blindspots.json`
 records Survivors a human has actually looked at. When measured and confirmed
 diverge, the eval says MISMATCH and you investigate — you do not update the
@@ -78,7 +83,15 @@ Closing Tests committed on disk. An agent that scores itself is not evidence.
    No strawmen. Every assertion must be one people actually write.
 5. `record_plan.py` — every model call the suite makes
 6. Record fixtures for **both** models
-7. Run the eval, look at each Survivor by hand, then write `blindspots.json`
+7. Run the eval, look at each Survivor by hand, then write `blindspots.json`.
+   A Survivor is only a Blind Spot if the sabotage actually changed what the
+   Feature returns — the Harness reports the rest as **Inert**, but check the
+   observations yourself before recording ground truth:
+   `python -m greenwash.observe corpus/NN_name --operator <id>`
+
+`04_purchase_orders` is the **precision control**: a suite that catches
+everything, whose `blindspots.json` is deliberately empty. If Greenwash ever
+reports a finding there, precision is broken and no other case will tell you.
 
 ## Layout
 

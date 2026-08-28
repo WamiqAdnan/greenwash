@@ -1,0 +1,16 @@
+AL RAYYAN OFFICE SUPPLIES
+Al Quoz Industrial 3, Dubai
+
+PURCHASE ORDER
+
+PO Number: PO-2026-0447
+Date: 2026-04-02
+Currency: AED
+
+Description                          Qty    Unit Price    Line Total
+A4 paper, box of 5 reams              12         42.00        504.00
+Whiteboard markers, pack of 8          6         19.50        117.00
+
+                                             Subtotal         621.00
+                                             VAT 5%            31.05
+                                             Total            652.05

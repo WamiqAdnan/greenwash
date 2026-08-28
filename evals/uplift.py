@@ -112,6 +112,15 @@ def main() -> None:
         a = sum(r["after"] for r in reported) / len(reported)
         print(f"corpus mean kill rate  {b:.0%} -> {a:.0%}   "
               f"({len(reported)} of {len(rows)} case(s) reported)")
+        # A case with no Blind Spots has none to close and can only pull the
+        # mean towards itself. Both numbers are shown so neither can be quoted
+        # as if it were the other.
+        movable = [r for r in reported if r["before"] < 1.0]
+        if movable and len(movable) != len(reported):
+            mb = sum(r["before"] for r in movable) / len(movable)
+            ma = sum(r["after"] for r in movable) / len(movable)
+            print(f"  of which had blind spots to close: {mb:.0%} -> {ma:.0%}   "
+                  f"({len(movable)} case(s))")
     else:
         print("nothing reportable")
     unreported = [r for r in rows if not r["reported"]]

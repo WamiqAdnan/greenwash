@@ -53,13 +53,18 @@ def main() -> None:
         )
         if result.invalid:
             print(f"  ! INVALID (harness fault, not scored): {', '.join(result.invalid)}")
+        if result.inert:
+            print(f"  - INERT (the sabotage changed nothing the suite could see, "
+                  f"not scored): {', '.join(result.inert)}")
         if result.survivors:
             print(f"  blind spots: {', '.join(result.survivors)}")
 
         expected = case.known_blind_spots
-        if expected:
+        if case.has_ground_truth:
             measured = set(result.survivors)
-            if measured == expected:
+            if measured == expected and not expected:
+                print("  ground truth: matches — confirmed clean, no blind spots")
+            elif measured == expected:
                 print("  ground truth: matches")
             else:
                 missing = expected - measured

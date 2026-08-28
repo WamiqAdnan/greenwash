@@ -48,6 +48,15 @@ The Suite stayed green under a Mutant. The suite is blind to that failure, and t
 Mutant is the receipt. Every finding Greenwash reports is a Survivor.
 _Avoid_: miss, gap, escape
 
+**Inert**:
+The Suite stayed green because the sabotage changed nothing the Suite could see —
+the Feature returned exactly what it returned before. Not a Blind Spot: there was
+nothing to catch. Decided by running the **Record Plan** with and without the
+Operator, which is every call the Suite makes, so identical results mean no
+assertion could have told the difference. Excluded from the Kill Rate for the
+same reason **Invalid** is: it would make a Suite look blinder than it is.
+_Avoid_: no-op, harmless, weak mutant
+
 **Invalid**:
 The Suite went red because *Greenwash* broke — a missing fixture, an unknown
 Operator. Indistinguishable from a Kill unless you look, which is why

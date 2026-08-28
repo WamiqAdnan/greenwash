@@ -76,3 +76,29 @@ def test_the_gate_never_touches_the_real_case(tmp_path):
     gate(tmp_path).judge(OPERATOR, REAL)
     after = sorted(p.name for p in (CASE.path / "tests").iterdir() if p.is_file())
     assert before == after
+
+
+# --- the Inert state --------------------------------------------------------
+
+CONTROL = harness.Case(ROOT / "corpus" / "04_purchase_orders")
+
+
+def test_a_sabotage_that_changes_nothing_is_inert_not_a_survivor():
+    """The precision control's whole job, as a test.
+
+    `qwen3:0.6b` extracts these purchase orders byte-identically to `qwen3:8b`,
+    so `model.downgrade` leaves a green suite with nothing to catch. Reporting
+    that as a Blind Spot is the false alarm that costs the user their trust.
+    """
+    op = next(o for o in CONTROL.operators() if o.id == "model.downgrade")
+    result, _out, _clean = harness.evaluate_mutant(CONTROL, op)
+    assert result.inert
+    assert result.status == "INERT"
+    assert not result.killed
+
+
+def test_inert_mutants_leave_the_kill_rate_alone():
+    result = harness.run_case(CONTROL)
+    assert result.inert == ["model.downgrade"]
+    assert "model.downgrade" not in result.survivors
+    assert result.kill_rate == 1.0, "every sabotage that did anything was caught"
