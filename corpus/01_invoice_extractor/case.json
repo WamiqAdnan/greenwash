@@ -1,0 +1,5 @@
+{
+  "description": "Extracts vendor, invoice number, date and total from invoice text with a local LLM.",
+  "tags": ["llm", "extraction", "amounts", "structured_output"],
+  "suite_looks_like": "Two tests, both green, both asserting only that the call returned something shaped like a result."
+}

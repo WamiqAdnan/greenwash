@@ -1,0 +1,12 @@
+{
+  "survivors": [
+    "model.downgrade",
+    "model.echo",
+    "citation.wrong_page",
+    "citation.fabricate",
+    "retrieval.truncate",
+    "retrieval.shuffle"
+  ],
+  "why": "The suite checks that an answer is non-empty and that citations carry a page number. Nothing connects a citation to the document, and nothing connects the answer to the citation. Every sabotage survives, including replacing the model with one that echoes its input.",
+  "verified_by_hand": "2026-08-28"
+}

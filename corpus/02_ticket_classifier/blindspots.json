@@ -1,0 +1,5 @@
+{
+  "survivors": ["classify.collapse", "classify.confidence_pin"],
+  "why": "The judge is asked whether a routing decision is 'reasonable' rather than whether it is correct, and almost any label is reasonable for almost any ticket. Routing every ticket to billing passes. The confidence floor is asserted against a number the feature itself reports, so pinning it high passes too.",
+  "verified_by_hand": "2026-08-28"
+}

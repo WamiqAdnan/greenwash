@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:8b",
+  "prompt": "Answer the question using only the context. Cite the page you used.\n\nContext:\n[page 1] Annual leave accrues at 2.5 days per completed month of service.\n[page 2] Unused annual leave may be carried over, to a maximum of 10 days.\n\nQuestion: How many days of leave can be carried over?\n\nAnswer:",
+  "response": "The answer is 10 days. This is stated on [page 2]."
+}

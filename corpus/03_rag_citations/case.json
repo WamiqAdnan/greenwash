@@ -1,0 +1,5 @@
+{
+  "description": "Answers policy questions from a document, returning the page and quote each claim rests on.",
+  "tags": ["llm", "retrieval", "citations"],
+  "suite_looks_like": "Checks that an answer came back and that it carries citations. Never checks that a citation says what the answer claims it says."
+}

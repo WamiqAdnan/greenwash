@@ -1,0 +1,5 @@
+{
+  "description": "Routes support tickets to a queue, with an LLM judge in the test suite scoring each answer.",
+  "tags": ["llm", "classification", "confidence"],
+  "suite_looks_like": "Looks rigorous — an LLM judge, several cases, a confidence floor. The judge prompt asks whether the label is 'reasonable'."
+}

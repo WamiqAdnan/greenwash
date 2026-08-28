@@ -1,0 +1,10 @@
+{
+  "survivors": [
+    "model.downgrade",
+    "value.zero_amounts",
+    "value.null_fields",
+    "value.transpose_digits"
+  ],
+  "why": "The suite asserts that a result came back and that three keys exist. It never looks at a value, so any corruption of the values is invisible. It never pins the model, so a downgrade to a 13x smaller model is invisible too — verified: qwen3:0.6b returns '02 April 2026' where the schema demands YYYY-MM-DD, and the suite passes.",
+  "verified_by_hand": "2026-08-28"
+}

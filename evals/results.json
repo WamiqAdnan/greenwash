@@ -1,0 +1,153 @@
+[
+  {
+    "case": "01_invoice_extractor",
+    "baseline_green": true,
+    "mutants": [
+      {
+        "operator": "model.downgrade",
+        "summary": "The model behind the feature is swapped for a much weaker one.",
+        "killed": false,
+        "valid": true,
+        "detail": ""
+      },
+      {
+        "operator": "model.echo",
+        "summary": "The model is replaced by one that echoes its input back.",
+        "killed": true,
+        "valid": true,
+        "detail": "E           ValueError: model did not return JSON: '                  Subtotal     1,284.50\\n                                        VAT (0%)         0.00\\n    "
+      },
+      {
+        "operator": "value.zero_amounts",
+        "summary": "Every monetary amount comes back as zero.",
+        "killed": false,
+        "valid": true,
+        "detail": ""
+      },
+      {
+        "operator": "value.null_fields",
+        "summary": "Every extracted field is present but null.",
+        "killed": false,
+        "valid": true,
+        "detail": ""
+      },
+      {
+        "operator": "value.transpose_digits",
+        "summary": "Digits inside extracted numbers are transposed \u2014 1284.50 becomes 1248.50.",
+        "killed": false,
+        "valid": true,
+        "detail": ""
+      },
+      {
+        "operator": "schema.drop_field",
+        "summary": "One field silently disappears from the structured output.",
+        "killed": true,
+        "valid": true,
+        "detail": "E       AssertionError: assert 'vendor' in {'invoice_number': 'NW-2026-0417', 'date': '2026-03-14', 'total': 1284.5}"
+      }
+    ],
+    "kill_rate": 0.3333,
+    "survivors": [
+      "model.downgrade",
+      "value.zero_amounts",
+      "value.null_fields",
+      "value.transpose_digits"
+    ]
+  },
+  {
+    "case": "02_ticket_classifier",
+    "baseline_green": true,
+    "mutants": [
+      {
+        "operator": "model.downgrade",
+        "summary": "The model behind the feature is swapped for a much weaker one.",
+        "killed": true,
+        "valid": true,
+        "detail": "E       assert 0.0 >= 0.5"
+      },
+      {
+        "operator": "model.echo",
+        "summary": "The model is replaced by one that echoes its input back.",
+        "killed": true,
+        "valid": true,
+        "detail": "E           json.decoder.JSONDecodeError: Expecting ',' delimiter: line 1 column 35 (char 34)"
+      },
+      {
+        "operator": "classify.collapse",
+        "summary": "Every input is classified into the single most common label.",
+        "killed": false,
+        "valid": true,
+        "detail": ""
+      },
+      {
+        "operator": "classify.confidence_pin",
+        "summary": "Confidence is pinned high regardless of how uncertain the model was.",
+        "killed": false,
+        "valid": true,
+        "detail": ""
+      }
+    ],
+    "kill_rate": 0.5,
+    "survivors": [
+      "classify.collapse",
+      "classify.confidence_pin"
+    ]
+  },
+  {
+    "case": "03_rag_citations",
+    "baseline_green": true,
+    "mutants": [
+      {
+        "operator": "model.downgrade",
+        "summary": "The model behind the feature is swapped for a much weaker one.",
+        "killed": false,
+        "valid": true,
+        "detail": ""
+      },
+      {
+        "operator": "model.echo",
+        "summary": "The model is replaced by one that echoes its input back.",
+        "killed": false,
+        "valid": true,
+        "detail": ""
+      },
+      {
+        "operator": "citation.wrong_page",
+        "summary": "Every citation points at a real but wrong location in the source.",
+        "killed": false,
+        "valid": true,
+        "detail": ""
+      },
+      {
+        "operator": "citation.fabricate",
+        "summary": "Citations are invented: plausible quotes that appear nowhere in the source.",
+        "killed": false,
+        "valid": true,
+        "detail": ""
+      },
+      {
+        "operator": "retrieval.truncate",
+        "summary": "Only the first half of the retrieved context reaches the model.",
+        "killed": false,
+        "valid": true,
+        "detail": ""
+      },
+      {
+        "operator": "retrieval.shuffle",
+        "summary": "Retrieved chunks arrive in a scrambled order.",
+        "killed": false,
+        "valid": true,
+        "detail": ""
+      }
+    ],
+    "kill_rate": 0.0,
+    "survivors": [
+      "model.downgrade",
+      "model.echo",
+      "citation.wrong_page",
+      "citation.fabricate",
+      "retrieval.truncate",
+      "retrieval.shuffle"
+    ]
+  }
+]

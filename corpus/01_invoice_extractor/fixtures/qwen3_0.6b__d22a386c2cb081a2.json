@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:0.6b",
+  "prompt": "Extract these fields from the invoice below and reply with JSON only:\nvendor (string), invoice_number (string), date (YYYY-MM-DD string), total (number).\n\nInvoice:\nAL RAYYAN OFFICE SUPPLIES\nShop 12, Al Quoz, Dubai\n\nTax Invoice #ARO-8821\nDated 02 April 2026\n\nItem                        Qty     Rate      Total\n-----------------------------------------------------\nA4 paper, box of 5           4     46.00     184.00\nWhiteboard markers          12      7.25      87.00\nDesk organiser               3     29.00      87.00\n-----------------------------------------------------\n                         Subtotal            358.00\n                         VAT 5%               17.90\n                         AMOUNT DUE          375.90\n\n\nJSON:",
+  "response": "```json\n{\n  \"vendor\": \"AL RAYYAN OFFICE SUPPLIES\",\n  \"invoice_number\": \"ARO-8821\",\n  \"date\": \"02 April 2026\",\n  \"total\": 375.90\n}\n```"
+}

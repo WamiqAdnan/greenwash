@@ -1,0 +1,15 @@
+AL RAYYAN OFFICE SUPPLIES
+Shop 12, Al Quoz, Dubai
+
+Tax Invoice #ARO-8821
+Dated 02 April 2026
+
+Item                        Qty     Rate      Total
+-----------------------------------------------------
+A4 paper, box of 5           4     46.00     184.00
+Whiteboard markers          12      7.25      87.00
+Desk organiser               3     29.00      87.00
+-----------------------------------------------------
+                         Subtotal            358.00
+                         VAT 5%               17.90
+                         AMOUNT DUE          375.90

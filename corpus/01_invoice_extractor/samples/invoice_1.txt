@@ -1,0 +1,21 @@
+NORTHWIND TRADING LLC
+PO Box 44219, Dubai, UAE
+TRN 100234567800003
+
+INVOICE
+
+Invoice No:   NW-2026-0417
+Issue Date:   2026-03-14
+Bill To:      Cedar Logistics FZE
+
+Description                     Qty      Unit        Amount
+---------------------------------------------------------------
+Freight forwarding, Jebel Ali     1    1,120.00     1,120.00
+Documentation handling            2       35.00        70.00
+Customs clearance                 1       94.50        94.50
+---------------------------------------------------------------
+                                        Subtotal     1,284.50
+                                        VAT (0%)         0.00
+                                        TOTAL        1,284.50
+
+Payment due within 30 days.

@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:8b",
+  "prompt": "Answer the question using only the context. Cite the page you used.\n\nContext:\n[page 3] Probation lasts six months. Leave may not be taken during probation.\n[page 1] Annual leave accrues at 2.5 days per completed month of service.\n[page 2] Unused annual leave may be carried over, to a maximum of 10 days.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How much annual leave accrues each month?\n\nAnswer:",
+  "response": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1]."
+}
