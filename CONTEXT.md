@@ -56,6 +56,54 @@ reported loudly. **An Invalid Mutant counted as a Kill silently inflates the
 headline number** — this bug was real, see the Changelog.
 _Avoid_: error, skipped
 
+### The agent
+
+**Auditor**:
+The agent that reads a Corpus Case, runs Operators against it, and writes the
+tests that close what survived. It **never predicts** which sabotages survive —
+it runs them and observes. Every finding it reports is a Survivor with a run
+attached. Contrast the **Baseline**, which is only allowed to predict.
+_Avoid_: analyser, scanner, reviewer
+
+**Baseline**:
+One model call per Corpus Case, given the Feature, the Suite and the whole
+Operator catalogue, asked which sabotages the Suite would miss. It cannot run
+anything. Prediction versus verification is the only variable between it and the
+Auditor, and both are scored by `evals/score_predictions.py`.
+_Avoid_: control, naive version
+
+**Prior**:
+What the Auditor expected before it ran anything, recorded in its Trajectory.
+Kept as evidence and never reported as a finding — a Prior that turns out wrong
+is the point of the project, not a bug.
+_Avoid_: guess, hypothesis
+
+**Closing Test**:
+A test the Auditor wrote that turns a Survivor into a Killed. Added to a Suite,
+never edited into one — Closing Tests live in `auditor/closing_tests/` and are
+merged onto an **Overlay** to be measured.
+_Avoid_: fix, patch, new test
+
+**Verification Gate**:
+The two runs every Closing Test must survive before the Auditor is allowed to
+report it: green on the clean Feature, red under the Mutant it claims to close,
+and neither run tripping a `HARNESS_FAULTS` signature. A Closing Test that fails
+the Gate goes back to the Auditor with the pytest output attached. **This is
+where a local model's bad assertions die** rather than reaching the user.
+_Avoid_: validation, check
+
+**Overlay**:
+A scratch copy of a Corpus Case with Closing Tests dropped into its `tests/`.
+The way Uplift is measured without ever editing a Suite, which is evidence.
+_Avoid_: patched case, fork
+
+**Uplift**:
+Kill Rate before Closing Tests and after, on the same Corpus Case. The number
+the intended user actually cares about — Kill Rate says how blind the Suite is,
+Uplift says how much of that the Auditor closed. Measured by `evals/uplift.py`,
+outside the agent, so the agent never scores itself.
+_Avoid_: improvement, delta, gain
+
 ### The measurement
 
 **Kill Rate**:
@@ -88,6 +136,12 @@ A Corpus Case's list of every model call its Suite will make, so recording cover
 replay completely. Operators that change the prompt (anything under `retrieval.`)
 get their own recording pass.
 _Avoid_: manifest, script
+
+**Selftest**:
+One of Greenwash's own tests, under `selftests/`. Deliberately not called a
+Suite: that word belongs to a Corpus Case's own tests, and blurring the two is
+how you end up editing evidence.
+_Avoid_: unit test, our tests
 
 **Weak Model**:
 The deliberately worse model `model.downgrade` swaps in — `qwen3:0.6b` against a

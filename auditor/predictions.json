@@ -1,0 +1,91 @@
+{
+  "predictor": "auditor-v1",
+  "model": "qwen3:8b",
+  "verified": true,
+  "predictions": {
+    "01_invoice_extractor": [
+      "model.downgrade",
+      "value.zero_amounts",
+      "value.null_fields",
+      "value.transpose_digits"
+    ],
+    "02_ticket_classifier": [
+      "classify.confidence_pin",
+      "classify.collapse"
+    ],
+    "03_rag_citations": [
+      "model.downgrade",
+      "model.echo",
+      "citation.wrong_page",
+      "citation.fabricate",
+      "retrieval.truncate",
+      "retrieval.shuffle"
+    ]
+  },
+  "hallucinated_ids": {
+    "01_invoice_extractor": [],
+    "02_ticket_classifier": [],
+    "03_rag_citations": []
+  },
+  "closed": {
+    "01_invoice_extractor": [
+      "model.downgrade",
+      "value.zero_amounts",
+      "value.null_fields",
+      "value.transpose_digits"
+    ],
+    "02_ticket_classifier": [
+      "classify.confidence_pin"
+    ],
+    "03_rag_citations": [
+      "model.echo"
+    ]
+  },
+  "prior": {
+    "01_invoice_extractor": {
+      "order": [
+        "model.downgrade",
+        "model.echo",
+        "value.zero_amounts",
+        "value.null_fields",
+        "schema.drop_field",
+        "value.transpose_digits"
+      ],
+      "expect_missed": [
+        "value.null_fields",
+        "schema.drop_field"
+      ],
+      "why": "The suite does not validate field values or check for required fields, making null fields and missing fields undetectable.",
+      "invented_ids": []
+    },
+    "02_ticket_classifier": {
+      "order": [
+        "model.downgrade",
+        "model.echo",
+        "classify.confidence_pin",
+        "classify.collapse"
+      ],
+      "expect_missed": [
+        "classify.collapse"
+      ],
+      "why": "The suite checks for reasonable routing and confidence, but doesn't verify label accuracy, so a label collapse would go undetected.",
+      "invented_ids": []
+    },
+    "03_rag_citations": {
+      "order": [
+        "model.downgrade",
+        "model.echo",
+        "citation.wrong_page",
+        "citation.fabricate",
+        "retrieval.truncate",
+        "retrieval.shuffle"
+      ],
+      "expect_missed": [
+        "citation.wrong_page",
+        "citation.fabricate"
+      ],
+      "why": "The suite only checks for the presence of citations, not their correctness or validity, so it will miss cases where citations are incorrect or fabricated.",
+      "invented_ids": []
+    }
+  }
+}

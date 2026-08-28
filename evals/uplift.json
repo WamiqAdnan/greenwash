@@ -1,0 +1,45 @@
+{
+  "cases": [
+    {
+      "case": "01_invoice_extractor",
+      "before": 0.3333,
+      "after": 1.0,
+      "closed": [
+        "model.downgrade",
+        "value.null_fields",
+        "value.transpose_digits",
+        "value.zero_amounts"
+      ],
+      "still_open": [],
+      "reported": true
+    },
+    {
+      "case": "02_ticket_classifier",
+      "before": 0.5,
+      "after": 0.75,
+      "closed": [
+        "classify.confidence_pin"
+      ],
+      "still_open": [
+        "classify.collapse"
+      ],
+      "reported": true
+    },
+    {
+      "case": "03_rag_citations",
+      "before": 0.0,
+      "after": 0.5,
+      "closed": [
+        "model.downgrade",
+        "model.echo",
+        "retrieval.truncate"
+      ],
+      "still_open": [
+        "citation.fabricate",
+        "citation.wrong_page",
+        "retrieval.shuffle"
+      ],
+      "reported": true
+    }
+  ]
+}

@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import shutil
 import subprocess
 import sys
 from dataclasses import asdict, dataclass
@@ -100,10 +102,16 @@ class Case:
     def operators(self) -> list[ops.Operator]:
         return ops.applicable(self.tags)
 
-    def run_suite(self, operator_id: str | None = None) -> tuple[bool, str]:
+    def run_suite(
+        self, operator_id: str | None = None, select: str | None = None
+    ) -> tuple[bool, str]:
         """Run the case's pytest suite, optionally under one Operator.
 
         Returns (green, output). Green means every test passed.
+
+        `select` narrows the run to one path inside the case. The Verification
+        Gate uses it to judge a single Closing Test on its own: whether the rest
+        of the Suite is green is already known and would only add noise.
         """
         env = {
             **os.environ,
@@ -116,14 +124,34 @@ class Case:
             env["GREENWASH_MUTATION"] = operator_id
 
         proc = subprocess.run(
-            [sys.executable, "-m", "pytest", "-q", "--no-header", "-p", "no:cacheprovider"],
+            [sys.executable, "-m", "pytest", "-q", "--no-header",
+             "-p", "no:cacheprovider", *([select] if select else [])],
             cwd=self.path,
             env=env,
             capture_output=True,
             text=True,
             timeout=300,
         )
-        return proc.returncode == 0, (proc.stdout + proc.stderr)[-2000:]
+        return proc.returncode == 0, _stable((proc.stdout + proc.stderr)[-2000:])
+
+
+# pytest prints its own wall clock, Python prints object addresses, and a
+# traceback prints wherever this machine happens to keep its files. None of it
+# is information, all of it differs between two identical runs, and the Auditor
+# feeds this output straight back into its next prompt — so a Fixture recorded
+# on one machine would miss on another and the whole replay claim would be
+# false. Normalised where it is captured, once.
+_NOISE = (
+    (re.compile(r"\bin \d+\.\d+s\b"), "in N.NNs"),
+    (re.compile(r"0x[0-9a-f]{6,}"), "0xADDR"),
+    (re.compile(r"/(?:[\w.@+-]+/)+([\w.@+-]+/[\w.@+-]+\.py)"), r".../\1"),
+)
+
+
+def _stable(output: str) -> str:
+    for pattern, replacement in _NOISE:
+        output = pattern.sub(replacement, output)
+    return output
 
 
 def run_case(case: Case, verbose: bool = False) -> CaseResult:
@@ -154,9 +182,19 @@ def run_case(case: Case, verbose: bool = False) -> CaseResult:
 
 
 def _first_failure(output: str) -> str:
-    for line in output.splitlines():
-        if line.startswith(("FAILED", "E   ")):
-            return line.strip()[:160]
+    """The one line worth quoting as the receipt.
+
+    pytest's `FAILED ...` summary names the test as well as the assertion, so it
+    is preferred; a bare `E   ` line is the fallback for a collection error that
+    never got as far as a summary.
+    """
+    lines = output.splitlines()
+    for line in lines:
+        if line.startswith("FAILED"):
+            return line.strip()[:200]
+    for line in lines:
+        if line.startswith("E   "):
+            return line.strip()[:200]
     return ""
 
 
@@ -167,6 +205,24 @@ def discover(corpus_dir: Path | None = None) -> list[Case]:
         for p in sorted(corpus_dir.iterdir())
         if p.is_dir() and (p / "case.json").exists()
     ]
+
+
+def overlay(case: Case, extra_tests: dict[str, str], dest: Path) -> Case:
+    """A scratch copy of a Corpus Case with extra test files dropped into `tests/`.
+
+    A Suite is evidence. Closing Tests are therefore never written into one —
+    they are merged onto a copy, and the copy is what gets measured. Fixtures
+    come along, which is what keeps an Overlay offline and deterministic.
+    """
+    if dest.exists():
+        shutil.rmtree(dest)
+    shutil.copytree(
+        case.path, dest, ignore=shutil.ignore_patterns("__pycache__", ".pytest_cache")
+    )
+    (dest / "tests").mkdir(exist_ok=True)
+    for name, code in extra_tests.items():
+        (dest / "tests" / name).write_text(code)
+    return Case(dest)
 
 
 def to_json(results: list[CaseResult]) -> str:

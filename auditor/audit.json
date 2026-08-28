@@ -1,0 +1,188 @@
+[
+  {
+    "case": "01_invoice_extractor",
+    "kill_rate_before": 0.3333,
+    "findings": [
+      {
+        "operator": "model.downgrade",
+        "summary": "The model behind the feature is swapped for a much weaker one.",
+        "receipt": "suite stayed green",
+        "closing_test": "from feature import extract\n\ndef test_invoice_date_format():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"date\"] == \"2026-03-14\"\n    assert result2[\"date\"] == \"2026-04-02\"\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_invoice_date_format - AssertionE...",
+        "attempts": 1,
+        "gate": "green on the clean feature, red under model.downgrade"
+      },
+      {
+        "operator": "value.zero_amounts",
+        "summary": "Every monetary amount comes back as zero.",
+        "receipt": "suite stayed green",
+        "closing_test": "from feature import extract\n\ndef test_total_amount_not_zero():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"total\"] != 0 and result2[\"total\"] != 0\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_total_amount_not_zero - assert (...",
+        "attempts": 1,
+        "gate": "green on the clean feature, red under value.zero_amounts"
+      },
+      {
+        "operator": "value.null_fields",
+        "summary": "Every extracted field is present but null.",
+        "receipt": "suite stayed green",
+        "closing_test": "from feature import extract\n\ndef test_total_is_number_not_null():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert isinstance(result1[\"total\"], float)\n    assert isinstance(result2[\"total\"], float)\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_total_is_number_not_null - asser...",
+        "attempts": 1,
+        "gate": "green on the clean feature, red under value.null_fields"
+      },
+      {
+        "operator": "value.transpose_digits",
+        "summary": "Digits inside extracted numbers are transposed \u2014 1284.50 becomes 1248.50.",
+        "receipt": "suite stayed green",
+        "closing_test": "from feature import extract\n\ndef test_total_amount_is_correct():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"total\"] == 1284.5 and result2[\"total\"] == 375.9\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_total_amount_is_correct - assert...",
+        "attempts": 1,
+        "gate": "green on the clean feature, red under value.transpose_digits"
+      }
+    ],
+    "killed": [
+      "model.echo",
+      "schema.drop_field"
+    ],
+    "invalid": [],
+    "prior": {
+      "order": [
+        "model.downgrade",
+        "model.echo",
+        "value.zero_amounts",
+        "value.null_fields",
+        "schema.drop_field",
+        "value.transpose_digits"
+      ],
+      "expect_missed": [
+        "value.null_fields",
+        "schema.drop_field"
+      ],
+      "why": "The suite does not validate field values or check for required fields, making null fields and missing fields undetectable.",
+      "invented_ids": []
+    },
+    "skipped": []
+  },
+  {
+    "case": "02_ticket_classifier",
+    "kill_rate_before": 0.5,
+    "findings": [
+      {
+        "operator": "classify.confidence_pin",
+        "summary": "Confidence is pinned high regardless of how uncertain the model was.",
+        "receipt": "suite stayed green",
+        "closing_test": "import json\nimport re\nfrom feature import classify\n\ndef test_confidence_pin_bypassed():\n    assert classify(\"t1\")[\"confidence\"] == 0.95\n    assert classify(\"t2\")[\"confidence\"] == 0.95\n    assert classify(\"t3\")[\"confidence\"] == 0.95\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_confidence_pin_bypassed - assert...",
+        "attempts": 1,
+        "gate": "green on the clean feature, red under classify.confidence_pin"
+      },
+      {
+        "operator": "classify.collapse",
+        "summary": "Every input is classified into the single most common label.",
+        "receipt": "suite stayed green",
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "red on the clean feature (assertion failed)"
+      }
+    ],
+    "killed": [
+      "model.downgrade",
+      "model.echo"
+    ],
+    "invalid": [],
+    "prior": {
+      "order": [
+        "model.downgrade",
+        "model.echo",
+        "classify.confidence_pin",
+        "classify.collapse"
+      ],
+      "expect_missed": [
+        "classify.collapse"
+      ],
+      "why": "The suite checks for reasonable routing and confidence, but doesn't verify label accuracy, so a label collapse would go undetected.",
+      "invented_ids": []
+    },
+    "skipped": []
+  },
+  {
+    "case": "03_rag_citations",
+    "kill_rate_before": 0.0,
+    "findings": [
+      {
+        "operator": "model.downgrade",
+        "summary": "The model behind the feature is swapped for a much weaker one.",
+        "receipt": "suite stayed green",
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "model.downgrade was applied and the test still passed"
+      },
+      {
+        "operator": "model.echo",
+        "summary": "The model is replaced by one that echoes its input back.",
+        "receipt": "suite stayed green",
+        "closing_test": "from feature import answer\n\ndef test_answer_quotes_match_clean_output():\n    questions = [\n        \"How much annual leave accrues each month?\",\n        \"How many days of leave can be carried over?\"\n    ]\n    clean_answers = [\n        \"The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].\",\n        \"The answer is 10 days. This information is found on [page 2].\"\n    ]\n    for i, q in enumerate(questions):\n        result = answer(q)\n        assert result[\"answer\"] == clean_answers[i]\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_answer_quotes_match_clean_output",
+        "attempts": 2,
+        "gate": "green on the clean feature, red under model.echo"
+      },
+      {
+        "operator": "citation.wrong_page",
+        "summary": "Every citation points at a real but wrong location in the source.",
+        "receipt": "suite stayed green",
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "red on the clean feature (assertion failed)"
+      },
+      {
+        "operator": "citation.fabricate",
+        "summary": "Citations are invented: plausible quotes that appear nowhere in the source.",
+        "receipt": "suite stayed green",
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "red on the clean feature (assertion failed)"
+      },
+      {
+        "operator": "retrieval.truncate",
+        "summary": "Only the first half of the retrieved context reaches the model.",
+        "receipt": "suite stayed green",
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "red on the clean feature (assertion failed)"
+      },
+      {
+        "operator": "retrieval.shuffle",
+        "summary": "Retrieved chunks arrive in a scrambled order.",
+        "receipt": "suite stayed green",
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "retrieval.shuffle was applied and the test still passed"
+      }
+    ],
+    "killed": [],
+    "invalid": [],
+    "prior": {
+      "order": [
+        "model.downgrade",
+        "model.echo",
+        "citation.wrong_page",
+        "citation.fabricate",
+        "retrieval.truncate",
+        "retrieval.shuffle"
+      ],
+      "expect_missed": [
+        "citation.wrong_page",
+        "citation.fabricate"
+      ],
+      "why": "The suite only checks for the presence of citations, not their correctness or validity, so it will miss cases where citations are incorrect or fabricated.",
+      "invented_ids": []
+    },
+    "skipped": []
+  }
+]

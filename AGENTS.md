@@ -12,12 +12,25 @@ notices. Hackathon submission, deadline **Mon 31 Aug 2026, 18:00 UTC**
 ## Run it
 
 ```bash
-.venv/bin/python evals/run_eval.py -v            # whole corpus
-.venv/bin/python evals/run_eval.py --case 01_invoice_extractor -v
+.venv/bin/python evals/run_eval.py -v            # kill rate per case, ~3s
+.venv/bin/python auditor/audit.py                # the agent, replayed, ~20s
+.venv/bin/python evals/score_predictions.py auditor/predictions.json
+.venv/bin/python evals/uplift.py                 # kill rate before -> after
+.venv/bin/python -m pytest selftests -q          # greenwash's own tests
 ```
 
-Needs no network and no GPU: every model answer is replayed from `fixtures/`.
-A full sweep of the current three cases takes about 3 seconds.
+Needs no network and no GPU: every model answer is replayed from `fixtures/`,
+the Auditor's own answers included. A full sweep of the current three cases
+takes about 3 seconds.
+
+Re-running the Auditor against Ollama, which rewrites `auditor/fixtures/` and
+the Trajectories:
+
+```bash
+ollama serve &
+.venv/bin/python auditor/audit.py --record       # ~7 min on an M1 Pro
+.venv/bin/python scripts/render_trajectory.py --all
+```
 
 Recording new fixtures *does* need Ollama running (`ollama serve`):
 
@@ -46,6 +59,13 @@ records Survivors a human has actually looked at. When measured and confirmed
 diverge, the eval says MISMATCH and you investigate — you do not update the
 JSON to match.
 
+**A Closing Test is reported only if the Gate passed it.** Green on the clean
+Feature, red under the Mutant it claims to close. The Gate is in
+`auditor/agent.py`; it is the reason a small model's assertions are safe to ship.
+
+**Uplift is measured outside the agent.** `evals/uplift.py` runs it, from the
+Closing Tests committed on disk. An agent that scores itself is not evidence.
+
 **Every claim in the submission needs a run behind it.** Ground rule 09.
 
 ## Adding a Corpus Case
@@ -64,10 +84,19 @@ JSON to match.
 
 ```
 greenwash/         operators.py (the sabotage library), harness.py (the loop),
-                   modelclient.py (record/replay seam)
+                   modelclient.py (record/replay seam), observe.py (what a
+                   Feature actually returned, clean or sabotaged)
 corpus/NN_*/       one Corpus Case each
+auditor/           agent.py (the Auditor: phases, tools, Verification Gate),
+                   audit.py (the CLI and every artifact it writes),
+                   fixtures/ (the Auditor's own model answers — replay),
+                   closing_tests/, reports/ (Trust Reports), predictions.json
+baseline/          the one-shot predictor the Auditor is measured against
 evals/run_eval.py  the measurement the Changelog reports against
-scripts/           record_fixtures.py
+evals/uplift.py    kill rate before and after Closing Tests — the user's number
+evals/score_predictions.py   one scorer, both predictors
+selftests/         Greenwash's own tests. Never called a Suite
+scripts/           record_fixtures.py, render_trajectory.py
 trajectories/      agent traces — required deliverable, capture from run one
 docs/adr/          decisions worth their own file
 ```

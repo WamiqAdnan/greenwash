@@ -1,0 +1,30 @@
+{
+  "predictor": "auditor-v1",
+  "model": "qwen3:8b",
+  "verified": true,
+  "overall": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0
+  },
+  "per_case": [
+    {
+      "case": "01_invoice_extractor",
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "case": "02_ticket_classifier",
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "case": "03_rag_citations",
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    }
+  ]
+}

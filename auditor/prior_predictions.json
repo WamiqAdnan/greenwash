@@ -1,0 +1,24 @@
+{
+  "predictor": "auditor-v1-prior",
+  "model": "qwen3:8b",
+  "verified": false,
+  "predictions": {
+    "01_invoice_extractor": [
+      "value.null_fields",
+      "schema.drop_field"
+    ],
+    "02_ticket_classifier": [
+      "classify.collapse"
+    ],
+    "03_rag_citations": [
+      "citation.wrong_page",
+      "citation.fabricate"
+    ]
+  },
+  "hallucinated_ids": {
+    "01_invoice_extractor": [],
+    "02_ticket_classifier": [],
+    "03_rag_citations": []
+  },
+  "note": "what the auditor expected before it ran anything. Evidence, never a finding \u2014 see docs/adr/0001."
+}

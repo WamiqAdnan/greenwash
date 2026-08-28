@@ -60,22 +60,23 @@ def _call_ollama(model: str, prompt: str) -> str:
         return json.load(resp)["response"]
 
 
-def complete(prompt: str, model: str | None = None) -> str:
-    """Answer `prompt`, from fixtures in replay mode or from Ollama in record mode.
+def record_or_replay(
+    prompt: str, *, model: str, fixture_dir: Path, mode: str, hint: str = ""
+) -> str:
+    """The seam itself, with every input passed explicitly.
 
-    `model` is deliberately overridable: the downgrade Operator works by handing
-    a Corpus Case a weaker model, and that only bites if the feature reads the
-    model name at call time rather than at import time.
+    Corpus Cases reach this through `complete`, which reads the environment the
+    Harness sets. The Auditor calls it directly: its own model answers are
+    Fixtures too, in its own directory, because an audit a judge cannot replay
+    offline is not a reproducible result.
     """
-    model = model or os.environ.get("GREENWASH_MODEL", DEFAULT_MODEL)
-    mode = os.environ.get("GREENWASH_MODE", "replay")
-    path = _fixture_dir() / f"{_key(model, prompt)}.json"
+    path = Path(fixture_dir) / f"{_key(model, prompt)}.json"
 
     if mode == "replay":
         if not path.exists():
             raise FixtureMiss(
                 f"No fixture for model={model} at {path.name}.\n"
-                f"Run: python scripts/record_fixtures.py --case <case>"
+                f"{hint or 'Run: python scripts/record_fixtures.py --case <case>'}"
             )
         return json.loads(path.read_text())["response"]
 
@@ -93,3 +94,18 @@ def complete(prompt: str, model: str | None = None) -> str:
         return response
 
     raise RuntimeError(f"GREENWASH_MODE must be replay or record, got {mode!r}")
+
+
+def complete(prompt: str, model: str | None = None) -> str:
+    """Answer `prompt`, from fixtures in replay mode or from Ollama in record mode.
+
+    `model` is deliberately overridable: the downgrade Operator works by handing
+    a Corpus Case a weaker model, and that only bites if the feature reads the
+    model name at call time rather than at import time.
+    """
+    return record_or_replay(
+        prompt,
+        model=model or os.environ.get("GREENWASH_MODEL", DEFAULT_MODEL),
+        fixture_dir=_fixture_dir(),
+        mode=os.environ.get("GREENWASH_MODE", "replay"),
+    )

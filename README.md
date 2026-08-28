@@ -7,7 +7,7 @@ time — and reports every break your tests slept through, with the failing run
 attached.
 
 > Built for the micro1 Agentic Workflows Hackathon, 28–31 August 2026.
-> Status: measurement rig complete, auditor agent not yet built. See `STATE.md`.
+> Status: the auditor agent works end to end. See `STATE.md`.
 
 ## The user
 
@@ -67,18 +67,65 @@ receipt.
 The tool cannot invent a finding. A blind spot exists only when a real sabotage
 survived a real test run.
 
+## The agent
+
+Finding the holes is the easy half. The agent — `auditor/audit.py` — also writes
+the tests that close them, and it is not trusted to do either.
+
+It **never predicts** which sabotages survive. It applies each one, runs your
+suite, and reads the result. Then, for each survivor, it is shown what the
+feature actually returned before and after the sabotage and asked for the
+assertion that would have caught it. Every test it writes is then run twice —
+green on the clean feature, red under the sabotage — or it goes back with the
+pytest output attached. **A test that does not do both is never reported.**
+
+The whole agent runs on `qwen3:8b` on a laptop, because the hard part is the
+harness's job, not the model's.
+
+| | precision | recall | F1 | blind spots found |
+|---|---|---|---|---|
+| the same model, predicting (baseline) | 64% | 58% | 0.61 | 7 / 12 |
+| the same model, predicting (inside the agent, before it ran anything) | 80% | 33% | 0.47 | 4 / 12 |
+| **the agent, after running them** | **100%** | **100%** | **1.00** | **12 / 12** |
+
+One scorer, one ground truth, three predictors. Reaching 12/12 is not cleverness
+and is not claimed as any — it is what happens when you stop guessing and run
+the thing. The number that took work is the next one.
+
+**Kill rate across the corpus: 28% → 75%**, measured by `evals/uplift.py` from
+the tests the agent wrote, outside the agent, on a scratch copy — your suite is
+evidence and is never edited.
+
+### What it got wrong, which is the more interesting half
+
+Asked to catch a sabotage that routes every ticket to `billing`, it wrote
+`assert result["label"] == "billing"` — a test asserting the bug is present.
+Three times. The gate rejected all three and that hole is still reported open.
+An agent that writes tests from observed output will happily codify the bug it
+was shown; the gate is what makes a small model's assertions safe to ship.
+
+And some tests it *did* get through the gate pin the model's exact prose, which
+kills every mutant and would fire on a legitimate model upgrade. Mutation
+testing rewards over-fitting. That is the project's main failure mode and it is
+written up in `CHANGELOG.md` with the measurement that is missing.
+
 ## Run it
 
 ```bash
 python -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python evals/run_eval.py -v
+.venv/bin/python evals/run_eval.py -v      # how blind are the suites?
+.venv/bin/python auditor/audit.py          # the agent, replayed
+.venv/bin/python evals/uplift.py           # kill rate before -> after
 ```
 
-No network, no GPU, no API key — every model answer replays from `fixtures/`.
-Under 3 seconds for the current three cases — verified from a clean clone. Full setup, recording, and expected
-output: see `AGENTS.md`.
+No network, no GPU, no API key — every model answer replays from `fixtures/`,
+the agent's own answers included. The whole pipeline is under 20 seconds and was
+verified with Ollama stopped. Step-by-step from a clean machine, with the output
+you should see: `REPRODUCE.md`.
 
 ## Reading order
 
-`CONTEXT.md` for the vocabulary · `STATE.md` for where the work is ·
-`CHANGELOG.md` for how it got here, including what was removed.
+`CONTEXT.md` for the vocabulary · `REPRODUCE.md` to run it · `STATE.md` for
+where the work is · `CHANGELOG.md` for how it got here, including the main
+failure mode · `auditor/reports/` for what the user actually reads ·
+`trajectories/` for what both agents did, step by step.
