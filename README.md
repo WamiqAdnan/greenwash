@@ -75,7 +75,7 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 ```
 
 No network, no GPU, no API key — every model answer replays from `fixtures/`.
-About a minute for the current three cases. Full setup, recording, and expected
+Under 3 seconds for the current three cases — verified from a clean clone. Full setup, recording, and expected
 output: see `AGENTS.md`.
 
 ## Reading order

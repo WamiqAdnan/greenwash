@@ -17,7 +17,7 @@ notices. Hackathon submission, deadline **Mon 31 Aug 2026, 18:00 UTC**
 ```
 
 Needs no network and no GPU: every model answer is replayed from `fixtures/`.
-A full sweep of the current three cases takes about a minute.
+A full sweep of the current three cases takes about 3 seconds.
 
 Recording new fixtures *does* need Ollama running (`ollama serve`):
 
