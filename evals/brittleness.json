@@ -1,0 +1,23 @@
+{
+  "cases": [
+    {
+      "case": "01_invoice_extractor",
+      "change": "prompt.reword",
+      "measured": false,
+      "why": "the change was inert"
+    },
+    {
+      "case": "02_ticket_classifier",
+      "change": "prompt.reword",
+      "measured": false,
+      "why": "the change was inert"
+    },
+    {
+      "case": "03_rag_citations",
+      "change": "prompt.reword",
+      "measured": true,
+      "closing_tests": 2,
+      "false_alarms": []
+    }
+  ]
+}

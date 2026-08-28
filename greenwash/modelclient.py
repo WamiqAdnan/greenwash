@@ -43,14 +43,20 @@ def _fixture_dir() -> Path:
     return Path(d)
 
 
-def _call_ollama(model: str, prompt: str) -> str:
+def _call_ollama(model: str, prompt: str, temperature: float = 0.0) -> str:
+    """Temperature is a parameter because a *second correct answer* is useful.
+
+    Everything Greenwash measures runs at 0. The brittleness probe needs the
+    same model to say the same thing differently, so that a Closing Test which
+    only passes on one exact wording can be caught doing it.
+    """
     body = json.dumps(
         {
             "model": model,
             "prompt": prompt,
             "stream": False,
             "think": False,
-            "options": {"temperature": 0, "num_predict": 512},
+            "options": {"temperature": temperature, "num_predict": 512},
         }
     ).encode()
     req = urllib.request.Request(
@@ -61,7 +67,8 @@ def _call_ollama(model: str, prompt: str) -> str:
 
 
 def record_or_replay(
-    prompt: str, *, model: str, fixture_dir: Path, mode: str, hint: str = ""
+    prompt: str, *, model: str, fixture_dir: Path, mode: str, hint: str = "",
+    temperature: float = 0.0,
 ) -> str:
     """The seam itself, with every input passed explicitly.
 
@@ -83,7 +90,7 @@ def record_or_replay(
     if mode == "record":
         if path.exists():
             return json.loads(path.read_text())["response"]
-        response = _call_ollama(model, prompt)
+        response = _call_ollama(model, prompt, temperature)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
             json.dumps(
@@ -108,4 +115,5 @@ def complete(prompt: str, model: str | None = None) -> str:
         model=model or os.environ.get("GREENWASH_MODEL", DEFAULT_MODEL),
         fixture_dir=_fixture_dir(),
         mode=os.environ.get("GREENWASH_MODE", "replay"),
+        temperature=float(os.environ.get("GREENWASH_TEMPERATURE", "0")),
     )

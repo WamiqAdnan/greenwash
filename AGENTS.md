@@ -16,6 +16,7 @@ notices. Hackathon submission, deadline **Mon 31 Aug 2026, 18:00 UTC**
 .venv/bin/python auditor/audit.py                # the agent, replayed, ~20s
 .venv/bin/python evals/score_predictions.py auditor/predictions.json
 .venv/bin/python evals/uplift.py                 # kill rate before -> after
+.venv/bin/python evals/brittleness.py            # do the new tests cry wolf?
 .venv/bin/python -m pytest selftests -q          # greenwash's own tests
 ```
 
@@ -71,6 +72,12 @@ Feature, red under the Mutant it claims to close. The Gate is in
 **Uplift is measured outside the agent.** `evals/uplift.py` runs it, from the
 Closing Tests committed on disk. An agent that scores itself is not evidence.
 
+**Uplift alone can be bought with over-fitting.** A Closing Test that pins the
+model's exact prose kills every Mutant and would go red the next time someone
+rewords a prompt. `evals/brittleness.py` is the other side of the measurement:
+apply a **Benign Change**, and every Closing Test that goes red is a False Alarm.
+Never quote Uplift without it.
+
 **Every claim in the submission needs a run behind it.** Ground rule 09.
 
 ## Adding a Corpus Case
@@ -82,8 +89,12 @@ Closing Tests committed on disk. An agent that scores itself is not evidence.
 4. `tests/test_feature.py` — a suite a real team would plausibly have written.
    No strawmen. Every assertion must be one people actually write.
 5. `record_plan.py` — every model call the suite makes
-6. Record fixtures for **both** models
-7. Run the eval, look at each Survivor by hand, then write `blindspots.json`.
+6. `PROMPT_VARIANT` in `feature.py` — the same instruction worded differently,
+   for the `prompt.reword` Benign Change. Read both and satisfy yourself they
+   mean the same thing; that judgement is the whole basis of the False Alarm
+   number
+7. Record fixtures for **both** models
+8. Run the eval, look at each Survivor by hand, then write `blindspots.json`.
    A Survivor is only a Blind Spot if the sabotage actually changed what the
    Feature returns — the Harness reports the rest as **Inert**, but check the
    observations yourself before recording ground truth:
@@ -107,6 +118,7 @@ auditor/           agent.py (the Auditor: phases, tools, Verification Gate),
 baseline/          the one-shot predictor the Auditor is measured against
 evals/run_eval.py  the measurement the Changelog reports against
 evals/uplift.py    kill rate before and after Closing Tests — the user's number
+evals/brittleness.py  how many Closing Tests fire on output that is correct
 evals/score_predictions.py   one scorer, both predictors
 selftests/         Greenwash's own tests. Never called a Suite
 scripts/           record_fixtures.py, render_trajectory.py

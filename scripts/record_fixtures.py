@@ -41,7 +41,8 @@ def _run_plan(case_dir: Path, label: str, mutation: str | None) -> None:
         sys.path.remove(str(case_dir))
 
 
-def record(case_dir: Path, model: str, with_mutations: bool = True) -> None:
+def record(case_dir: Path, model: str, with_mutations: bool = True,
+           into: str = "fixtures", temperature: float = 0.0) -> None:
     """Record the clean run, then one run per Operator that changes the prompt.
 
     A retrieval Operator rewrites the context the model sees, so it needs its
@@ -49,8 +50,9 @@ def record(case_dir: Path, model: str, with_mutations: bool = True) -> None:
     Harness reports INVALID — correct, but useless.
     """
     os.environ["GREENWASH_MODE"] = "record"
-    os.environ["GREENWASH_FIXTURES"] = str(case_dir / "fixtures")
+    os.environ["GREENWASH_FIXTURES"] = str(case_dir / into)
     os.environ["GREENWASH_MODEL"] = model
+    os.environ["GREENWASH_TEMPERATURE"] = str(temperature)
 
     if not (case_dir / "record_plan.py").exists():
         raise SystemExit(
@@ -62,15 +64,19 @@ def record(case_dir: Path, model: str, with_mutations: bool = True) -> None:
     from greenwash import operators as ops
 
     tags = set(_json.loads((case_dir / "case.json").read_text())["tags"])
-    print(f"{case_dir.name} @ {model}")
+    print(f"{case_dir.name} @ {model} -> {into}/ (temperature {temperature})")
     _run_plan(case_dir, "clean", None)
 
     if not with_mutations:
         return
-    # Only Operators that alter what reaches the model need extra fixtures.
-    for op in ops.applicable(tags):
-        if not op.id.startswith(("retrieval.",)):
-            continue
+    # Anything that alters what reaches the model needs its own fixtures, or its
+    # Mutant dies of a fixture miss and reports INVALID. That is the retrieval
+    # Operators, which rewrite the context, and every Benign Change, which
+    # rewrites the prompt itself.
+    changes_the_prompt = [
+        op for op in ops.applicable(tags) if op.id.startswith("retrieval.")
+    ] + ops.applicable_benign(tags)
+    for op in changes_the_prompt:
         os.environ["GREENWASH_MODEL"] = model
         _run_plan(case_dir, op.id, op.id)
 
@@ -81,9 +87,15 @@ def main() -> None:
     ap.add_argument("--model", default="qwen3:8b")
     ap.add_argument("--no-mutations", action="store_true",
                     help="skip the extra prompt-changing Operator runs")
+    ap.add_argument("--into", default="fixtures",
+                    help="directory under the case to write into")
+    ap.add_argument("--temperature", type=float, default=0.0,
+                    help="0 for everything Greenwash measures; higher only for "
+                         "the brittleness probe's second correct answer")
     args = ap.parse_args()
     record(ROOT / "corpus" / args.case, args.model,
-           with_mutations=not args.no_mutations)
+           with_mutations=not args.no_mutations,
+           into=args.into, temperature=args.temperature)
 
 
 if __name__ == "__main__":

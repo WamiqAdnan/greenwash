@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:8b",
+  "prompt": "Route this support ticket to exactly one of these queues: billing, technical, account, abuse.\nRespond with JSON only: {\"label\": \"...\", \"confidence\": 0.0-1.0}\n\nTicket: I was charged twice for the March subscription. Please refund one.\n\nJSON:",
+  "response": "{\"label\": \"billing\", \"confidence\": 0.95}"
+}

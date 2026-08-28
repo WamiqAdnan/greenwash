@@ -65,6 +65,23 @@ reported loudly. **An Invalid Mutant counted as a Kill silently inflates the
 headline number** — this bug was real, see the Changelog.
 _Avoid_: error, skipped
 
+### The opposite of sabotage
+
+**Benign Change**:
+A change a team really makes that does **not** break the Feature — rewording the
+prompt, moving to a better model. Lives in its own registry so `applicable()`
+can never hand one to the Kill Rate sweep, where a green Suite would be scored as
+a Blind Spot. A Corpus Case declares its own reworded prompt and a human has read
+both, because "means the same thing" is not something to leave to a regex.
+_Avoid_: non-mutation, control mutation, no-op
+
+**False Alarm**:
+A test that goes red under a **Benign Change**. The Feature is fine and the test
+says it is broken. Kill Rate cannot see this — a test that pins the model's exact
+prose kills every Mutant and is, by that measure, perfect. False Alarms are how a
+tool like this loses its user, so `evals/brittleness.py` counts them separately.
+_Avoid_: flake, false positive
+
 ### The agent
 
 **Auditor**:

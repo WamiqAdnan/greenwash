@@ -2,7 +2,7 @@
 
 The agent that built this repository, traced from the session log it wrote while working.
 
-- source: `58d303d6-ba28-4c88-9f18-d032e5f00db4.jsonl` (583 records)
+- source: `58d303d6-ba28-4c88-9f18-d032e5f00db4.jsonl` (891 records)
 - system reminders removed, home directory and email addresses redacted
 - tool results truncated to 1200 characters
 - private reasoning: excluded
@@ -2570,5 +2570,1482 @@ ok
 
 ```json
 {"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python evals/run_eval.py --json evals/results.json > /dev/null && echo \"results.json refreshed\"\n.venv/bin/python scripts/render_coding_trajectory.py \\\n  ~/.claude/projects/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4.jsonl \\\n  --title \"session 2 \u2014 building the auditor agent\" \\\n  -o trajectories/building-greenwash-2-the-auditor.md\ngit status --short", "description": "Refresh artifacts and render session 2 trajectory"}
+```
+
+### 244. the tool responded
+
+```
+results.json refreshed
+wrote trajectories/building-greenwash-2-the-auditor.md (105 KB)
+ M AGENTS.md
+ M CHANGELOG.md
+ M CONTEXT.md
+ M README.md
+ M STATE.md
+ M evals/results.json
+ M greenwash/harness.py
+ M greenwash/modelclient.py
+?? REPRODUCE.md
+?? auditor/
+?? docs/
+?? evals/auditor_score.json
+?? evals/prior_score.json
+?? evals/uplift.json
+?? evals/uplift.py
+?? greenwash/observe.py
+?? scripts/render_coding_trajectory.py
+?? scripts/render_trajectory.py
+?? selftests/
+?? trajectories/
+```
+
+### 245. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\ngrep -rn -iE \"sk-ant|api[_-]key.*=.*['\\\"][A-Za-z0-9]{8}|password.*=|Bearer \" --include=\"*.py\" --include=\"*.json\" --include=\"*.md\" . 2>/dev/null | grep -v \".venv\" | grep -v \"ANTHROPIC_API_KEY:\" | head -5\necho \"--- secret scan done ---\"\ndu -sh trajectories auditor/fixtures\ngit add -A && git status --short | wc -l", "description": "Scan for secrets and stage"}
+```
+
+### 246. the tool responded
+
+```
+--- secret scan done ---
+712K	trajectories
+192K	auditor/fixtures
+      65
+```
+
+### 247. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\ngit commit -q -F - <<'MSG'\nBuild the Auditor: it runs the sabotages instead of guessing at them\n\nThe measurement rig could say how blind a suite is. This is the agent that\nfinds the holes and writes the tests that close them.\n\nFour phases per Corpus Case \u2014 triage, verify, remediate, report \u2014 with six\ntools and one constraint: every Closing Test must pass the Verification Gate,\ngreen on the clean Feature and red under the Mutant it claims to close, or it\ngoes back to the model with the pytest output attached. A findi
+```
+
+### 248. the tool responded
+
+```
+86690cc Build the Auditor: it runs the sabotages instead of guessing at them
+ccd3044 Correct the local-model decision: the auditor runs locally too
+e88be08 Add the one-shot baseline and a shared prediction scorer
+ auditor/fixtures/qwen3_8b__c64b012500239222.json   |    5 +
+ auditor/fixtures/qwen3_8b__c6cf83f606ed3163.json   |    5 +
+ auditor/fixtures/qwen3_8b__c6e6d94e94479a70.json   |    5 +
+ auditor/fixtures/qwen3_8b__c758591223f5b81b.json   |    5 +
+ auditor/fixtures/qwen3_8b__db11f78f4f95f356.json   |    5 +
+ auditor/fixtures/qwen3_8b__e73603a32f1078bb.json   |    5 +
+ auditor/predictions.json                           |   91 +
+ auditor/prior_predictions.json                     |   24 +
+ auditor/reports/01_invoice_extractor.md            |   95 +
+ auditor/reports/02_ticket_classifier.md            |   50 +
+ auditor/reports/03_rag_citations.md                |   92 +
+ ...1-the-auditor-verifies-instead-of-predicting.md |   66 +
+ evals/auditor_score.json                           |   30 +
+ evals/prior_score.json                             |   30 +
+ evals/results.json                                 |    8 +-
+ evals/uplift.json                                  |   45 +
+ evals/upl
+… [1205 more characters]
+```
+
+### 249. the agent said
+
+```
+Committed. Now the check that actually matters for the qualification gate — a clean clone, fresh venv, no Ollama:
+```
+
+### 250. the agent ran `Bash`
+
+```json
+{"command": "SCRATCH=/private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/scratchpad\nrm -rf $SCRATCH/clean && git clone -q ~/Desktop/mvps/HackerEarth $SCRATCH/clean && cd $SCRATCH/clean\npython3 -m venv .venv && .venv/bin/pip install -q -r requirements.txt\necho \"=== clean clone, ollama down ===\"\ncurl -s --max-time 2 http://localhost:11434/api/tags >/dev/null && echo \"OLLAMA UP\" || echo \"ollama down\"\n.venv/bin/python evals/run_eval.py 2>&1 | tail -2\n.venv/bin/python auditor/audit.py 2>&1 | grep -E \"blind spots,\" \n.
+```
+
+### 251. the tool responded
+
+```
+[notice] A new release of pip is available: 24.3.1 -> 26.2.1
+[notice] To update, run: python3.11 -m pip install --upgrade pip
+=== clean clone, ollama down ===
+ollama down
+
+corpus mean kill rate: 28%  (3 case(s))
+12 blind spots, 6 closed
+OVERALL   precision 100%   recall 100%   f1 1.00
+          found 12/12 confirmed blind spots
+corpus mean kill rate  28% -> 75%   (3 of 3 case(s) reported)
+..........                                                               [100%]
+10 passed in 1.10s
+=== trajectories reproduce byte-for-byte? ===
+EMPTY DIFF — replay matched the recorded run
+Shell cwd was reset to ~/Desktop/mvps/HackerEarth
+```
+
+### 252. the agent said
+
+```
+Clean clone, fresh venv, Ollama down: **same numbers, byte-identical trajectories.** The reproduction gate passes.
+
+**Auditor v1 is committed and verified.**
+
+| | precision | recall | F1 | found |
+|---|---|---|---|---|
+| baseline predicting | 64% | 58% | 0.61 | 7/12 |
+| same model predicting *inside* the agent | 80% | 33% | 0.47 | 4/12 |
+| the agent, after running them | 100% | 100% | 1.00 | 12/12 |
+
+Kill rate **28% → 75%**, measured outside the agent.
+
+Two things you should know before deciding what's next:
+
+**The 75% has an asterisk I put in the changelog rather than hiding.** Some closing tests that passed the gate pin the model's exact prose (`assert answer == "The annual leave accrues at 2.5 days…"`). That kills every mutant honestly, and would also fire on a legitimate model upgrade. Mutation testing rewards over-fitting and the Kill Rate can't see it.
+
+**Your Claude Code session transcripts are now in the repo** as `trajectories/building-greenwash-*.md` (both sessions, ~100 KB each) — deliverable 04 asks for traces of every agent used. They're filtered: system reminders dropped, home paths and emails redacted, private reasoning excluded, tool results truncated. Worth a skim before you submit.
+```
+
+### 253. the agent ran `AskUserQuestion`
+
+```json
+{"questions": [{"question": "Auditor v1 is done and reproducible. What should I build next with the ~64h left?", "header": "Next move", "multiSelect": false, "options": [{"label": "Precision control, then brittleness probe (Recommended)", "description": "First add one Corpus Case with a genuinely GOOD suite (~1-2h). If the auditor reports a blind spot there, precision is broken \u2014 and nothing in the current corpus could catch that, which is the weakest point in the 100% claim. Then build the brittleness probe: re-record each case at temperature 0.7, run the closing tests against that corre
+```
+
+### 254. the tool responded
+
+```
+Your questions have been answered: "Auditor v1 is done and reproducible. What should I build next with the ~64h left?"="Precision control, then brittleness probe (Recommended)". You can now continue with these answers in mind.
+```
+
+### 255. the agent said
+
+```
+Building the precision control first. Starting Ollama and writing the case:
+```
+
+### 256. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nnohup ollama serve > /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/scratchpad/ollama.log 2>&1 &\nmkdir -p corpus/04_purchase_orders/samples corpus/04_purchase_orders/tests\ncat > corpus/04_purchase_orders/samples/po_1.txt <<'TXT'\nNORTHWIND TRADING LLC\nJebel Ali Free Zone, Dubai\n\nPURCHASE ORDER\n\nPO Number: PO-2026-1180\nDate: 2026-03-14\nCurrency: AED\n\nDescription                          Qty    Unit Price    Line Total\nStanding desk, electric                4       145
+```
+
+### 257. the tool responded
+
+```
+ollama up
+```
+
+### 258. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python scripts/record_fixtures.py --case 04_purchase_orders --model qwen3:8b 2>&1 | tail -3\necho \"--- what qwen3:8b actually returned ---\"\nPYTHONPATH=. .venv/bin/python -m greenwash.observe corpus/04_purchase_orders 2>&1 | .venv/bin/python -c \"\nimport sys, json\nfor line in sys.stdin:\n    line = line.rstrip()\n    if line.startswith('call'):\n        print(line)\n    elif 'returned' in line:\n        print(json.dumps(json.loads(line.split('returned ',1)[1]), indent=2))\n\"", "description": "Record case 04 with qwen3:8
+```
+
+### 259. the tool responded
+
+```
+04_purchase_orders @ qwen3:8b
+  clean: 2 call(s) recorded
+--- what qwen3:8b actually returned ---
+call 1: lambda: feature.extract("po_1.txt")
+{
+  "currency": "AED",
+  "date": "2026-03-14",
+  "line_items": [
+    {
+      "description": "Standing desk, electric",
+      "line_total": 5800.0,
+      "quantity": 4,
+      "unit_price": 1450.0
+    },
+    {
+      "description": "Desk mat, felt",
+      "line_total": 850.0,
+      "quantity": 10,
+      "unit_price": 85.0
+    }
+  ],
+  "po_number": "PO-2026-1180",
+  "subtotal": 6650.0,
+  "tax": 332.5,
+  "total": 6982.5,
+  "vendor": "NORTHWIND TRADING LLC"
+}
+call 2: lambda: feature.extract("po_2.txt")
+{
+  "currency": "AED",
+  "date": "2026-04-02",
+  "line_items": [
+    {
+      "description": "A4 paper, box of 5 reams",
+      "line_total": 504.0,
+      "quantity": 12,
+      "unit_price": 42.0
+    },
+    {
+      "description": "Whiteboard markers, pack of 8",
+      "line_total": 117.0,
+      "quantity": 6,
+      "unit_price": 19.5
+    }
+  ],
+  "po_number": "PO-2026-0447",
+  "subtotal": 621.0,
+  "tax": 31.05,
+  "total": 652.05,
+  "vendor": "AL RAYYAN OFFICE SUPPLIES"
+}
+```
+
+### 260. the agent said
+
+```
+qwen3:8b extracted both perfectly. Now the suite — a genuinely good one, checking values against the document rather than against itself:
+```
+
+### 261. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\ncat > corpus/04_purchase_orders/tests/test_feature.py <<'PY'\n\"\"\"The control suite: one that would actually notice.\n\nCase 01's suite checks that three keys exist. This one checks the values against\nthe document they came from, which is the whole difference between a test and a\nformality.\n\nNothing here is exotic and none of it is snapshotting the model's phrasing. Every\nassertion is a fact of the purchase order \u2014 the arithmetic has to reconcile, the\ndate has to be a date, the vendor has to be a string that actually appe
+```
+
+### 262. the tool responded
+
+```
+04_purchase_orders @ qwen3:0.6b
+  clean: 2 call(s) recorded
+--- eval ---
+
+04_purchase_orders  [amounts, extraction, llm, structured_output]
+  S model.downgrade              SURVIVED
+  . model.echo                   killed
+  . value.zero_amounts           killed
+  . value.null_fields            killed
+  . value.transpose_digits       killed
+  . schema.drop_field            killed
+  kill rate: 83% (5/6 mutants killed)
+  blind spots: model.downgrade
+
+corpus mean kill rate: 83%  (1 case(s))
+```
+
+### 263. the agent said
+
+```
+5/6 killed, but `model.downgrade` survived. That needs a hand check — the question is whether the weak model actually broke anything:
+```
+
+### 264. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nPYTHONPATH=. .venv/bin/python -m greenwash.observe corpus/04_purchase_orders --operator model.downgrade 2>&1 | .venv/bin/python -c \"\nimport sys, json\nfor line in sys.stdin:\n    line = line.rstrip()\n    if line.startswith('call'): print(line)\n    elif 'returned' in line: print(json.dumps(json.loads(line.split('returned ',1)[1]), indent=2))\n    else: print(line)\n\"", "description": "Inspect what the weak model returned on case 04"}
+```
+
+### 265. the tool responded
+
+```
+call 1: lambda: feature.extract("po_1.txt")
+{
+  "currency": "AED",
+  "date": "2026-03-14",
+  "line_items": [
+    {
+      "description": "Standing desk, electric",
+      "line_total": 5800.0,
+      "quantity": 4,
+      "unit_price": 1450.0
+    },
+    {
+      "description": "Desk mat, felt",
+      "line_total": 850.0,
+      "quantity": 10,
+      "unit_price": 85.0
+    }
+  ],
+  "po_number": "PO-2026-1180",
+  "subtotal": 6650.0,
+  "tax": 332.5,
+  "total": 6982.5,
+  "vendor": "NORTHWIND TRADING LLC"
+}
+call 2: lambda: feature.extract("po_2.txt")
+{
+  "currency": "AED",
+  "date": "2026-04-02",
+  "line_items": [
+    {
+      "description": "A4 paper, box of 5 reams",
+      "line_total": 504.0,
+      "quantity": 12,
+      "unit_price": 42.0
+    },
+    {
+      "description": "Whiteboard markers, pack of 8",
+      "line_total": 117.0,
+      "quantity": 6,
+      "unit_price": 19.5
+    }
+  ],
+  "po_number": "PO-2026-0447",
+  "subtotal": 621.0,
+  "tax": 31.05,
+  "total": 652.05,
+  "vendor": "AL RAYYAN OFFICE SUPPLIES"
+}
+```
+
+### 266. the agent said
+
+```
+qwen3:0.6b — the model 13× smaller — extracted it **byte-identically**. So `model.downgrade` didn't survive because the suite is blind; it survived because the sabotage didn't sabotage anything.
+
+That's a false positive by construction, and the precision control caught it on its first run. Let me check how far it reaches:
+```
+
+### 267. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nPYTHONPATH=. .venv/bin/python - <<'PY'\nfrom greenwash import harness, observe\n\nfor case in harness.discover():\n    clean = observe.observe(case.path, None)\n    print(f\"\\n{case.name}\")\n    for op in case.operators():\n        mutated = observe.observe(case.path, op.id)\n        same = clean == mutated\n        if same:\n            print(f\"  INERT  {op.id:26} the feature returned exactly the same thing\")\nPY", "description": "Check every operator for inertness across the corpus"}
+```
+
+### 268. the tool responded
+
+```
+01_invoice_extractor
+
+02_ticket_classifier
+
+03_rag_citations
+
+04_purchase_orders
+  INERT  model.downgrade            the feature returned exactly the same thing
+```
+
+### 269. the agent said
+
+```
+Only case 04. The existing 12 blind spots are all real, so the headline numbers stand. Now making the harness able to tell the difference:
+```
+
+### 270. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\np = Path(\"greenwash/observe.py\"); t = p.read_text()\nold = '''def as_text(observations: list[dict]) -> str:'''\nnew = '''def failed(observations: list[dict]) -> bool:\n    \"\"\"Did the observation itself break? Then it says nothing about the Feature.\"\"\"\n    return any(o[\"call\"] == -1 for o in observations)\n\n\ndef as_text(observations: list[dict]) -> str:'''\nassert t.count(old) == 1\np.write_text(t.replace(old, new))\nprint(\"observe ok\")\nPY\n\n.venv/bin/python - <<'PY'
+```
+
+### 271. the tool responded
+
+```
+observe ok
+harness dataclasses ok
+```
+
+### 272. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\np = Path(\"greenwash/harness.py\"); t = p.read_text()\n\nold = '''def run_case(case: Case, verbose: bool = False) -> CaseResult:\n    baseline_green, baseline_out = case.run_suite()\n    if not baseline_green and verbose:\n        print(f\"  ! {case.name} is red before any mutation:\\\\n{baseline_out}\")\n\n    mutants: list[MutantResult] = []\n    for op in case.operators():\n        green, out = case.run_suite(op.id)\n        fault = next((f for f in HARNESS_FAULTS if f in out), N
+```
+
+### 273. the tool responded
+
+```
+ok
+04_purchase_orders  [amounts, extraction, llm, structured_output]
+  - model.downgrade              INERT
+  . model.echo                   killed
+  . value.zero_amounts           killed
+  . value.null_fields            killed
+  . value.transpose_digits       killed
+  . schema.drop_field            killed
+  kill rate: 100% (5/5 mutants killed)
+
+corpus mean kill rate: 100%  (1 case(s))
+```
+
+### 274. the agent said
+
+```
+Case 04 is now a proper control: 100%, no blind spots. Wiring the same logic into the agent so it can never report an inert mutant as a finding:
+```
+
+### 275. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\n\n# --- run_eval reports the new state -----------------------------------------\np = Path(\"evals/run_eval.py\"); t = p.read_text()\nold = '''        if result.invalid:\n            print(f\"  ! INVALID (harness fault, not scored): {', '.join(result.invalid)}\")'''\nnew = '''        if result.invalid:\n            print(f\"  ! INVALID (harness fault, not scored): {', '.join(result.invalid)}\")\n        if result.inert:\n            print(f\"  - INERT (the sabotage changed nothing t
+```
+
+### 276. the tool responded
+
+```
+run_eval ok
+agent ok
+imports clean
+```
+
+### 277. the agent said
+
+```
+Now the vocabulary, the ground truth for case 04, and a selftest for the new state:
+```
+
+### 278. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\np = Path(\"CONTEXT.md\"); t = p.read_text()\nold = '''**Invalid**:'''\nnew = '''**Inert**:\nThe Suite stayed green because the sabotage changed nothing the Suite could see \u2014\nthe Feature returned exactly what it returned before. Not a Blind Spot: there was\nnothing to catch. Decided by running the **Record Plan** with and without the\nOperator, which is every call the Suite makes, so identical results mean no\nassertion could have told the difference. Excluded from the Kill Rat
+```
+
+### 279. the tool responded
+
+```
+context ok
+selftests/test_prediction_contract.py:58: AssertionError
+=========================== short test summary info ============================
+FAILED selftests/test_prediction_contract.py::test_it_covers_every_corpus_case
+1 failed, 11 passed in 2.62s
+```
+
+### 280. the agent said
+
+```
+That failure is correct — the audit hasn't seen case 04 yet. Recording it (one new model call):
+```
+
+### 281. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python auditor/audit.py --record 2>&1 | tail -18", "description": "Re-run the audit including the control case"}
+```
+
+### 282. the tool responded
+
+```
+    attempt 1 rejected: retrieval.shuffle was applied and the test still passed
+    attempt 2 rejected: retrieval.shuffle was applied and the test still passed
+    attempt 3 rejected: retrieval.shuffle was applied and the test still passed
+  kill rate before: 0%   blind spots: 6   closed: 1
+
+04_purchase_orders  [amounts, extraction, llm, structured_output]
+  prior: expects to miss ['schema.drop_field', 'value.null_fields']
+  . value.null_fields            killed
+  . value.zero_amounts           killed
+  . schema.drop_field            killed
+  . value.transpose_digits       killed
+  . model.echo                   killed
+  - model.downgrade              INERT — the feature returned exactly the same thing
+  kill rate before: 100%   blind spots: 0   closed: 0
+
+12 blind spots, 6 closed
+wrote ~/Desktop/mvps/HackerEarth/auditor/predictions.json
+wrote auditor/prior_predictions.json — what it expected, scored by the same scorer
+```
+
+### 283. the agent said
+
+```
+The control works: the agent reported **0 blind spots** there — while its own Prior predicted two. Prediction would have raised two false alarms on a good suite. Let me re-run the baseline on case 04 so all three predictors face the same corpus:
+```
+
+### 284. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python baseline/predict.py --model qwen3:8b 2>&1 | tail -8", "description": "Re-run the baseline over all four cases"}
+```
+
+### 285. the tool responded
+
+```
+02_ticket_classifier: asking qwen3:8b about 4 sabotages...
+  predicted missed: ['model.downgrade', 'model.echo', 'classify.collapse', 'classify.confidence_pin']
+03_rag_citations: asking qwen3:8b about 6 sabotages...
+  predicted missed: ['citation.wrong_page', 'citation.fabricate', 'retrieval.truncate', 'retrieval.shuffle']
+04_purchase_orders: asking qwen3:8b about 6 sabotages...
+  predicted missed: ['model.downgrade', 'model.echo', 'value.zero_amounts', 'value.null_fields', 'value.transpose_digits', 'schema.drop_field']
+
+wrote ~/Desktop/mvps/HackerEarth/baseline/predictions.json
+```
+
+### 286. the agent said
+
+```
+The baseline called **all six** sabotages "missed" on the suite that catches every one. Six false alarms out of six. Scoring all three:
+```
+
+### 287. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nfor f in baseline/predictions.json auditor/prior_predictions.json auditor/predictions.json; do\n  echo \"===== $f =====\"\n  .venv/bin/python evals/score_predictions.py $f 2>&1 | head -2\n  .venv/bin/python evals/score_predictions.py $f 2>&1 | sed -n '/04_purchase_orders/,/^$/p'\n  .venv/bin/python evals/score_predictions.py $f 2>&1 | tail -3\n  echo\ndone", "description": "Score all three predictors on the four-case corpus"}
+```
+
+### 288. the tool responded
+
+```
+===== baseline/predictions.json =====
+baseline-oneshot  model=qwen3:8b  verified=False
+
+04_purchase_orders
+  precision 0%   recall 100%   f1 0.00
+  false alarms: model.downgrade, model.echo, schema.drop_field, value.null_fields, value.transpose_digits, value.zero_amounts
+
+====================================================
+OVERALL   precision 41%   recall 58%   f1 0.48
+          found 7/12 confirmed blind spots
+
+===== auditor/prior_predictions.json =====
+auditor-v1-prior  model=qwen3:8b  verified=False
+
+04_purchase_orders
+  precision 0%   recall 100%   f1 0.00
+  false alarms: schema.drop_field, value.null_fields
+
+====================================================
+OVERALL   precision 57%   recall 33%   f1 0.42
+          found 4/12 confirmed blind spots
+
+===== auditor/predictions.json =====
+auditor-v1  model=qwen3:8b  verified=True
+
+04_purchase_orders
+  precision 100%   recall 100%   f1 1.00
+
+====================================================
+OVERALL   precision 100%   recall 100%   f1 1.00
+          found 12/12 confirmed blind spots
+```
+
+### 289. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python evals/uplift.py 2>&1 | tail -14\necho; echo \"=== full corpus eval ===\"\n.venv/bin/python evals/run_eval.py 2>&1 | grep -E \"^0|kill rate|blind spots|ground truth|INERT|corpus mean\"", "description": "Run uplift and full eval on four cases"}
+```
+
+### 290. the tool responded
+
+```
+  closed: classify.confidence_pin
+  still blind: classify.collapse
+
+03_rag_citations
+  kill rate 0% -> 50%   (3 of 6 blind spots closed)
+  closed: model.downgrade, model.echo, retrieval.truncate
+  still blind: citation.fabricate, citation.wrong_page, retrieval.shuffle
+
+04_purchase_orders
+  no closing tests — nothing to merge
+
+====================================================
+corpus mean kill rate  46% -> 81%   (4 of 4 case(s) reported)
+wrote ~/Desktop/mvps/HackerEarth/evals/uplift.json
+
+=== full corpus eval ===
+01_invoice_extractor  [amounts, extraction, llm, structured_output]
+  kill rate: 33% (2/6 mutants killed)
+  blind spots: model.downgrade, value.zero_amounts, value.null_fields, value.transpose_digits
+  ground truth: matches
+02_ticket_classifier  [classification, confidence, llm]
+  kill rate: 50% (2/4 mutants killed)
+  blind spots: classify.collapse, classify.confidence_pin
+  ground truth: matches
+03_rag_citations  [citations, llm, retrieval]
+  kill rate: 0% (0/6 mutants killed)
+  blind spots: model.downgrade, model.echo, citation.wrong_page, citation.fabricate, retrieval.truncate, retrieval.shuffle
+  ground truth: matches
+04_purchase_orders  [amounts, extraction, llm, str
+… [184 more characters]
+```
+
+### 291. the agent said
+
+```
+Two gaps: the control's ground truth is silently skipped (empty ≠ unchecked), and the corpus mean now hides the control's zero-by-design contribution.
+```
+
+### 292. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\n\np = Path(\"greenwash/harness.py\"); t = p.read_text()\nold = '''        gt = self.path / \"blindspots.json\"\n        self.known_blind_spots: set[str] = (\n            set(json.loads(gt.read_text())[\"survivors\"]) if gt.exists() else set()\n        )'''\nnew = '''        gt = self.path / \"blindspots.json\"\n        # A case with no confirmed Blind Spots and a case nobody has checked are\n        # both empty sets and mean opposite things. The precision control is the\n        #
+```
+
+### 293. the tool responded
+
+```
+harness ok
+run_eval ok
+uplift ok
+  - INERT (the sabotage changed nothing the suite could see, not scored): model.downgrade
+  ground truth: matches — confirmed clean, no blind spots
+
+corpus mean kill rate: 46%  (4 case(s))
+
+
+====================================================
+corpus mean kill rate  46% -> 81%   (4 of 4 case(s) reported)
+  of which had blind spots to close: 28% -> 75%   (3 case(s))
+wrote ~/Desktop/mvps/HackerEarth/evals/uplift.json
+
+............                                                             [100%]
+12 passed in 2.61s
+```
+
+### 294. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\np = Path(\"auditor/audit.py\"); t = p.read_text()\nold = '''    if result.invalid:\n        lines += [\n            \"## Not measured\",'''\nnew = '''    if result.inert:\n        lines += [\n            \"## Tried, and nothing happened\",\n            \"\",\n            \"These sabotages were applied and your feature returned exactly what \"\n            \"it returned before. Your suite stayed green because there was \"\n            \"nothing to notice \u2014 this is not a hole:\",
+```
+
+### 295. the tool responded
+
+```
+ok
+# Trust Report — 04_purchase_orders
+
+**The feature.** Extracts header fields and line items from a purchase order with a local LLM.
+
+**The suite.** The control: a suite that actually checks. Types, formats, the arithmetic, the values against the document, and that the vendor it returned is really in the source.
+
+**Kill rate: 100%** — 5 of 5 sabotages were noticed.
+
+No sabotage survived this suite.
+
+## Tried, and nothing happened
+
+These sabotages were applied and your feature returned exactly what it returned before. Your suite stayed green because there was nothing to notice — this is not a hole:
+
+- `model.downgrade`
+
+## What the auditor expected, before it ran anything
+
+Predicted misses: `schema.drop_field`, `value.null_fields`
+
+Actually missed: (none)
+
+> The suite checks for presence of fields and their types, so missing fields or null values would be caught by type checks, while transposed digits and zero amounts would trigger arithmetic assertions.
+
+The prediction is kept as evidence and never reported as a finding. Findings come from runs.
+```
+
+### 296. the agent said
+
+```
+The Prior's own stated reasoning contradicts its prediction — it explains why type checks would catch null fields, then predicts null fields would be missed. Updating the docs:
+```
+
+### 297. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\np = Path(\"CHANGELOG.md\"); t = p.read_text()\nanchor = \"\\n## Main failure mode: mutation testing rewards over-fitting\"\nrows = \"\"\"| Precision control \u2014 a Corpus Case with a **good** suite | Nothing in the corpus could catch the Auditor inventing a Blind Spot, because every case had real ones. `04_purchase_orders` is the control: same ordinary extraction feature, but a suite that checks types and formats, that the line items multiply out, that the totals reconcile, that t
+```
+
+### 298. the tool responded
+
+```
+changelog ok
+| Precision control — a Corpus Case with a **good** suite | Nothing in the corpus could catch the 
+| **Inert**: a sabotage that does not sabotage | The control's `model.downgrade` Mutant survived. Ch
+```
+
+### 299. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\np = Path(\"README.md\"); t = p.read_text()\n\nold = \"\"\"| | precision | recall | F1 | blind spots found |\n|---|---|---|---|---|\n| the same model, predicting (baseline) | 64% | 58% | 0.61 | 7 / 12 |\n| the same model, predicting (inside the agent, before it ran anything) | 80% | 33% | 0.47 | 4 / 12 |\n| **the agent, after running them** | **100%** | **100%** | **1.00** | **12 / 12** |\n\nOne scorer, one ground truth, three predictors. Reaching 12/12 is not cleverness\nand is not
+```
+
+### 300. the tool responded
+
+```
+readme ok
+ok
+87:| the same model, predicting (baseline) | 41% | 58% | 0.48 | 7 / 12 |
+95:**Kill rate across the corpus: 46% → 81%**, measured by `evals/uplift.py` from
+105:baseline's precision is 41% rather than 64%: asked about the strong suite, the
+113:says so — a mutant whose sabotage changes nothing observable is reported *inert*
+```
+
+### 301. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\np = Path(\"STATE.md\"); t = p.read_text()\nreps = [\n (\"Last updated: 29 Aug 2026, ~01:15 Asia/Dubai. **Deadline Mon 31 Aug 18:00 UTC\\n(22:00 Dubai)** \u2014 roughly 65 hours out.\",\n  \"Last updated: 29 Aug 2026, ~02:30 Asia/Dubai. **Deadline Mon 31 Aug 18:00 UTC\\n(22:00 Dubai)** \u2014 roughly 63 hours out.\"),\n (\"**The measurement rig.** `evals/run_eval.py -v`, ~3 s, corpus mean Kill Rate\\n**28%**, ground truth matches on all three cases.\",\n  \"**The measurement rig.** `
+```
+
+### 302. the tool responded
+
+```
+state ok
+# Where the work is
+
+Last updated: 29 Aug 2026, ~02:30 Asia/Dubai. **Deadline Mon 31 Aug 18:00 UTC
+(22:00 Dubai)** — roughly 63 hours out.
+
+## Built and working
+
+Everything below runs offline from recorded fixtures — no network, no GPU, no
+API key, and verified with `ollama serve` stopped.
+
+**The measurement rig.** `evals/run_eval.py -v`, ~6 s, corpus mean Kill Rate
+**46%** over four cases, ground truth matches on all of them.
+
+- `greenwash/operators.py` — 12 Operators across model quality, extracted
+```
+
+### 303. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\np = Path(\"AGENTS.md\"); t = p.read_text()\nold = \"\"\"7. Run the eval, look at each Survivor by hand, then write `blindspots.json`\"\"\"\nnew = \"\"\"7. Run the eval, look at each Survivor by hand, then write `blindspots.json`.\n   A Survivor is only a Blind Spot if the sabotage actually changed what the\n   Feature returns \u2014 the Harness reports the rest as **Inert**, but check the\n   observations yourself before recording ground truth:\n   `python -m greenwash.observe corpu
+```
+
+### 304. the tool responded
+
+````
+agents ok
+```
+$ .venv/bin/python evals/run_eval.py
+01_invoice_extractor  [amounts, extraction, llm, structured_output]
+  kill rate: 33% (2/6 mutants killed)
+  blind spots: model.downgrade, value.zero_amounts, value.null_fields, value.transpose_digits
+  ground truth: matches
+02_ticket_classifier  [classification, confidence, llm]
+  kill rate: 50% (2/4 mutants killed)
+  blind spots: classify.collapse, classify.confidence_pin
+  ground truth: matches
+03_rag_citations  [citations, llm, retrieval]
+  kill rate: 0% (0/6 mutants killed)
+  blind spots: model.downgrade, model.echo, citation.wrong_page, citation.fabricate, retrieval.truncate, retrieval.shuffle
+  ground truth: matches
+04_purchase_orders  [amounts, extraction, llm, structured_output]
+  kill rate: 100% (5/5 mutants killed)
+  - INERT (the sabotage changed nothing the suite could see, not scored): model.downgrade
+  ground truth: matches — confirmed clean, no blind spots
+corpus mean kill rate: 46%  (4 case(s))
+
+$ .venv/bin/python evals/score_predictions.py baseline/predictions.json
+baseline-oneshot  model=qwen3:8b  verified=False
+OVERALL   precision 41%   recall 58%   f1 0.48
+          found 7/12 confirmed blind spots
+
+$ .venv/bin/p
+… [1189 more characters]
+````
+
+### 305. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\nimport re\nnew_block = Path(\"/private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/scratchpad/expected2.txt\").read_text().strip()\np = Path(\"REPRODUCE.md\"); t = p.read_text()\nstart = t.index(\"## What you should see\")\nend = t.index(\"## Reproducing the recordings\")\nbody = f\"\"\"## What you should see\n\n{new_block}\n\nThree predictors, one scorer, one ground truth: the baseline predicting (0.48),\nthe *same model* predictin
+```
+
+### 306. the tool responded
+
+```
+ok
+............                                                             [100%]
+12 passed in 2.59s
+9380559 Add the precision control, and learn that a green suite can mean nothing
+86690cc Build the Auditor: it runs the sabotages instead of guessing at them
+```
+
+### 307. the agent said
+
+```
+Now the brittleness probe. First the plumbing — recording at a different temperature into a separate fixture set:
+```
+
+### 308. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\n\n# --- temperature is a parameter, not a constant ------------------------------\np = Path(\"greenwash/modelclient.py\"); t = p.read_text()\nold = '''def _call_ollama(model: str, prompt: str) -> str:\n    body = json.dumps(\n        {\n            \"model\": model,\n            \"prompt\": prompt,\n            \"stream\": False,\n            \"think\": False,\n            \"options\": {\"temperature\": 0, \"num_predict\": 512},\n        }\n    ).encode()'''\nnew = '''def _call_olla
+```
+
+### 309. the tool responded
+
+```
+modelclient ok
+harness ok
+record_fixtures ok
+
+corpus mean kill rate: 46%  (4 case(s))
+```
+
+### 310. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nfor c in 01_invoice_extractor 02_ticket_classifier 03_rag_citations 04_purchase_orders; do\n  .venv/bin/python scripts/record_fixtures.py --case $c --model qwen3:8b --into fixtures_variant --temperature 0.7 --no-mutations 2>&1 | tail -2\ndone", "description": "Record a second correct answer at temperature 0.7"}
+```
+
+### 311. the tool responded
+
+```
+01_invoice_extractor @ qwen3:8b -> fixtures_variant/ (temperature 0.7)
+  clean: 2 call(s) recorded
+02_ticket_classifier @ qwen3:8b -> fixtures_variant/ (temperature 0.7)
+  clean: 4 call(s) recorded
+03_rag_citations @ qwen3:8b -> fixtures_variant/ (temperature 0.7)
+  clean: 2 call(s) recorded
+04_purchase_orders @ qwen3:8b -> fixtures_variant/ (temperature 0.7)
+  clean: 2 call(s) recorded
+```
+
+### 312. the agent said
+
+```
+Now the part that decides whether this measurement is valid at all: are the variant answers still *correct*?
+```
+
+### 313. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\np = Path(\"greenwash/observe.py\"); t = p.read_text()\nold = '''    ap.add_argument(\"--json\", action=\"store_true\", help=\"machine-readable, for the Auditor\")\n    args = ap.parse_args()\n\n    case_dir = args.case if args.case.is_absolute() else REPO_ROOT / args.case\n    os.environ.setdefault(\"GREENWASH_MODE\", \"replay\")\n    os.environ[\"GREENWASH_FIXTURES\"] = str(case_dir / \"fixtures\")'''\nnew = '''    ap.add_argument(\"--json\", action=\"store_true\", help=\"machine-r
+```
+
+### 314. the tool responded
+
+```
+ok
+########## 01_invoice_extractor ##########
+--- temperature 0 (what everything is measured against) ---
+call 1: lambda: feature.extract("invoice_1.txt")
+  returned {"date": "2026-03-14", "invoice_number": "NW-2026-0417", "total": 1284.5, "vendor": "NORTHWIND TRADING LLC"}
+call 2: lambda: feature.extract("invoice_2.txt")
+  returned {"date": "2026-04-02", "invoice_number": "ARO-8821", "total": 375.9, "vendor": "AL RAYYAN OFFICE SUPPLIES"}
+--- temperature 0.7 (the second answer) ---
+call 1: lambda: feature.extract("invoice_1.txt")
+  returned {"date": "2026-03-14", "invoice_number": "NW-2026-0417", "total": 1284.5, "vendor": "NORTHWIND TRADING LLC"}
+call 2: lambda: feature.extract("invoice_2.txt")
+  returned {"date": "2026-04-02", "invoice_number": "ARO-8821", "total": 375.9, "vendor": "AL RAYYAN OFFICE SUPPLIES"}
+########## 03_rag_citations ##########
+--- temperature 0 (what everything is measured against) ---
+call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
+  returned {"answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].", "citations": [{"page": 1, "quote": "Annual leave accr
+… [2303 more characters]
+```
+
+### 315. the agent said
+
+```
+Temperature 0.7 produced **identical** output — no variation to probe. That's a null result, not a clean bill of health. The realistic benign change an engineer actually makes is rewording the prompt, so let me make that first-class:
+```
+
+### 316. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nrm -rf corpus/*/fixtures_variant\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\np = Path(\"greenwash/operators.py\"); t = p.read_text()\n\nold = '''REGISTRY: dict[str, Operator] = {}\n\n\ndef operator(id: str, summary: str, tags: tuple[str, ...]):\n    def register(fn: Patch) -> Patch:\n        REGISTRY[id] = Operator(id=id, summary=summary, tags=tags, patch=fn)\n        return fn\n    return register\n\n\ndef applicable(tags: set[str]) -> list[Operator]:\n    \"\"\"Operators whose every tag the case declares.\"\"\"\n    return
+```
+
+### 317. the tool responded
+
+```
+operators ok
+
+corpus mean kill rate: 46%  (4 case(s))
+```
+
+### 318. the agent said
+
+```
+Now the reworded prompts — hand-written per case, since "means the same thing" isn't a regex:
+```
+
+### 319. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\n\nvariants = {\n\"corpus/01_invoice_extractor/feature.py\": ('''def read_invoice(name: str) -> str:''', '''# The same instruction, worded differently \u2014 what the `prompt.reword` Benign\n# Change swaps in. A team edits this line all the time and the feature is not\n# broken by it, so the suite is supposed to stay green.\nPROMPT_VARIANT = \"\"\"Read the invoice below and return JSON only, containing:\nvendor (string), invoice_number (string), date (string in YYYY-MM-DD form),\ntot
+```
+
+### 320. the tool responded
+
+```
+variant added: corpus/01_invoice_extractor/feature.py
+variant added: corpus/02_ticket_classifier/feature.py
+variant added: corpus/03_rag_citations/feature.py
+variant added: corpus/04_purchase_orders/feature.py
+record_fixtures ok
+01_invoice_extractor @ qwen3:8b -> fixtures/ (temperature 0.0)
+  clean: 2 call(s) recorded
+  prompt.reword: 2 call(s) recorded
+02_ticket_classifier @ qwen3:8b -> fixtures/ (temperature 0.0)
+  clean: 4 call(s) recorded
+  prompt.reword: 4 call(s) recorded
+  retrieval.truncate: 2 call(s) recorded
+  retrieval.shuffle: 2 call(s) recorded
+  prompt.reword: 2 call(s) recorded
+04_purchase_orders @ qwen3:8b -> fixtures/ (temperature 0.0)
+  clean: 2 call(s) recorded
+  prompt.reword: 2 call(s) recorded
+```
+
+### 321. the agent said
+
+```
+Now the validity check that decides whether this measurement means anything — is the reworded-prompt output still correct?
+```
+
+### 322. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nfor c in 01_invoice_extractor 03_rag_citations 04_purchase_orders; do\n  echo \"########## $c ##########\"\n  echo \"--- original prompt ---\"\n  PYTHONPATH=. .venv/bin/python -m greenwash.observe corpus/$c 2>&1 | grep returned | cut -c1-215\n  echo \"--- reworded prompt (must still be correct) ---\"\n  PYTHONPATH=. .venv/bin/python -m greenwash.observe corpus/$c --operator prompt.reword 2>&1 | grep returned | cut -c1-215\ndone", "description": "Verify reworded-prompt output is still correct"}
+```
+
+### 323. the tool responded
+
+```
+########## 01_invoice_extractor ##########
+--- original prompt ---
+  returned {"date": "2026-03-14", "invoice_number": "NW-2026-0417", "total": 1284.5, "vendor": "NORTHWIND TRADING LLC"}
+  returned {"date": "2026-04-02", "invoice_number": "ARO-8821", "total": 375.9, "vendor": "AL RAYYAN OFFICE SUPPLIES"}
+--- reworded prompt (must still be correct) ---
+  returned {"date": "2026-03-14", "invoice_number": "NW-2026-0417", "total": 1284.5, "vendor": "NORTHWIND TRADING LLC"}
+  returned {"date": "2026-04-02", "invoice_number": "ARO-8821", "total": 375.9, "vendor": "AL RAYYAN OFFICE SUPPLIES"}
+########## 03_rag_citations ##########
+--- original prompt ---
+  returned {"answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed
+  returned {"answer": "The answer is 10 days. This information is found on [page 2].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Un
+--- reworded prompt (must still be correct) ---
+  returned {"answer": "The answer is 2.5 days. This information
+… [1343 more characters]
+```
+
+### 324. the agent said
+
+```
+Perfect setup: extraction cases are unchanged by the rewording, but case 03's answer is re-worded and **still correct** — which is exactly where the snapshot assertion lives. Writing the probe:
+```
+
+### 325. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\ncat > evals/brittleness.py <<'PY'\n#!/usr/bin/env python\n\"\"\"How many of the Auditor's Closing Tests fire on output that is *correct*?\n\nKill Rate cannot tell \"caught the bug\" from \"pinned the output\". A test that\nasserts the model's exact prose kills every Mutant, passes the Verification Gate\nhonestly, and would go red the next time someone rewords a prompt. By Kill Rate\nit is a perfect test. To the engineer who owns the feature it is a pager at 3am\nfor nothing, and after two of those they stop believing the tool.\n\nSo t
+```
+
+### 326. the tool responded
+
+```
+01_invoice_extractor
+  prompt.reword: the feature returned exactly the same thing — no variation to probe, not measured
+
+02_ticket_classifier
+  prompt.reword: the feature returned exactly the same thing — no variation to probe, not measured
+
+03_rag_citations
+  prompt.reword: The prompt is reworded to say the same thing differently.
+    the feature still returns a correct answer, worded differently
+    the case's own suite: green
+    closing tests: 1 of 1 raised a FALSE ALARM
+      - test_answer_quotes_match_clean_output
+
+04_purchase_orders
+  no closing tests — nothing to probe
+
+====================================================
+false alarm rate  1/1 (100%) of closing tests go red on output that is correct
+wrote ~/Desktop/mvps/HackerEarth/evals/brittleness.json
+```
+
+### 327. the agent said
+
+```
+The probe works, and it's stark: the one closing test that could be measured fires on correct output. Now v1.1a — fixing the retry loop's fixed point:
+```
+
+### 328. the agent ran `Bash`
+
+````json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\np = Path(\"auditor/agent.py\"); t = p.read_text()\n\nold = '''REVISE_CLOSING_TEST = \"\"\"{instructions}\n\n## What you wrote\n\n```python\n{code}\n```\n\n## What happened when it was run\n\n{verdict}\n\n```\n{output}\n```\n\n## What the feature actually returns\n\nBefore `{operator}`:\n\n{clean}\n\nAfter `{operator}`:\n\n{mutated}\n\n## Your task\n\nFix it. It must PASS on the clean feature and FAIL after `{operator}`.\nReply with Python only, the whole test, no explanation, no mar
+````
+
+### 329. the tool responded
+
+```
+ok
+imports clean
+```
+
+### 330. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python auditor/audit.py --record 2>&1 | tail -32", "description": "Record the v1.1a audit", "run_in_background": true}
+```
+
+### 331. the tool responded
+
+```
+Command running in background with ID: bcz71zyhh. Output is being written to: /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/bcz71zyhh.output. You will be notified when it completes. To check interim output, use Read on that file path.
+Session cwd remains ~/Desktop/mvps/HackerEarth; directory changes made by the backgrounded command do not apply to subsequent commands.
+```
+
+### 332. the agent said
+
+```
+While that records — the vocabulary and a selftest for the new concepts:
+```
+
+### 333. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\np = Path(\"CONTEXT.md\"); t = p.read_text()\nold = '''### The agent'''\nnew = '''### The opposite of sabotage\n\n**Benign Change**:\nA change a team really makes that does **not** break the Feature \u2014 rewording the\nprompt, moving to a better model. Lives in its own registry so `applicable()`\ncan never hand one to the Kill Rate sweep, where a green Suite would be scored as\na Blind Spot. A Corpus Case declares its own reworded prompt and a human has read\nboth, because \"means
+```
+
+### 334. the tool responded
+
+```
+context ok
+.................                                                        [100%]
+17 passed in 3.07s
+```
+
+### 335. the agent ran `Bash`
+
+```json
+{"command": "cat /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/bcz71zyhh.output 2>/dev/null | tail -30; echo \"[fixtures: $(ls auditor/fixtures | wc -l)]\"", "description": "Check v1.1a recording progress"}
+```
+
+### 336. the tool responded
+
+```
+[fixtures:       29]
+```
+
+### 337. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\np = Path(\"AGENTS.md\"); t = p.read_text()\nold = \"\"\".venv/bin/python evals/uplift.py                 # kill rate before -> after\n.venv/bin/python -m pytest selftests -q          # greenwash's own tests\"\"\"\nnew = \"\"\".venv/bin/python evals/uplift.py                 # kill rate before -> after\n.venv/bin/python evals/brittleness.py            # do the new tests cry wolf?\n.venv/bin/python -m pytest selftests -q          # greenwash's own tests\"\"\"\nassert t.count(old) == 1
+```
+
+### 338. the tool responded
+
+```
+ok
+```
+
+### 339. the agent said
+
+```
+Waiting for the v1.1a recording; I'll report uplift and brittleness for it when it lands.
+```
+
+### 340. the agent ran `Bash`
+
+```json
+{"command": "cat /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/bcz71zyhh.output 2>/dev/null | tail -32", "description": "Check v1.1a results"}
+```
+
+### 341. the tool responded
+
+```
+(Bash completed with no output)
+```
+
+### 342. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth; echo \"[fixtures: $(ls auditor/fixtures | wc -l)]\"; pgrep -f \"audit.py --record\" >/dev/null && echo recording || echo done", "description": "Check recording progress"}
+```
+
+### 343. the tool responded
+
+```
+[fixtures:       34]
+recording
+```
+
+### 344. the agent said
+
+```
+I'll wait for the notification rather than polling further.
+```
+
+### 345. the agent ran `Bash`
+
+```json
+{"command": "until ! pgrep -f \"audit.py --record\" > /dev/null; do sleep 20; done\ncd ~/Desktop/mvps/HackerEarth\necho \"===== v1.1a AUDIT =====\"; .venv/bin/python auditor/audit.py 2>&1 | grep -E \"kill rate before|blind spots,|closes |rejected|INERT\"\necho; echo \"===== UPLIFT =====\"; .venv/bin/python evals/uplift.py 2>&1 | tail -8\necho; echo \"===== BRITTLENESS =====\"; .venv/bin/python evals/brittleness.py 2>&1 | tail -16\necho; echo \"===== SCORER =====\"; .venv/bin/python evals/score_predictions.py auditor/predictions.json 2>&1 | tail -3", "description": "Measure v1.1
+```
+
+### 346. the tool responded
+
+```
+Command running in background with ID: b3u5x4s8o. Output is being written to: /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/b3u5x4s8o.output. You will be notified when it completes. To check interim output, use Read on that file path.
+Session cwd remains ~/Desktop/mvps/HackerEarth; directory changes made by the backgrounded command do not apply to subsequent commands.
+```
+
+### 347. the agent said
+
+```
+Measurement chain is queued behind the recording. Waiting.
+```
+
+### 348. the agent ran `Bash`
+
+```json
+{"command": "cat /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/b3u5x4s8o.output 2>/dev/null | tail -40", "description": "Check v1.1a measurements"}
+```
+
+### 349. the tool responded
+
+```
+(Bash completed with no output)
+```
+
+### 350. the agent said
+
+```
+I'll hold for the completion notification.
+```
+
+### 351. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth; echo \"[fixtures: $(ls auditor/fixtures | wc -l)]\"; tail -c 400 /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/bcz71zyhh.output 2>/dev/null", "description": "Check progress"}
+```
+
+### 352. the tool responded
+
+```
+[fixtures:       35]
+```
+
+### 353. the agent said
+
+```
+The v1.1a recording is still running (35 model calls so far — the retry-history prompts are longer, so it's slower than v1). The measurement chain will fire automatically when it finishes and I'll report uplift, brittleness, and the scorer together.
+```
+
+### 354. the agent ran `Bash`
+
+```json
+{"command": "cat /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/b3u5x4s8o.output 2>/dev/null | tail -40", "description": "Check chain output"}
+```
+
+### 355. the tool responded
+
+```
+(Bash completed with no output)
+```
+
+### 356. the agent ran `Bash`
+
+```json
+{"command": "sleep 240; cd ~/Desktop/mvps/HackerEarth; echo \"[fixtures: $(ls auditor/fixtures | wc -l)]\"; pgrep -f \"audit.py --record\" >/dev/null && echo recording || echo done", "description": "Wait then check recording status", "run_in_background": true}
+```
+
+### 357. the tool responded
+
+```
+Command running in background with ID: b4azm833a. Output is being written to: /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/b4azm833a.output. You will be notified when it completes. To check interim output, use Read on that file path.
+Session cwd remains ~/Desktop/mvps/HackerEarth; directory changes made by the backgrounded command do not apply to subsequent commands.
+```
+
+### 358. the agent said
+
+```
+Waiting on the recording.
+```
+
+### 359. the agent ran `Bash`
+
+```json
+{"command": "cat /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/b4azm833a.output 2>/dev/null", "description": "Check waiter"}
+```
+
+### 360. the tool responded
+
+```
+(Bash completed with no output)
+```
+
+### 361. the agent said
+
+```
+I'll wait for the notifications rather than continuing to poll.
+```
+
+### 362. the agent ran `Bash`
+
+```json
+{"command": "cat /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/b3u5x4s8o.output 2>/dev/null | tail -40; echo \"---\"; cd ~/Desktop/mvps/HackerEarth; pgrep -f \"audit.py --record\" >/dev/null && echo recording || echo done", "description": "Check status"}
+```
+
+### 363. the tool responded
+
+```
+---
+recording
+```
+
+### 364. the agent ran `Bash`
+
+```json
+{"command": "sleep 300; cd ~/Desktop/mvps/HackerEarth; pgrep -f \"audit.py --record\" >/dev/null && echo \"still recording, fixtures: $(ls auditor/fixtures | wc -l)\" || echo \"RECORD DONE\"", "description": "Long wait for recording", "run_in_background": true}
+```
+
+### 365. the tool responded
+
+```
+Command running in background with ID: b77g3m11l. Output is being written to: /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/b77g3m11l.output. You will be notified when it completes. To check interim output, use Read on that file path.
+Session cwd remains ~/Desktop/mvps/HackerEarth; directory changes made by the backgrounded command do not apply to subsequent commands.
+```
+
+### 366. the agent said
+
+```
+Waiting for the v1.1a recording to finish.
+```
+
+### 367. the human asked
+
+```
+<task-notification>
+<task-id>b4azm833a</task-id>
+<tool-use-id>toolu_01SnqEQqd6JrG5N7L9Sd9dDo</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/b4azm833a.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait then check recording status" completed (exit code 0)</summary>
+</task-notification>
+```
+
+### 368. the agent ran `Bash`
+
+```json
+{"command": "cat /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/b3u5x4s8o.output 2>/dev/null | tail -45", "description": "Check v1.1a measurement chain"}
+```
+
+### 369. the tool responded
+
+```
+(Bash completed with no output)
+```
+
+### 370. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth; pgrep -f \"audit.py --record\" >/dev/null && echo \"recording, fixtures: $(ls auditor/fixtures | wc -l)\" || echo \"DONE, fixtures: $(ls auditor/fixtures | wc -l)\"; cat /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/bcz71zyhh.output 2>/dev/null | tail -25", "description": "Check recording status and output"}
+```
+
+### 371. the tool responded
+
+```
+recording, fixtures:       51
+```
+
+### 372. the agent said
+
+```
+51 model calls versus v1's 26 — the retries are now genuinely distinct prompts rather than cache hits, which is the fix working. Still recording.
+```
+
+### 373. the agent ran `Bash`
+
+```json
+{"command": "cat /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/b77g3m11l.output 2>/dev/null", "description": "Check long waiter"}
+```
+
+### 374. the tool responded
+
+```
+(Bash completed with no output)
+```
+
+### 375. the agent said
+
+```
+I'll wait for the pending notifications.
+```
+
+### 376. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth; pgrep -f \"audit.py --record\" >/dev/null && echo \"recording, fixtures: $(ls auditor/fixtures | wc -l)\" || echo \"DONE\"", "description": "Status check"}
+```
+
+### 377. the tool responded
+
+```
+recording, fixtures:       52
+```
+
+### 378. the agent ran `Bash`
+
+```json
+{"command": "until ! pgrep -f \"audit.py --record\" > /dev/null; do sleep 30; done; echo \"RECORD FINISHED\"; sleep 5; cat /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/bcz71zyhh.output | tail -30", "description": "Block until recording done and print audit output", "run_in_background": true}
+```
+
+### 379. the tool responded
+
+```
+Command running in background with ID: bl0uv12a7. Output is being written to: /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/bl0uv12a7.output. You will be notified when it completes. To check interim output, use Read on that file path.
+```
+
+### 380. the agent ran `Bash`
+
+```json
+{"command": "cat /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4/tasks/bcz71zyhh.output | tail -35", "description": "Read v1.1a audit output"}
+```
+
+### 381. the tool responded
+
+```
+  S retrieval.shuffle            SURVIVED
+    attempt 1 rejected: model.downgrade was applied and the test still passed
+    attempt 2 rejected: red on the clean feature (assertion failed)
+    attempt 3 rejected: red on the clean feature (assertion failed)
+    attempt 1 rejected: red on the clean feature (assertion failed)
+    attempt 2 rejected: red on the clean feature (assertion failed)
+    attempt 3 rejected: red on the clean feature (assertion failed)
+    attempt 1 rejected: citation.wrong_page was applied and the test still passed
+    attempt 2 rejected: red on the clean feature (assertion failed)
+    attempt 3 rejected: red on the clean feature (assertion failed)
+    attempt 1 rejected: red on the clean feature (assertion failed)
+    closes citation.fabricate (attempt 2)
+    attempt 1 rejected: retrieval.truncate was applied and the test still passed
+    closes retrieval.truncate (attempt 2)
+    attempt 1 rejected: retrieval.shuffle was applied and the test still passed
+    attempt 2 rejected: red on the clean feature (assertion failed)
+    attempt 3 rejected: red on the clean feature (assertion failed)
+  kill rate before: 0%   blind spots: 6   closed: 2
+
+04_purchase_orders
+… [634 more characters]
+```
+
+### 382. the agent said
+
+```
+v1.1a: **8 closed, up from 6**, and the retries now produce genuinely different verdicts per attempt instead of repeating. Full measurement:
+```
+
+### 383. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python auditor/audit.py > /dev/null 2>&1\necho \"===== UPLIFT =====\"; .venv/bin/python evals/uplift.py 2>&1 | tail -12\necho; echo \"===== BRITTLENESS =====\"; .venv/bin/python evals/brittleness.py 2>&1 | tail -18\necho; echo \"===== SCORER =====\"; .venv/bin/python evals/score_predictions.py auditor/predictions.json 2>&1 | tail -3\necho; echo \"===== SELFTESTS =====\"; .venv/bin/python -m pytest selftests -q 2>&1 | tail -2", "description": "Measure v1.1a"}
+```
+
+### 384. the tool responded
+
+```
+===== UPLIFT =====
+03_rag_citations
+  kill rate 0% -> 50%   (3 of 6 blind spots closed)
+  closed: citation.fabricate, citation.wrong_page, retrieval.truncate
+  still blind: model.downgrade, model.echo, retrieval.shuffle
+
+04_purchase_orders
+  no closing tests — nothing to merge
+
+====================================================
+corpus mean kill rate  46% -> 88%   (4 of 4 case(s) reported)
+  of which had blind spots to close: 28% -> 83%   (3 case(s))
+wrote ~/Desktop/mvps/HackerEarth/evals/uplift.json
+
+===== BRITTLENESS =====
+01_invoice_extractor
+  prompt.reword: the feature returned exactly the same thing — no variation to probe, not measured
+
+02_ticket_classifier
+  prompt.reword: the feature returned exactly the same thing — no variation to probe, not measured
+
+03_rag_citations
+  prompt.reword: The prompt is reworded to say the same thing differently.
+    the feature still returns a correct answer, worded differently
+    the case's own suite: green
+    closing tests: 0 of 2 raised a FALSE ALARM
+
+04_purchase_orders
+  no closing tests — nothing to probe
+
+====================================================
+false alarm rate  0/2 (0%) of closing tests go red on output that is correct
+… [344 more characters]
+```
+
+### 385. the agent said
+
+```
+v1.1a is a clear improvement, and the brittleness moved too. Let me see what it actually wrote:
+```
+
+### 386. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth; sed -n '/^# closes/,$p' auditor/closing_tests/03_rag_citations.py", "description": "Read the v1.1a closing tests for case 03"}
+```
+
+### 387. the tool responded
+
+```
+# closes: citation.fabricate — Citations are invented: plausible quotes that appear nowhere in the source.
+# gate: green on the clean feature, red under citation.fabricate
+# fails as: FAILED tests/test_greenwash_closing.py::test_citations_have_valid_quotes - as...
+from feature import answer
+
+def test_citations_have_valid_quotes():
+    q1 = "How much annual leave accrues each month?"
+    q2 = "How many days of leave can be carried over?"
+    
+    result1 = answer(q1)
+    result2 = answer(q2)
+    
+    valid_quotes = {
+        1: "Annual leave accrues at 2.5 days per completed month of service.",
+        2: "Unused annual leave may be carried over, to a maximum of 10 days.",
+        3: "Probation lasts six months. Leave may not be taken during probation.",
+        4: "Sick leave requires a medical certificate from the third consecutive day."
+    }
+    
+    assert all(c["quote"] == valid_quotes[c["page"]] for c in result1["citations"])
+    assert all(c["quote"] == valid_quotes[c["page"]] for c in result2["citations"])
+
+
+# closes: retrieval.truncate — Only the first half of the retrieved context reaches the model.
+# gate: green on the clean feature, red under retrieval.truncate
+# fails
+… [338 more characters]
+```
+
+### 388. the agent said
+
+```
+Much better tests — `test_citations_have_valid_quotes` checks each quote against the document keyed by page, which is exactly the grounding check case 03's suite was missing. It survives a prompt rewording because it asserts document facts, not model prose.
+
+Recording the two experiments:
+```
+
+### 389. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python scripts/render_trajectory.py --all > /dev/null\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\np = Path(\"CHANGELOG.md\"); t = p.read_text()\nanchor = \"\\n## Main failure mode: mutation testing rewards over-fitting\"\nrows = \"\"\"| Brittleness probe \u2014 the measurement the Kill Rate cannot make | A Closing Test that pins the model's exact prose kills every Mutant and passes the Gate honestly, and would go red the next time somebody reworded a prompt. Kill Rate calls that a perfect test. So: a second registr
+```
+
+### 390. the tool responded
+
+```
+ok
+68
+```
+
+### 391. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PY'\nfrom pathlib import Path\n\n# --- README -----------------------------------------------------------------\np = Path(\"README.md\"); t = p.read_text()\nold = \"\"\"**Kill rate across the corpus: 46% \u2192 81%**, measured by `evals/uplift.py` from\nthe tests the agent wrote, outside the agent, on a scratch copy \u2014 your suite is\nevidence and is never edited. Over the three cases that had blind spots to close\nat all: 28% \u2192 75%.\"\"\"\nnew = \"\"\"**Kill rate across the corpus: 46% \u2192 88%**, meas
+```
+
+### 392. the tool responded
+
+```
+readme ok
+state ok
+.................                                                        [100%]
+17 passed in 2.98s
+```
+
+### 393. the agent ran `Bash`
+
+````json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n{\necho '```'\necho '$ .venv/bin/python evals/run_eval.py'\n.venv/bin/python evals/run_eval.py 2>&1 | grep -E \"^\\S|kill rate|blind spots|ground truth|INERT\"\necho\necho '$ .venv/bin/python evals/score_predictions.py baseline/predictions.json'\n.venv/bin/python evals/score_predictions.py baseline/predictions.json 2>&1 | sed -n '1p;/OVERALL/,+1p'\necho\necho '$ .venv/bin/python evals/score_predictions.py auditor/prior_predictions.json'\n.venv/bin/python evals/score_predictions.py auditor/prior_predictions.json 2>&1 | sed -n '1p;/OVER
+````
+
+### 394. the tool responded
+
+```
+ok
+
+====================================================
+false alarm rate  0/2 (0%) of closing tests go red on output that is correct
+wrote ~/Desktop/mvps/HackerEarth/evals/brittleness.json
+```
+
+### 395. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python scripts/render_coding_trajectory.py \\\n  ~/.claude/projects/-Users-wamiqadnan-Desktop-mvps-HackerEarth/58d303d6-ba28-4c88-9f18-d032e5f00db4.jsonl \\\n  --title \"session 2 \u2014 building the auditor agent\" \\\n  -o trajectories/building-greenwash-2-the-auditor.md > /dev/null\nrm -rf /tmp/traj_before && cp -r trajectories /tmp/traj_before\n.venv/bin/python auditor/audit.py > /dev/null 2>&1\ndiff -r /tmp/traj_before trajectories > /dev/null && echo \"replay still byte-identical\" || echo \"REPLAY DIFF
 ```
 

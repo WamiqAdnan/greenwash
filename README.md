@@ -92,10 +92,10 @@ One scorer, one ground truth, three predictors. Reaching 12/12 is not cleverness
 and is not claimed as any — it is what happens when you stop guessing and run
 the thing. The number that took work is the next one.
 
-**Kill rate across the corpus: 46% → 81%**, measured by `evals/uplift.py` from
+**Kill rate across the corpus: 46% → 88%**, measured by `evals/uplift.py` from
 the tests the agent wrote, outside the agent, on a scratch copy — your suite is
 evidence and is never edited. Over the three cases that had blind spots to close
-at all: 28% → 75%.
+at all: 28% → 83%.
 
 ### The control
 
@@ -121,10 +121,27 @@ Three times. The gate rejected all three and that hole is still reported open.
 An agent that writes tests from observed output will happily codify the bug it
 was shown; the gate is what makes a small model's assertions safe to ship.
 
-And some tests it *did* get through the gate pin the model's exact prose, which
-kills every mutant and would fire on a legitimate model upgrade. Mutation
-testing rewards over-fitting. That is the project's main failure mode and it is
-written up in `CHANGELOG.md` with the measurement that is missing.
+And some tests it *did* get through the gate pinned the model's exact prose.
+That kills every mutant and passes the gate honestly — and would go red the next
+time somebody reworded a prompt. By kill rate it is a perfect test; to you it is
+a pager at 3am for nothing.
+
+Kill rate structurally cannot see that, so there is a second measurement that
+can. `evals/brittleness.py` applies a **benign change** — something a team really
+does, like rewording the prompt, which does not break anything — and counts the
+new tests that go red anyway. Those are false alarms.
+
+```
+run_eval      apply a sabotage.       The suite SHOULD go red.    Green = blind spot.
+brittleness   apply a benign change.  The suite SHOULD stay green. Red = false alarm.
+```
+
+It caught the first version of the agent doing it: 1 of 1 measurable test fired
+on output that was correct. The current version's score is 0 of 2 — but nothing
+in the agent forbids a snapshot, it simply wrote better tests this time, and only
+two of them can be probed at all, because rewording a prompt does not change what
+an extraction feature returns. **Measured, not fixed.** `CHANGELOG.md` says what
+would fix it.
 
 ## Run it
 
@@ -133,6 +150,7 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python evals/run_eval.py -v      # how blind are the suites?
 .venv/bin/python auditor/audit.py          # the agent, replayed
 .venv/bin/python evals/uplift.py           # kill rate before -> after
+.venv/bin/python evals/brittleness.py     # do the new tests cry wolf?
 ```
 
 No network, no GPU, no API key — every model answer replays from `fixtures/`,

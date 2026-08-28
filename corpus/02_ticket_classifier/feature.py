@@ -17,6 +17,14 @@ Ticket: {ticket}
 
 JSON:"""
 
+# The same instruction, worded differently — see `prompt.reword`.
+PROMPT_VARIANT = """Route this support ticket to exactly one of these queues: {labels}.
+Respond with JSON only: {{"label": "...", "confidence": 0.0-1.0}}
+
+Ticket: {ticket}
+
+JSON:"""
+
 TICKETS = {
     "t1": "I was charged twice for the March subscription. Please refund one.",
     "t2": "The export button spins forever and never downloads the CSV.",

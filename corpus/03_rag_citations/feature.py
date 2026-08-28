@@ -21,6 +21,18 @@ Question: {question}
 Answer:"""
 
 
+# The same instruction, worded differently — see `prompt.reword`.
+PROMPT_VARIANT = """Using only the context below, answer the question. Say which
+page your answer comes from.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+
+
 def retrieve(question: str) -> list[dict]:
     """Naive keyword retrieval — returns the pages that share a word with the question."""
     words = {w.lower().strip("?.,") for w in question.split() if len(w) > 3}

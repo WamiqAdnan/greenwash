@@ -16,13 +16,12 @@
     {
       "case": "02_ticket_classifier",
       "before": 0.5,
-      "after": 0.75,
+      "after": 1.0,
       "closed": [
+        "classify.collapse",
         "classify.confidence_pin"
       ],
-      "still_open": [
-        "classify.collapse"
-      ],
+      "still_open": [],
       "reported": true
     },
     {
@@ -30,13 +29,13 @@
       "before": 0.0,
       "after": 0.5,
       "closed": [
-        "model.downgrade",
-        "model.echo",
+        "citation.fabricate",
+        "citation.wrong_page",
         "retrieval.truncate"
       ],
       "still_open": [
-        "citation.fabricate",
-        "citation.wrong_page",
+        "model.downgrade",
+        "model.echo",
         "retrieval.shuffle"
       ],
       "reported": true

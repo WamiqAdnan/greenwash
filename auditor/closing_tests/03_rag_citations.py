@@ -9,20 +9,36 @@ Merged onto an Overlay by `evals/uplift.py`. Never written into a Suite.
 """
 
 
-# closes: model.echo — The model is replaced by one that echoes its input back.
-# gate: green on the clean feature, red under model.echo
-# fails as: FAILED tests/test_greenwash_closing.py::test_answer_quotes_match_clean_output
+# closes: citation.fabricate — Citations are invented: plausible quotes that appear nowhere in the source.
+# gate: green on the clean feature, red under citation.fabricate
+# fails as: FAILED tests/test_greenwash_closing.py::test_citations_have_valid_quotes - as...
 from feature import answer
 
-def test_answer_quotes_match_clean_output():
-    questions = [
-        "How much annual leave accrues each month?",
-        "How many days of leave can be carried over?"
-    ]
-    clean_answers = [
-        "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
-        "The answer is 10 days. This information is found on [page 2]."
-    ]
-    for i, q in enumerate(questions):
-        result = answer(q)
-        assert result["answer"] == clean_answers[i]
+def test_citations_have_valid_quotes():
+    q1 = "How much annual leave accrues each month?"
+    q2 = "How many days of leave can be carried over?"
+    
+    result1 = answer(q1)
+    result2 = answer(q2)
+    
+    valid_quotes = {
+        1: "Annual leave accrues at 2.5 days per completed month of service.",
+        2: "Unused annual leave may be carried over, to a maximum of 10 days.",
+        3: "Probation lasts six months. Leave may not be taken during probation.",
+        4: "Sick leave requires a medical certificate from the third consecutive day."
+    }
+    
+    assert all(c["quote"] == valid_quotes[c["page"]] for c in result1["citations"])
+    assert all(c["quote"] == valid_quotes[c["page"]] for c in result2["citations"])
+
+
+# closes: retrieval.truncate — Only the first half of the retrieved context reaches the model.
+# gate: green on the clean feature, red under retrieval.truncate
+# fails as: FAILED tests/test_greenwash_closing.py::test_citations_page_3_exists - Assert...
+from feature import answer
+
+def test_citations_page_3_exists():
+    q = "How much annual leave accrues each month?"
+    result = answer(q)
+    assert len(result["citations"]) >= 3
+    assert any(citation["page"] == 3 for citation in result["citations"])

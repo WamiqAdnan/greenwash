@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:8b",
+  "prompt": "Route this support ticket to exactly one of these queues: billing, technical, account, abuse.\nRespond with JSON only: {\"label\": \"...\", \"confidence\": 0.0-1.0}\n\nTicket: The export button spins forever and never downloads the CSV.\n\nJSON:",
+  "response": "{\"label\": \"technical\", \"confidence\": 0.95}"
+}

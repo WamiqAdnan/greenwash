@@ -8,7 +8,7 @@
 
 2 ways this feature can break without your suite going red. Every one below was applied to the real feature and the suite was run; it stayed green.
 
-1 of them now has a test that would have caught it.
+2 of them now have a test that would have caught it.
 
 ## `classify.confidence_pin`
 
@@ -35,16 +35,26 @@ def test_confidence_pin_bypassed():
 Every input is classified into the single most common label.
 
 - suite under this sabotage: **suite stayed green**
-- **no closing test.** 3 attempt(s), last verdict: red on the clean feature (assertion failed)
+- closing test: verified green on the clean feature, red under classify.collapse
+- it fails as: `FAILED tests/test_greenwash_closing.py::test_label_for_t2 - AssertionError: a...`
+- attempts needed: 2
 
-This one is still open. The blind spot is real — the run above proves it — but the auditor could not write a test that closed it.
+```python
+import json
+import re
+from feature import classify
+
+def test_label_for_t2():
+    result = classify("t2")
+    assert result["label"] == "technical"
+```
 
 ## What the auditor expected, before it ran anything
 
-Predicted misses: `classify.collapse`
+Predicted misses: `classify.confidence_pin`
 
 Actually missed: `classify.confidence_pin`, `classify.collapse`
 
-> The suite checks for reasonable routing and confidence, but doesn't verify label accuracy, so a label collapse would go undetected.
+> The suite checks confidence but only enforces a floor, not a ceiling, so confidence pinning may go undetected.
 
 The prediction is kept as evidence and never reported as a finding. Findings come from runs.

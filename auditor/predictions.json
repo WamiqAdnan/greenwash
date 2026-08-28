@@ -37,10 +37,12 @@
       "value.transpose_digits"
     ],
     "02_ticket_classifier": [
-      "classify.confidence_pin"
+      "classify.confidence_pin",
+      "classify.collapse"
     ],
     "03_rag_citations": [
-      "model.echo"
+      "citation.fabricate",
+      "retrieval.truncate"
     ],
     "04_purchase_orders": []
   },
@@ -48,17 +50,15 @@
     "01_invoice_extractor": {
       "order": [
         "model.downgrade",
-        "model.echo",
         "value.zero_amounts",
         "value.null_fields",
         "schema.drop_field",
         "value.transpose_digits"
       ],
       "expect_missed": [
-        "value.null_fields",
-        "schema.drop_field"
+        "value.transpose_digits"
       ],
-      "why": "The suite does not validate field values or check for required fields, making null fields and missing fields undetectable.",
+      "why": "The suite lacks tests for numeric precision and field-specific validation, making it blind to subtle data corruption like transposed digits.",
       "invented_ids": []
     },
     "02_ticket_classifier": {
@@ -69,9 +69,9 @@
         "classify.collapse"
       ],
       "expect_missed": [
-        "classify.collapse"
+        "classify.confidence_pin"
       ],
-      "why": "The suite checks for reasonable routing and confidence, but doesn't verify label accuracy, so a label collapse would go undetected.",
+      "why": "The suite checks confidence but only enforces a floor, not a ceiling, so confidence pinning may go undetected.",
       "invented_ids": []
     },
     "03_rag_citations": {
@@ -95,15 +95,16 @@
         "value.null_fields",
         "value.zero_amounts",
         "schema.drop_field",
-        "value.transpose_digits",
         "model.echo"
       ],
       "expect_missed": [
         "schema.drop_field",
-        "value.null_fields"
+        "model.echo"
       ],
-      "why": "The suite checks for presence of fields and their types, so missing fields or null values would be caught by type checks, while transposed digits and zero amounts would trigger arithmetic assertions.",
-      "invented_ids": []
+      "why": "The suite checks for presence of fields and their types, but does not verify that all required fields are present, making schema.drop_field and model.echo potential blind spots.",
+      "invented_ids": [
+        "transpose_digits"
+      ]
     }
   }
 }

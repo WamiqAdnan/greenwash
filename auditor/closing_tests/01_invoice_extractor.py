@@ -11,10 +11,10 @@ Merged onto an Overlay by `evals/uplift.py`. Never written into a Suite.
 
 # closes: model.downgrade — The model behind the feature is swapped for a much weaker one.
 # gate: green on the clean feature, red under model.downgrade
-# fails as: FAILED tests/test_greenwash_closing.py::test_invoice_date_format - AssertionE...
+# fails as: FAILED tests/test_greenwash_closing.py::test_date_format_consistency - Assert...
 from feature import extract
 
-def test_invoice_date_format():
+def test_date_format_consistency():
     result1 = extract("invoice_1.txt")
     result2 = extract("invoice_2.txt")
     assert result1["date"] == "2026-03-14"
@@ -34,14 +34,14 @@ def test_total_amount_not_zero():
 
 # closes: value.null_fields — Every extracted field is present but null.
 # gate: green on the clean feature, red under value.null_fields
-# fails as: FAILED tests/test_greenwash_closing.py::test_total_is_number_not_null - asser...
+# fails as: FAILED tests/test_greenwash_closing.py::test_total_is_not_null - assert None ...
 from feature import extract
 
-def test_total_is_number_not_null():
+def test_total_is_not_null():
     result1 = extract("invoice_1.txt")
     result2 = extract("invoice_2.txt")
-    assert isinstance(result1["total"], float)
-    assert isinstance(result2["total"], float)
+    assert result1["total"] is not None
+    assert result2["total"] is not None
 
 
 # closes: value.transpose_digits — Digits inside extracted numbers are transposed — 1284.50 becomes 1248.50.

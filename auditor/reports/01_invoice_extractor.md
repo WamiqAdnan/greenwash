@@ -16,13 +16,13 @@ The model behind the feature is swapped for a much weaker one.
 
 - suite under this sabotage: **suite stayed green**
 - closing test: verified green on the clean feature, red under model.downgrade
-- it fails as: `FAILED tests/test_greenwash_closing.py::test_invoice_date_format - AssertionE...`
+- it fails as: `FAILED tests/test_greenwash_closing.py::test_date_format_consistency - Assert...`
 - attempts needed: 1
 
 ```python
 from feature import extract
 
-def test_invoice_date_format():
+def test_date_format_consistency():
     result1 = extract("invoice_1.txt")
     result2 = extract("invoice_2.txt")
     assert result1["date"] == "2026-03-14"
@@ -53,17 +53,17 @@ Every extracted field is present but null.
 
 - suite under this sabotage: **suite stayed green**
 - closing test: verified green on the clean feature, red under value.null_fields
-- it fails as: `FAILED tests/test_greenwash_closing.py::test_total_is_number_not_null - asser...`
+- it fails as: `FAILED tests/test_greenwash_closing.py::test_total_is_not_null - assert None ...`
 - attempts needed: 1
 
 ```python
 from feature import extract
 
-def test_total_is_number_not_null():
+def test_total_is_not_null():
     result1 = extract("invoice_1.txt")
     result2 = extract("invoice_2.txt")
-    assert isinstance(result1["total"], float)
-    assert isinstance(result2["total"], float)
+    assert result1["total"] is not None
+    assert result2["total"] is not None
 ```
 
 ## `value.transpose_digits`
@@ -86,10 +86,10 @@ def test_total_amount_is_correct():
 
 ## What the auditor expected, before it ran anything
 
-Predicted misses: `value.null_fields`, `schema.drop_field`
+Predicted misses: `value.transpose_digits`
 
 Actually missed: `model.downgrade`, `value.zero_amounts`, `value.null_fields`, `value.transpose_digits`
 
-> The suite does not validate field values or check for required fields, making null fields and missing fields undetectable.
+> The suite lacks tests for numeric precision and field-specific validation, making it blind to subtle data corruption like transposed digits.
 
 The prediction is kept as evidence and never reported as a finding. Findings come from runs.

@@ -23,6 +23,18 @@ Purchase order:
 JSON:"""
 
 
+# The same instruction, worded differently — see `prompt.reword`.
+PROMPT_VARIANT = """Read the purchase order below and return JSON only, containing:
+vendor (string, exactly as written), po_number (string), date (string in YYYY-MM-DD form),
+currency (3-letter code string), subtotal (number), tax (number), total (number),
+line_items (list of objects with description, quantity, unit_price, line_total).
+
+Purchase order:
+{text}
+
+JSON:"""
+
+
 def read_po(name: str) -> str:
     return (Path(__file__).parent / "samples" / name).read_text()
 

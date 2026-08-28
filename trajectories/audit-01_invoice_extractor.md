@@ -54,6 +54,19 @@ Invoice:
 JSON:"""
 
 
+# The same instruction, worded differently — what the `prompt.reword` Benign
+# Change swaps in. A team edits this line all the time and the feature is not
+# broken by it, so the suite is supposed to stay green.
+PROMPT_VARIANT = """Read the invoice below and return JSON only, containing:
+vendor (string), invoice_number (string), date (string in YYYY-MM-DD form),
+total (number).
+
+Invoice:
+{text}
+
+JSON:"""
+
+
 def read_invoice(name: str) -> str:
     return (Path(__file__).parent / "samples" / name).read_text()
 
@@ -159,6 +172,19 @@ Invoice:
 JSON:"""
 
 
+# The same instruction, worded differently — what the `prompt.reword` Benign
+# Change swaps in. A team edits this line all the time and the feature is not
+# broken by it, so the suite is supposed to stay green.
+PROMPT_VARIANT = """Read the invoice below and return JSON only, containing:
+vendor (string), invoice_number (string), date (string in YYYY-MM-DD form),
+total (number).
+
+Invoice:
+{text}
+
+JSON:"""
+
+
 def read_invoice(name: str) -> str:
     return (Path(__file__).parent / "samples" / name).read_text()
 
@@ -233,7 +259,7 @@ JSON:
 **9. `qwen3:8b` answered**
 
 ```
-{"order": ["model.downgrade", "model.echo", "value.zero_amounts", "value.null_fields", "schema.drop_field", "value.transpose_digits"], "expect_missed": ["value.null_fields", "schema.drop_field"], "why": "The suite does not validate field values or check for required fields, making null fields and missing fields undetectable."}
+{"order": ["model.downgrade", "value.zero_amounts", "value.null_fields", "schema.drop_field", "value.transpose_digits"], "expect_missed": ["value.transpose_digits"], "why": "The suite lacks tests for numeric precision and field-specific validation, making it blind to subtle data corruption like transposed digits."}
 ```
 
 **10. recorded prior** (evidence, never a finding)
@@ -242,17 +268,15 @@ JSON:
 {
   "order": [
     "model.downgrade",
-    "model.echo",
     "value.zero_amounts",
     "value.null_fields",
     "schema.drop_field",
     "value.transpose_digits"
   ],
   "expect_missed": [
-    "value.null_fields",
-    "schema.drop_field"
+    "value.transpose_digits"
   ],
-  "why": "The suite does not validate field values or check for required fields, making null fields and missing fields undetectable.",
+  "why": "The suite lacks tests for numeric precision and field-specific validation, making it blind to subtle data corruption like transposed digits.",
   "invented_ids": []
 }
 ```
@@ -270,25 +294,17 @@ SURVIVED — suite stayed green
 2 passed in N.NNs
 ```
 
-**13. tool call** `run_operator(operator='model.echo')`
+**13. tool call** `run_operator(operator='value.zero_amounts')`
 
 **14. run_operator responded**
 
 ```
-killed — FAILED tests/test_feature.py::test_extraction_returns_a_result - ValueError: ...
-match = re.search(r"\{.*\}", raw, re.S)
-        if not match:
->           raise ValueError(f"model did not return JSON: {raw[:120]!r}")
-E           ValueError: model did not return JSON: '                  Subtotal     1,284.50\n                                        VAT (0%)         0.00\n                  '
-
-feature.py:38: ValueError
-=========================== short test summary info ============================
-FAILED tests/test_feature.py::test_extraction_returns_a_result - ValueError: ...
-FAILED tests/test_feature.py::test_extraction_has_the_expected_fields - Value...
-2 failed in N.NNs
+SURVIVED — suite stayed green
+..                                                                       [100%]
+2 passed in N.NNs
 ```
 
-**15. tool call** `run_operator(operator='value.zero_amounts')`
+**15. tool call** `run_operator(operator='value.null_fields')`
 
 **16. run_operator responded**
 
@@ -298,19 +314,9 @@ SURVIVED — suite stayed green
 2 passed in N.NNs
 ```
 
-**17. tool call** `run_operator(operator='value.null_fields')`
+**17. tool call** `run_operator(operator='schema.drop_field')`
 
 **18. run_operator responded**
-
-```
-SURVIVED — suite stayed green
-..                                                                       [100%]
-2 passed in N.NNs
-```
-
-**19. tool call** `run_operator(operator='schema.drop_field')`
-
-**20. run_operator responded**
 
 ```
 killed — FAILED tests/test_feature.py::test_extraction_has_the_expected_fields - Asser...
@@ -328,14 +334,32 @@ FAILED tests/test_feature.py::test_extraction_has_the_expected_fields - Asser...
 1 failed, 1 passed in N.NNs
 ```
 
-**21. tool call** `run_operator(operator='value.transpose_digits')`
+**19. tool call** `run_operator(operator='value.transpose_digits')`
 
-**22. run_operator responded**
+**20. run_operator responded**
 
 ```
 SURVIVED — suite stayed green
 ..                                                                       [100%]
 2 passed in N.NNs
+```
+
+**21. tool call** `run_operator(operator='model.echo')`
+
+**22. run_operator responded**
+
+```
+killed — FAILED tests/test_feature.py::test_extraction_returns_a_result - ValueError: ...
+match = re.search(r"\{.*\}", raw, re.S)
+        if not match:
+>           raise ValueError(f"model did not return JSON: {raw[:120]!r}")
+E           ValueError: model did not return JSON: '                  Subtotal     1,284.50\n                                        VAT (0%)         0.00\n                  '
+
+feature.py:51: ValueError
+=========================== short test summary info ============================
+FAILED tests/test_feature.py::test_extraction_returns_a_result - ValueError: ...
+FAILED tests/test_feature.py::test_extraction_has_the_expected_fields - Value...
+2 failed in N.NNs
 ```
 
 
@@ -401,6 +425,19 @@ from greenwash.modelclient import complete
 
 PROMPT = """Extract these fields from the invoice below and reply with JSON only:
 vendor (string), invoice_number (string), date (YYYY-MM-DD string), total (number).
+
+Invoice:
+{text}
+
+JSON:"""
+
+
+# The same instruction, worded differently — what the `prompt.reword` Benign
+# Change swaps in. A team edits this line all the time and the feature is not
+# broken by it, so the suite is supposed to stay green.
+PROMPT_VARIANT = """Read the invoice below and return JSON only, containing:
+vendor (string), invoice_number (string), date (string in YYYY-MM-DD form),
+total (number).
 
 Invoice:
 {text}
@@ -503,7 +540,7 @@ Python:
 ```python
 from feature import extract
 
-def test_invoice_date_format():
+def test_date_format_consistency():
     result1 = extract("invoice_1.txt")
     result2 = extract("invoice_2.txt")
     assert result1["date"] == "2026-03-14"
@@ -518,7 +555,7 @@ the test it is asking the gate to judge:
 ```python
 from feature import extract
 
-def test_invoice_date_format():
+def test_date_format_consistency():
     result1 = extract("invoice_1.txt")
     result2 = extract("invoice_2.txt")
     assert result1["date"] == "2026-03-14"
@@ -530,9 +567,9 @@ def test_invoice_date_format():
 
 ```
 accepted: green on the clean feature, red under model.downgrade
- ___________________________
+________________________
 
-    def test_invoice_date_format():
+    def test_date_format_consistency():
         result1 = extract("invoice_1.txt")
         result2 = extract("invoice_2.txt")
         assert result1["date"] == "2026-03-14"
@@ -544,7 +581,7 @@ E         + 02 April 2026
 
 tests/test_greenwash_closing.py:7: AssertionError
 =========================== short test summary info ============================
-FAILED tests/test_greenwash_closing.py::test_invoice_date_format - AssertionE...
+FAILED tests/test_greenwash_closing.py::test_date_format_consistency - Assert...
 1 failed in N.NNs
 ```
 
@@ -597,6 +634,19 @@ from greenwash.modelclient import complete
 
 PROMPT = """Extract these fields from the invoice below and reply with JSON only:
 vendor (string), invoice_number (string), date (YYYY-MM-DD string), total (number).
+
+Invoice:
+{text}
+
+JSON:"""
+
+
+# The same instruction, worded differently — what the `prompt.reword` Benign
+# Change swaps in. A team edits this line all the time and the feature is not
+# broken by it, so the suite is supposed to stay green.
+PROMPT_VARIANT = """Read the invoice below and return JSON only, containing:
+vendor (string), invoice_number (string), date (string in YYYY-MM-DD form),
+total (number).
 
 Invoice:
 {text}
@@ -795,6 +845,19 @@ Invoice:
 JSON:"""
 
 
+# The same instruction, worded differently — what the `prompt.reword` Benign
+# Change swaps in. A team edits this line all the time and the feature is not
+# broken by it, so the suite is supposed to stay green.
+PROMPT_VARIANT = """Read the invoice below and return JSON only, containing:
+vendor (string), invoice_number (string), date (string in YYYY-MM-DD form),
+total (number).
+
+Invoice:
+{text}
+
+JSON:"""
+
+
 def read_invoice(name: str) -> str:
     return (Path(__file__).parent / "samples" / name).read_text()
 
@@ -890,11 +953,11 @@ Python:
 ```python
 from feature import extract
 
-def test_total_is_number_not_null():
+def test_total_is_not_null():
     result1 = extract("invoice_1.txt")
     result2 = extract("invoice_2.txt")
-    assert isinstance(result1["total"], float)
-    assert isinstance(result2["total"], float)
+    assert result1["total"] is not None
+    assert result2["total"] is not None
 ```
 ````
 
@@ -905,11 +968,11 @@ the test it is asking the gate to judge:
 ```python
 from feature import extract
 
-def test_total_is_number_not_null():
+def test_total_is_not_null():
     result1 = extract("invoice_1.txt")
     result2 = extract("invoice_2.txt")
-    assert isinstance(result1["total"], float)
-    assert isinstance(result2["total"], float)
+    assert result1["total"] is not None
+    assert result2["total"] is not None
 ```
 
 
@@ -917,19 +980,19 @@ def test_total_is_number_not_null():
 
 ```
 accepted: green on the clean feature, red under value.null_fields
-S ===================================
-________________________ test_total_is_number_not_null _________________________
+   [100%]
+=================================== FAILURES ===================================
+____________________________ test_total_is_not_null ____________________________
 
-    def test_total_is_number_not_null():
+    def test_total_is_not_null():
         result1 = extract("invoice_1.txt")
         result2 = extract("invoice_2.txt")
->       assert isinstance(result1["total"], float)
-E       assert False
-E        +  where False = isinstance(None, float)
+>       assert result1["total"] is not None
+E       assert None is not None
 
 tests/test_greenwash_closing.py:6: AssertionError
 =========================== short test summary info ============================
-FAILED tests/test_greenwash_closing.py::test_total_is_number_not_null - asser...
+FAILED tests/test_greenwash_closing.py::test_total_is_not_null - assert None ...
 1 failed in N.NNs
 ```
 
@@ -982,6 +1045,19 @@ from greenwash.modelclient import complete
 
 PROMPT = """Extract these fields from the invoice below and reply with JSON only:
 vendor (string), invoice_number (string), date (YYYY-MM-DD string), total (number).
+
+Invoice:
+{text}
+
+JSON:"""
+
+
+# The same instruction, worded differently — what the `prompt.reword` Benign
+# Change swaps in. A team edits this line all the time and the feature is not
+# broken by it, so the suite is supposed to stay green.
+PROMPT_VARIANT = """Read the invoice below and return JSON only, containing:
+vendor (string), invoice_number (string), date (string in YYYY-MM-DD form),
+total (number).
 
 Invoice:
 {text}

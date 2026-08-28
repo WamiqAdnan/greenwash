@@ -108,7 +108,7 @@ OVERALL   precision 41%   recall 58%   f1 0.48
 
 $ .venv/bin/python evals/score_predictions.py auditor/prior_predictions.json
 auditor-v1-prior  model=qwen3:8b  verified=False
-OVERALL   precision 57%   recall 33%   f1 0.42
+OVERALL   precision 67%   recall 33%   f1 0.44
           found 4/12 confirmed blind spots
 
 $ .venv/bin/python evals/score_predictions.py auditor/predictions.json
@@ -121,18 +121,32 @@ $ .venv/bin/python evals/uplift.py
   kill rate 33% -> 100%   (4 of 4 blind spots closed)
   closed: model.downgrade, value.null_fields, value.transpose_digits, value.zero_amounts
 02_ticket_classifier
-  kill rate 50% -> 75%   (1 of 2 blind spots closed)
-  closed: classify.confidence_pin
-  still blind: classify.collapse
+  kill rate 50% -> 100%   (2 of 2 blind spots closed)
+  closed: classify.collapse, classify.confidence_pin
 03_rag_citations
   kill rate 0% -> 50%   (3 of 6 blind spots closed)
-  closed: model.downgrade, model.echo, retrieval.truncate
-  still blind: citation.fabricate, citation.wrong_page, retrieval.shuffle
+  closed: citation.fabricate, citation.wrong_page, retrieval.truncate
+  still blind: model.downgrade, model.echo, retrieval.shuffle
 04_purchase_orders
   no closing tests — nothing to merge
 ====================================================
-corpus mean kill rate  46% -> 81%   (4 of 4 case(s) reported)
-  of which had blind spots to close: 28% -> 75%   (3 case(s))
+corpus mean kill rate  46% -> 88%   (4 of 4 case(s) reported)
+  of which had blind spots to close: 28% -> 83%   (3 case(s))
+
+$ .venv/bin/python evals/brittleness.py
+01_invoice_extractor
+  prompt.reword: the feature returned exactly the same thing — no variation to probe, not measured
+02_ticket_classifier
+  prompt.reword: the feature returned exactly the same thing — no variation to probe, not measured
+03_rag_citations
+  prompt.reword: The prompt is reworded to say the same thing differently.
+    the feature still returns a correct answer, worded differently
+    the case's own suite: green
+    closing tests: 0 of 2 raised a FALSE ALARM
+04_purchase_orders
+  no closing tests — nothing to probe
+====================================================
+false alarm rate  0/2 (0%) of closing tests go red on output that is correct
 ```
 
 Three predictors, one scorer, one ground truth: the baseline predicting (0.48),
@@ -144,11 +158,14 @@ is the harness, not the model.
 reports nothing there. The baseline reports all six sabotages as missed, which is
 six false alarms, and that is most of why its precision is 41%.
 
-`evals/uplift.py` closes more blind spots than the agent claimed to close (8
-against 6). That is not a bookkeeping error: a closing test written for one
-sabotage often kills others, and one of them is a snapshot assertion that fails
-on any change to the output at all. See the Improvement Changelog — this is the
-project's own main failure mode.
+`evals/uplift.py` closes more blind spots than the agent claimed to close. That
+is not a bookkeeping error: a closing test written for one sabotage often kills
+others. On case 03 the test written for `citation.fabricate` checks every
+citation's quote against the document, so it also catches `citation.wrong_page`.
+
+`evals/brittleness.py` is the number that keeps uplift honest, and it can only
+reach case 03 — rewording a prompt does not change what an extraction feature
+returns, so those cases are reported *not measured* rather than passing.
 
 ## Reproducing the recordings (needs Ollama)
 

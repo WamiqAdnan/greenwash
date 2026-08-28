@@ -141,19 +141,9 @@ Python:"""
 
 REVISE_CLOSING_TEST = """{instructions}
 
-## What you wrote
+## What you have already tried for `{operator}`, and why each one failed
 
-```python
-{code}
-```
-
-## What happened when it was run
-
-{verdict}
-
-```
-{output}
-```
+{history}
 
 ## What the feature actually returns
 
@@ -167,10 +157,32 @@ After `{operator}`:
 
 ## Your task
 
-Fix it. It must PASS on the clean feature and FAIL after `{operator}`.
-Reply with Python only, the whole test, no explanation, no markdown fences.
+Attempt {attempt}. {hint}
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`{operator}`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
 
 Python:"""
+
+
+# The two ways a Closing Test fails the Gate need opposite corrections, and the
+# pytest output alone does not say which. Naming it is the difference between a
+# retry and a re-roll.
+HINTS = {
+    "clean": "Your last test failed on the CLEAN feature. Every assertion has to "
+             "be true of the *before* values above — that is what the feature "
+             "returns when nothing is wrong.",
+    "mutant": "Your last test passed even after the sabotage, so it is not "
+              "testing the thing that changed. Find something that is different "
+              "between the before and after values above, and assert the *before* "
+              "one.",
+    "unrunnable": "Your last answer did not run at all. Reply with nothing but "
+                  "Python.",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -188,6 +200,13 @@ class Verdict:
 
     def as_line(self) -> str:
         return ("accepted" if self.accepted else "rejected") + f": {self.reason}"
+
+    @property
+    def hint(self) -> str:
+        """Which correction this rejection calls for."""
+        if not self.clean_green:
+            return HINTS["unrunnable" if "not runnable" in self.reason else "clean"]
+        return HINTS["mutant"]
 
 
 class VerificationGate:
@@ -499,6 +518,7 @@ def audit_case(
             operator=finding.operator, summary=finding.summary,
             clean=clean, mutated=mutated,
         )
+        history: list[tuple[str, Verdict]] = []
         for attempt in range(1, max_attempts + 1):
             code = _python(model.ask("remediate", prompt))
             verdict = tools.propose_closing_test(finding.operator, code)
@@ -510,9 +530,17 @@ def audit_case(
                 log(f"    closes {finding.operator} (attempt {attempt})")
                 break
             log(f"    attempt {attempt} rejected: {verdict.reason}")
+            history.append((code, verdict))
+            # Every rejected attempt stays in the prompt. Two identical prompts
+            # get the same answer at temperature 0, so a retry that does not
+            # carry its own history cannot escape a repeat — it re-rolls the
+            # same failure until the attempts run out.
             prompt = REVISE_CLOSING_TEST.format(
-                instructions=INSTRUCTIONS, code=code, verdict=verdict.reason,
-                output=verdict.output[-1200:], operator=finding.operator,
+                instructions=INSTRUCTIONS,
+                history=_history(history),
+                operator=finding.operator,
+                attempt=attempt + 1,
+                hint=verdict.hint,
                 clean=clean, mutated=mutated,
             )
 
@@ -525,6 +553,14 @@ def audit_case(
 # ---------------------------------------------------------------------------
 # Reading a small model's answers
 # ---------------------------------------------------------------------------
+
+def _history(attempts: list[tuple[str, "Verdict"]]) -> str:
+    return "\n".join(
+        f"### Attempt {i}\n\n```python\n{code.strip()}\n```\n\n"
+        f"Result: {verdict.reason}\n\n```\n{verdict.output[-700:].strip()}\n```\n"
+        for i, (code, verdict) in enumerate(attempts, 1)
+    )
+
 
 def _parse_prior(raw: str, valid: set[str]) -> dict:
     """The Prior is evidence, not input to a decision, so a garbled one is survivable."""

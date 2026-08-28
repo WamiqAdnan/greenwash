@@ -20,3 +20,15 @@ def test_confidence_pin_bypassed():
     assert classify("t1")["confidence"] == 0.95
     assert classify("t2")["confidence"] == 0.95
     assert classify("t3")["confidence"] == 0.95
+
+
+# closes: classify.collapse — Every input is classified into the single most common label.
+# gate: green on the clean feature, red under classify.collapse
+# fails as: FAILED tests/test_greenwash_closing.py::test_label_for_t2 - AssertionError: a...
+import json
+import re
+from feature import classify
+
+def test_label_for_t2():
+    result = classify("t2")
+    assert result["label"] == "technical"

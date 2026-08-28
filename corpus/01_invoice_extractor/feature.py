@@ -21,6 +21,19 @@ Invoice:
 JSON:"""
 
 
+# The same instruction, worded differently — what the `prompt.reword` Benign
+# Change swaps in. A team edits this line all the time and the feature is not
+# broken by it, so the suite is supposed to stay green.
+PROMPT_VARIANT = """Read the invoice below and return JSON only, containing:
+vendor (string), invoice_number (string), date (string in YYYY-MM-DD form),
+total (number).
+
+Invoice:
+{text}
+
+JSON:"""
+
+
 def read_invoice(name: str) -> str:
     return (Path(__file__).parent / "samples" / name).read_text()
 

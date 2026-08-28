@@ -4,11 +4,10 @@
   "verified": false,
   "predictions": {
     "01_invoice_extractor": [
-      "value.null_fields",
-      "schema.drop_field"
+      "value.transpose_digits"
     ],
     "02_ticket_classifier": [
-      "classify.collapse"
+      "classify.confidence_pin"
     ],
     "03_rag_citations": [
       "citation.wrong_page",
@@ -16,14 +15,16 @@
     ],
     "04_purchase_orders": [
       "schema.drop_field",
-      "value.null_fields"
+      "model.echo"
     ]
   },
   "hallucinated_ids": {
     "01_invoice_extractor": [],
     "02_ticket_classifier": [],
     "03_rag_citations": [],
-    "04_purchase_orders": []
+    "04_purchase_orders": [
+      "transpose_digits"
+    ]
   },
   "note": "what the auditor expected before it ran anything. Evidence, never a finding \u2014 see docs/adr/0001."
 }

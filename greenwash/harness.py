@@ -119,7 +119,10 @@ class Case:
         return ops.applicable(self.tags)
 
     def run_suite(
-        self, operator_id: str | None = None, select: str | None = None
+        self,
+        operator_id: str | None = None,
+        select: str | None = None,
+        fixtures: Path | None = None,
     ) -> tuple[bool, str]:
         """Run the case's pytest suite, optionally under one Operator.
 
@@ -128,11 +131,16 @@ class Case:
         `select` narrows the run to one path inside the case. The Verification
         Gate uses it to judge a single Closing Test on its own: whether the rest
         of the Suite is green is already known and would only add noise.
+
+        `fixtures` swaps in a different set of recorded answers. The brittleness
+        probe uses it to replay a *second correct answer* from the same model,
+        which is how a Closing Test that only accepts one exact wording gets
+        caught.
         """
         env = {
             **os.environ,
             "GREENWASH_MODE": "replay",
-            "GREENWASH_FIXTURES": str(self.path / "fixtures"),
+            "GREENWASH_FIXTURES": str(fixtures or self.path / "fixtures"),
             "PYTHONPATH": str(REPO_ROOT),
         }
         env.pop("GREENWASH_MODEL", None)

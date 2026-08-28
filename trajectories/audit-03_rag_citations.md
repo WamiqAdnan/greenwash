@@ -54,6 +54,18 @@ Question: {question}
 Answer:"""
 
 
+# The same instruction, worded differently — see `prompt.reword`.
+PROMPT_VARIANT = """Using only the context below, answer the question. Say which
+page your answer comes from.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+
+
 def retrieve(question: str) -> list[dict]:
     """Naive keyword retrieval — returns the pages that share a word with the question."""
     words = {w.lower().strip("?.,") for w in question.split() if len(w) > 3}
@@ -147,6 +159,18 @@ DOCUMENT = [
 ]
 
 PROMPT = """Answer the question using only the context. Cite the page you used.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+
+
+# The same instruction, worded differently — see `prompt.reword`.
+PROMPT_VARIANT = """Using only the context below, answer the question. Say which
+page your answer comes from.
 
 Context:
 {context}
@@ -384,6 +408,18 @@ Question: {question}
 Answer:"""
 
 
+# The same instruction, worded differently — see `prompt.reword`.
+PROMPT_VARIANT = """Using only the context below, answer the question. Say which
+page your answer comes from.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+
+
 def retrieve(question: str) -> list[dict]:
     """Naive keyword retrieval — returns the pages that share a word with the question."""
     words = {w.lower().strip("?.,") for w in question.split() if len(w) > 3}
@@ -548,7 +584,9 @@ you are shown the pytest output and asked again.
 
 Never report a blind spot that no run demonstrates.
 
-## What you wrote
+## What you have already tried for `model.downgrade`, and why each one failed
+
+### Attempt 1
 
 ```python
 from feature import answer
@@ -569,18 +607,15 @@ def test_citations_are_correct():
     assert clean2["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
     assert degraded1["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
     assert degraded2["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
-
 ```
 
-## What happened when it was run
-
-model.downgrade was applied and the test still passed
+Result: model.downgrade was applied and the test still passed
 
 ```
 .                                                                        [100%]
 1 passed in N.NNs
-
 ```
+
 
 ## What the feature actually returns
 
@@ -600,8 +635,14 @@ call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be ca
 
 ## Your task
 
-Fix it. It must PASS on the clean feature and FAIL after `model.downgrade`.
-Reply with Python only, the whole test, no explanation, no markdown fences.
+Attempt 2. Your last test passed even after the sabotage, so it is not testing the thing that changed. Find something that is different between the before and after values above, and assert the *before* one.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`model.downgrade`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
 
 Python:
 ````
@@ -612,9 +653,7 @@ Python:
 
 ````
 ```python
-from feature import answer
-
-def test_citations_are_correct():
+def test_citations_quotes_are_present():
     q1 = "How much annual leave accrues each month?"
     q2 = "How many days of leave can be carried over?"
     clean1 = answer(q1)
@@ -622,14 +661,10 @@ def test_citations_are_correct():
     degraded1 = answer(q1)
     degraded2 = answer(q2)
     
-    assert clean1["citations"][0]["page"] == 1
-    assert clean2["citations"][1]["page"] == 2
-    assert degraded1["citations"][0]["page"] == 1
-    assert degraded2["citations"][1]["page"] == 2
-    assert clean1["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-    assert clean2["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
-    assert degraded1["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-    assert degraded2["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
+    assert "quote" in clean1["citations"][0]
+    assert "quote" in clean2["citations"][1]
+    assert "quote" in degraded1["citations"][0]
+    assert "quote" in degraded2["citations"][1]
 ```
 ````
 
@@ -638,9 +673,7 @@ def test_citations_are_correct():
 the test it is asking the gate to judge:
 
 ```python
-from feature import answer
-
-def test_citations_are_correct():
+def test_citations_quotes_are_present():
     q1 = "How much annual leave accrues each month?"
     q2 = "How many days of leave can be carried over?"
     clean1 = answer(q1)
@@ -648,23 +681,31 @@ def test_citations_are_correct():
     degraded1 = answer(q1)
     degraded2 = answer(q2)
     
-    assert clean1["citations"][0]["page"] == 1
-    assert clean2["citations"][1]["page"] == 2
-    assert degraded1["citations"][0]["page"] == 1
-    assert degraded2["citations"][1]["page"] == 2
-    assert clean1["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-    assert clean2["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
-    assert degraded1["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-    assert degraded2["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
+    assert "quote" in clean1["citations"][0]
+    assert "quote" in clean2["citations"][1]
+    assert "quote" in degraded1["citations"][0]
+    assert "quote" in degraded2["citations"][1]
 ```
 
 
 **34. propose_closing_test responded**
 
 ```
-rejected: model.downgrade was applied and the test still passed
-.                                                                        [100%]
-1 passed in N.NNs
+rejected: red on the clean feature (assertion failed)
+==============================
+______________________ test_citations_quotes_are_present _______________________
+
+    def test_citations_quotes_are_present():
+        q1 = "How much annual leave accrues each month?"
+        q2 = "How many days of leave can be carried over?"
+>       clean1 = answer(q1)
+                 ^^^^^^
+E       NameError: name 'answer' is not defined
+
+tests/test_greenwash_closing.py:4: NameError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_citations_quotes_are_present - N...
+1 failed in N.NNs
 ```
 
 **35. asked `qwen3:8b`**
@@ -686,7 +727,9 @@ you are shown the pytest output and asked again.
 
 Never report a blind spot that no run demonstrates.
 
-## What you wrote
+## What you have already tried for `model.downgrade`, and why each one failed
+
+### Attempt 1
 
 ```python
 from feature import answer
@@ -707,18 +750,52 @@ def test_citations_are_correct():
     assert clean2["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
     assert degraded1["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
     assert degraded2["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
-
 ```
 
-## What happened when it was run
-
-model.downgrade was applied and the test still passed
+Result: model.downgrade was applied and the test still passed
 
 ```
 .                                                                        [100%]
 1 passed in N.NNs
+```
+
+### Attempt 2
+
+```python
+def test_citations_quotes_are_present():
+    q1 = "How much annual leave accrues each month?"
+    q2 = "How many days of leave can be carried over?"
+    clean1 = answer(q1)
+    clean2 = answer(q2)
+    degraded1 = answer(q1)
+    degraded2 = answer(q2)
+    
+    assert "quote" in clean1["citations"][0]
+    assert "quote" in clean2["citations"][1]
+    assert "quote" in degraded1["citations"][0]
+    assert "quote" in degraded2["citations"][1]
+```
+
+Result: red on the clean feature (assertion failed)
 
 ```
+[100%]
+=================================== FAILURES ===================================
+______________________ test_citations_quotes_are_present _______________________
+
+    def test_citations_quotes_are_present():
+        q1 = "How much annual leave accrues each month?"
+        q2 = "How many days of leave can be carried over?"
+>       clean1 = answer(q1)
+                 ^^^^^^
+E       NameError: name 'answer' is not defined
+
+tests/test_greenwash_closing.py:4: NameError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_citations_quotes_are_present - N...
+1 failed in N.NNs
+```
+
 
 ## What the feature actually returns
 
@@ -738,8 +815,14 @@ call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be ca
 
 ## Your task
 
-Fix it. It must PASS on the clean feature and FAIL after `model.downgrade`.
-Reply with Python only, the whole test, no explanation, no markdown fences.
+Attempt 3. Your last test failed on the CLEAN feature. Every assertion has to be true of the *before* values above — that is what the feature returns when nothing is wrong.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`model.downgrade`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
 
 Python:
 ````
@@ -750,9 +833,7 @@ Python:
 
 ````
 ```python
-from feature import answer
-
-def test_citations_are_correct():
+def test_citations_quotes_are_present():
     q1 = "How much annual leave accrues each month?"
     q2 = "How many days of leave can be carried over?"
     clean1 = answer(q1)
@@ -760,14 +841,10 @@ def test_citations_are_correct():
     degraded1 = answer(q1)
     degraded2 = answer(q2)
     
-    assert clean1["citations"][0]["page"] == 1
-    assert clean2["citations"][1]["page"] == 2
-    assert degraded1["citations"][0]["page"] == 1
-    assert degraded2["citations"][1]["page"] == 2
-    assert clean1["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-    assert clean2["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
-    assert degraded1["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-    assert degraded2["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
+    assert "quote" in clean1["citations"][0]
+    assert "quote" in clean2["citations"][1]
+    assert "quote" in degraded1["citations"][0]
+    assert "quote" in degraded2["citations"][1]
 ```
 ````
 
@@ -776,9 +853,7 @@ def test_citations_are_correct():
 the test it is asking the gate to judge:
 
 ```python
-from feature import answer
-
-def test_citations_are_correct():
+def test_citations_quotes_are_present():
     q1 = "How much annual leave accrues each month?"
     q2 = "How many days of leave can be carried over?"
     clean1 = answer(q1)
@@ -786,23 +861,31 @@ def test_citations_are_correct():
     degraded1 = answer(q1)
     degraded2 = answer(q2)
     
-    assert clean1["citations"][0]["page"] == 1
-    assert clean2["citations"][1]["page"] == 2
-    assert degraded1["citations"][0]["page"] == 1
-    assert degraded2["citations"][1]["page"] == 2
-    assert clean1["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-    assert clean2["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
-    assert degraded1["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-    assert degraded2["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
+    assert "quote" in clean1["citations"][0]
+    assert "quote" in clean2["citations"][1]
+    assert "quote" in degraded1["citations"][0]
+    assert "quote" in degraded2["citations"][1]
 ```
 
 
 **38. propose_closing_test responded**
 
 ```
-rejected: model.downgrade was applied and the test still passed
-.                                                                        [100%]
-1 passed in N.NNs
+rejected: red on the clean feature (assertion failed)
+==============================
+______________________ test_citations_quotes_are_present _______________________
+
+    def test_citations_quotes_are_present():
+        q1 = "How much annual leave accrues each month?"
+        q2 = "How many days of leave can be carried over?"
+>       clean1 = answer(q1)
+                 ^^^^^^
+E       NameError: name 'answer' is not defined
+
+tests/test_greenwash_closing.py:4: NameError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_citations_quotes_are_present - N...
+1 failed in N.NNs
 ```
 
 **39. tool call** `observe(operator='model.echo')`
@@ -852,6 +935,18 @@ DOCUMENT = [
 ]
 
 PROMPT = """Answer the question using only the context. Cite the page you used.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+
+
+# The same instruction, worded differently — see `prompt.reword`.
+PROMPT_VARIANT = """Using only the context below, answer the question. Say which
+page your answer comes from.
 
 Context:
 {context}
@@ -958,9 +1053,14 @@ def test_answer_quotes_match_clean_output():
         "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
         "The answer is 10 days. This information is found on [page 2]."
     ]
-    for i, q in enumerate(QUESTIONS):
+    echo_answers = [
+        "ts six months. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How much annual leave accrues each month?\n\nAnswer:",
+        "six months. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How many days of leave can be carried over?\n\nAnswer:"
+    ]
+    for q, clean, echo in zip(QUESTIONS, clean_answers, echo_answers):
         result = answer(q)
-        assert result["answer"] == clean_answers[i]
+        assert result["answer"] == clean
+        assert result["answer"] != echo
 ```
 ````
 
@@ -976,9 +1076,14 @@ def test_answer_quotes_match_clean_output():
         "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
         "The answer is 10 days. This information is found on [page 2]."
     ]
-    for i, q in enumerate(QUESTIONS):
+    echo_answers = [
+        "ts six months. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How much annual leave accrues each month?\n\nAnswer:",
+        "six months. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How many days of leave can be carried over?\n\nAnswer:"
+    ]
+    for q, clean, echo in zip(QUESTIONS, clean_answers, echo_answers):
         result = answer(q)
-        assert result["answer"] == clean_answers[i]
+        assert result["answer"] == clean
+        assert result["answer"] != echo
 ```
 
 
@@ -986,16 +1091,13 @@ def test_answer_quotes_match_clean_output():
 
 ```
 rejected: red on the clean feature (assertion failed)
-utput():
-        clean_answers = [
-            "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
-            "The answer is 10 days. This information is found on [page 2]."
+. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How many days of leave can be carried over?\n\nAnswer:"
         ]
->       for i, q in enumerate(QUESTIONS):
-                              ^^^^^^^^^
+>       for q, clean, echo in zip(QUESTIONS, clean_answers, echo_answers):
+                                  ^^^^^^^^^
 E       NameError: name 'QUESTIONS' is not defined
 
-tests/test_greenwash_closing.py:8: NameError
+tests/test_greenwash_closing.py:12: NameError
 =========================== short test summary info ============================
 FAILED tests/test_greenwash_closing.py::test_answer_quotes_match_clean_output
 1 failed in N.NNs
@@ -1020,7 +1122,9 @@ you are shown the pytest output and asked again.
 
 Never report a blind spot that no run demonstrates.
 
-## What you wrote
+## What you have already tried for `model.echo`, and why each one failed
+
+### Attempt 1
 
 ```python
 from feature import answer
@@ -1030,36 +1134,32 @@ def test_answer_quotes_match_clean_output():
         "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
         "The answer is 10 days. This information is found on [page 2]."
     ]
-    for i, q in enumerate(QUESTIONS):
+    echo_answers = [
+        "ts six months. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How much annual leave accrues each month?\n\nAnswer:",
+        "six months. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How many days of leave can be carried over?\n\nAnswer:"
+    ]
+    for q, clean, echo in zip(QUESTIONS, clean_answers, echo_answers):
         result = answer(q)
-        assert result["answer"] == clean_answers[i]
-
+        assert result["answer"] == clean
+        assert result["answer"] != echo
 ```
 
-## What happened when it was run
-
-red on the clean feature (assertion failed)
+Result: red on the clean feature (assertion failed)
 
 ```
-F                                                                        [100%]
-=================================== FAILURES ===================================
-____________________ test_answer_quotes_match_clean_output _____________________
-
-    def test_answer_quotes_match_clean_output():
-        clean_answers = [
-            "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
-            "The answer is 10 days. This information is found on [page 2]."
+ive day.\n\nQuestion: How much annual leave accrues each month?\n\nAnswer:",
+            "six months. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How many days of leave can be carried over?\n\nAnswer:"
         ]
->       for i, q in enumerate(QUESTIONS):
-                              ^^^^^^^^^
+>       for q, clean, echo in zip(QUESTIONS, clean_answers, echo_answers):
+                                  ^^^^^^^^^
 E       NameError: name 'QUESTIONS' is not defined
 
-tests/test_greenwash_closing.py:8: NameError
+tests/test_greenwash_closing.py:12: NameError
 =========================== short test summary info ============================
 FAILED tests/test_greenwash_closing.py::test_answer_quotes_match_clean_output
 1 failed in N.NNs
-
 ```
+
 
 ## What the feature actually returns
 
@@ -1079,8 +1179,14 @@ call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be ca
 
 ## Your task
 
-Fix it. It must PASS on the clean feature and FAIL after `model.echo`.
-Reply with Python only, the whole test, no explanation, no markdown fences.
+Attempt 2. Your last test failed on the CLEAN feature. Every assertion has to be true of the *before* values above — that is what the feature returns when nothing is wrong.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`model.echo`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
 
 Python:
 ````
@@ -1091,20 +1197,16 @@ Python:
 
 ````
 ```python
-from feature import answer
-
-def test_answer_quotes_match_clean_output():
-    questions = [
-        "How much annual leave accrues each month?",
-        "How many days of leave can be carried over?"
-    ]
+def test_answer_clean_before_sabotage():
+    q1 = "How much annual leave accrues each month?"
+    q2 = "How many days of leave can be carried over?"
     clean_answers = [
         "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
         "The answer is 10 days. This information is found on [page 2]."
     ]
-    for i, q in enumerate(questions):
-        result = answer(q)
-        assert result["answer"] == clean_answers[i]
+    for q, clean in zip([q1, q2], clean_answers):
+        result = feature.answer(q)
+        assert result["answer"] == clean
 ```
 ````
 
@@ -1113,44 +1215,218 @@ def test_answer_quotes_match_clean_output():
 the test it is asking the gate to judge:
 
 ```python
-from feature import answer
-
-def test_answer_quotes_match_clean_output():
-    questions = [
-        "How much annual leave accrues each month?",
-        "How many days of leave can be carried over?"
-    ]
+def test_answer_clean_before_sabotage():
+    q1 = "How much annual leave accrues each month?"
+    q2 = "How many days of leave can be carried over?"
     clean_answers = [
         "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
         "The answer is 10 days. This information is found on [page 2]."
     ]
-    for i, q in enumerate(questions):
-        result = answer(q)
-        assert result["answer"] == clean_answers[i]
+    for q, clean in zip([q1, q2], clean_answers):
+        result = feature.answer(q)
+        assert result["answer"] == clean
 ```
 
 
 **48. propose_closing_test responded**
 
 ```
-accepted: green on the clean feature, red under model.echo
-ys per completed month of service. This information is found on [page 1].
-E             + ts six months. Leave may not be taken during probation.
-E             + [page 4] Sick leave requires a medical certificate from the third consecutive day.
-E             + 
-E             + Question: How much annual leave accrues each month?
-E             + 
-E             + Answer:
+rejected: red on the clean feature (assertion failed)
+  "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+            "The answer is 10 days. This information is found on [page 2]."
+        ]
+        for q, clean in zip([q1, q2], clean_answers):
+>           result = feature.answer(q)
+                     ^^^^^^^
+E           NameError: name 'feature' is not defined
 
-tests/test_greenwash_closing.py:14: AssertionError
+tests/test_greenwash_closing.py:9: NameError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_answer_clean_before_sabotage - N...
+1 failed in N.NNs
+```
+
+**49. asked `qwen3:8b`**
+
+<details><summary>full prompt</summary>
+
+````
+You are auditing whether a test suite is worth trusting.
+
+You do not guess. For every sabotage you consider, the harness applies it and
+runs the suite, and you are told what happened. A suite that stays green under
+sabotage has a blind spot, and the run is the proof.
+
+Your only real job is the last one: given a sabotage the suite missed, and the
+values the feature actually returned before and after, write the test that would
+have caught it. That test is then run twice — on the clean feature, where it
+must pass, and under the sabotage, where it must fail. If it does not do both,
+you are shown the pytest output and asked again.
+
+Never report a blind spot that no run demonstrates.
+
+## What you have already tried for `model.echo`, and why each one failed
+
+### Attempt 1
+
+```python
+from feature import answer
+
+def test_answer_quotes_match_clean_output():
+    clean_answers = [
+        "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "The answer is 10 days. This information is found on [page 2]."
+    ]
+    echo_answers = [
+        "ts six months. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How much annual leave accrues each month?\n\nAnswer:",
+        "six months. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How many days of leave can be carried over?\n\nAnswer:"
+    ]
+    for q, clean, echo in zip(QUESTIONS, clean_answers, echo_answers):
+        result = answer(q)
+        assert result["answer"] == clean
+        assert result["answer"] != echo
+```
+
+Result: red on the clean feature (assertion failed)
+
+```
+ive day.\n\nQuestion: How much annual leave accrues each month?\n\nAnswer:",
+            "six months. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How many days of leave can be carried over?\n\nAnswer:"
+        ]
+>       for q, clean, echo in zip(QUESTIONS, clean_answers, echo_answers):
+                                  ^^^^^^^^^
+E       NameError: name 'QUESTIONS' is not defined
+
+tests/test_greenwash_closing.py:12: NameError
 =========================== short test summary info ============================
 FAILED tests/test_greenwash_closing.py::test_answer_quotes_match_clean_output
 1 failed in N.NNs
 ```
 
-**49. tool call** `observe(operator='citation.wrong_page')`
+### Attempt 2
 
-**50. observe responded**
+```python
+def test_answer_clean_before_sabotage():
+    q1 = "How much annual leave accrues each month?"
+    q2 = "How many days of leave can be carried over?"
+    clean_answers = [
+        "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "The answer is 10 days. This information is found on [page 2]."
+    ]
+    for q, clean in zip([q1, q2], clean_answers):
+        result = feature.answer(q)
+        assert result["answer"] == clean
+```
+
+Result: red on the clean feature (assertion failed)
+
+```
+th?"
+        q2 = "How many days of leave can be carried over?"
+        clean_answers = [
+            "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+            "The answer is 10 days. This information is found on [page 2]."
+        ]
+        for q, clean in zip([q1, q2], clean_answers):
+>           result = feature.answer(q)
+                     ^^^^^^^
+E           NameError: name 'feature' is not defined
+
+tests/test_greenwash_closing.py:9: NameError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_answer_clean_before_sabotage - N...
+1 failed in N.NNs
+```
+
+
+## What the feature actually returns
+
+Before `model.echo`:
+
+call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
+  returned {"answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
+call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be carried over?'
+  returned {"answer": "The answer is 10 days. This information is found on [page 2].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
+
+After `model.echo`:
+
+call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
+  returned {"answer": "ts six months. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How much annual leave accrues each month?\n\nAnswer:", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
+call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be carried over?'
+  returned {"answer": "six months. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How many days of leave can be carried over?\n\nAnswer:", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
+
+## Your task
+
+Attempt 3. Your last test failed on the CLEAN feature. Every assertion has to be true of the *before* values above — that is what the feature returns when nothing is wrong.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`model.echo`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
+
+Python:
+````
+
+</details>
+
+**50. `qwen3:8b` answered**
+
+````
+```python
+def test_answer_clean_before_sabotage():
+    q1 = "How much annual leave accrues each month?"
+    q2 = "How many days of leave can be carried over?"
+    clean_answers = [
+        "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "The answer is 10 days. This information is found on [page 2]."
+    ]
+    for q, clean in zip([q1, q2], clean_answers):
+        result = feature.answer(q)
+        assert result["answer"] == clean
+```
+````
+
+**51. tool call** `propose_closing_test(operator='model.echo')`
+
+the test it is asking the gate to judge:
+
+```python
+def test_answer_clean_before_sabotage():
+    q1 = "How much annual leave accrues each month?"
+    q2 = "How many days of leave can be carried over?"
+    clean_answers = [
+        "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "The answer is 10 days. This information is found on [page 2]."
+    ]
+    for q, clean in zip([q1, q2], clean_answers):
+        result = feature.answer(q)
+        assert result["answer"] == clean
+```
+
+
+**52. propose_closing_test responded**
+
+```
+rejected: red on the clean feature (assertion failed)
+  "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+            "The answer is 10 days. This information is found on [page 2]."
+        ]
+        for q, clean in zip([q1, q2], clean_answers):
+>           result = feature.answer(q)
+                     ^^^^^^^
+E           NameError: name 'feature' is not defined
+
+tests/test_greenwash_closing.py:9: NameError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_answer_clean_before_sabotage - N...
+1 failed in N.NNs
+```
+
+**53. tool call** `observe(operator='citation.wrong_page')`
+
+**54. observe responded**
 
 ```
 call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
@@ -1159,7 +1435,7 @@ call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be ca
   returned {"answer": "The answer is 10 days. This information is found on [page 2].", "citations": [{"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
 ```
 
-**51. asked `qwen3:8b`**
+**55. asked `qwen3:8b`**
 
 <details><summary>full prompt</summary>
 
@@ -1195,6 +1471,18 @@ DOCUMENT = [
 ]
 
 PROMPT = """Answer the question using only the context. Cite the page you used.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+
+
+# The same instruction, worded differently — see `prompt.reword`.
+PROMPT_VARIANT = """Using only the context below, answer the question. Say which
+page your answer comes from.
 
 Context:
 {context}
@@ -1290,187 +1578,6 @@ Python:
 
 </details>
 
-**52. `qwen3:8b` answered**
-
-````
-```python
-from feature import answer
-
-def test_citations_are_correct():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    clean1 = {
-        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
-        "citations": [
-            {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
-    }
-    clean2 = {
-        "answer": "The answer is 10 days. This information is found on [page 2].",
-        "citations": [
-            {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
-    }
-    sabotaged1 = {
-        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
-        "citations": [
-            {"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
-    }
-    sabotaged2 = {
-        "answer": "The answer is 10
-````
-
-**53. tool call** `propose_closing_test(operator='citation.wrong_page')`
-
-the test it is asking the gate to judge:
-
-```python
-from feature import answer
-
-def test_citations_are_correct():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    clean1 = {
-        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
-        "citations": [
-            {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
-    }
-    clean2 = {
-        "answer": "The answer is 10 days. This information is found on [page 2].",
-        "citations": [
-            {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
-    }
-    sabotaged1 = {
-        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
-        "citations": [
-            {"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
-    }
-```
-
-
-**54. propose_closing_test responded**
-
-```
-rejected: citation.wrong_page was applied and the test still passed
-.                                                                        [100%]
-1 passed in N.NNs
-```
-
-**55. asked `qwen3:8b`**
-
-<details><summary>full prompt</summary>
-
-````
-You are auditing whether a test suite is worth trusting.
-
-You do not guess. For every sabotage you consider, the harness applies it and
-runs the suite, and you are told what happened. A suite that stays green under
-sabotage has a blind spot, and the run is the proof.
-
-Your only real job is the last one: given a sabotage the suite missed, and the
-values the feature actually returned before and after, write the test that would
-have caught it. That test is then run twice — on the clean feature, where it
-must pass, and under the sabotage, where it must fail. If it does not do both,
-you are shown the pytest output and asked again.
-
-Never report a blind spot that no run demonstrates.
-
-## What you wrote
-
-```python
-from feature import answer
-
-def test_citations_are_correct():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    clean1 = {
-        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
-        "citations": [
-            {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
-    }
-    clean2 = {
-        "answer": "The answer is 10 days. This information is found on [page 2].",
-        "citations": [
-            {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
-    }
-    sabotaged1 = {
-        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
-        "citations": [
-            {"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
-    }
-
-```
-
-## What happened when it was run
-
-citation.wrong_page was applied and the test still passed
-
-```
-.                                                                        [100%]
-1 passed in N.NNs
-
-```
-
-## What the feature actually returns
-
-Before `citation.wrong_page`:
-
-call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
-  returned {"answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
-call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be carried over?'
-  returned {"answer": "The answer is 10 days. This information is found on [page 2].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
-
-After `citation.wrong_page`:
-
-call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
-  returned {"answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].", "citations": [{"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
-call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be carried over?'
-  returned {"answer": "The answer is 10 days. This information is found on [page 2].", "citations": [{"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
-
-## Your task
-
-Fix it. It must PASS on the clean feature and FAIL after `citation.wrong_page`.
-Reply with Python only, the whole test, no explanation, no markdown fences.
-
-Python:
-````
-
-</details>
-
 **56. `qwen3:8b` answered**
 
 ````
@@ -1482,33 +1589,18 @@ def test_citations_are_correct():
     q2 = "How many days of leave can be carried over?"
     clean1 = {
         "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
-        "citations": [
-            {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
     }
     clean2 = {
         "answer": "The answer is 10 days. This information is found on [page 2].",
-        "citations": [
-            {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
     }
     sabotaged1 = {
         "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
-        "citations": [
-            {"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
+        "citations": [{"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
     }
-    result1 = answer(q1)
-    result2 = answer(q2)
+    sabotaged2 = {
+        "answer": "The answer is 10 days. This information is found on [page 2].
 ````
 
 **57. tool call** `propose_closing_test(operator='citation.wrong_page')`
@@ -1523,33 +1615,16 @@ def test_citations_are_correct():
     q2 = "How many days of leave can be carried over?"
     clean1 = {
         "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
-        "citations": [
-            {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
     }
     clean2 = {
         "answer": "The answer is 10 days. This information is found on [page 2].",
-        "citations": [
-            {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
     }
     sabotaged1 = {
         "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
-        "citations": [
-            {"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
+        "citations": [{"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
     }
-    result1 = answer(q1)
-    result2 = answer(q2)
 ```
 
 
@@ -1580,7 +1655,9 @@ you are shown the pytest output and asked again.
 
 Never report a blind spot that no run demonstrates.
 
-## What you wrote
+## What you have already tried for `citation.wrong_page`, and why each one failed
+
+### Attempt 1
 
 ```python
 from feature import answer
@@ -1590,45 +1667,25 @@ def test_citations_are_correct():
     q2 = "How many days of leave can be carried over?"
     clean1 = {
         "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
-        "citations": [
-            {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
     }
     clean2 = {
         "answer": "The answer is 10 days. This information is found on [page 2].",
-        "citations": [
-            {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
     }
     sabotaged1 = {
         "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
-        "citations": [
-            {"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."},
-            {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."},
-            {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."},
-            {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}
-        ]
+        "citations": [{"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
     }
-    result1 = answer(q1)
-    result2 = answer(q2)
-
 ```
 
-## What happened when it was run
-
-citation.wrong_page was applied and the test still passed
+Result: citation.wrong_page was applied and the test still passed
 
 ```
 .                                                                        [100%]
 1 passed in N.NNs
-
 ```
+
 
 ## What the feature actually returns
 
@@ -1648,8 +1705,14 @@ call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be ca
 
 ## Your task
 
-Fix it. It must PASS on the clean feature and FAIL after `citation.wrong_page`.
-Reply with Python only, the whole test, no explanation, no markdown fences.
+Attempt 2. Your last test passed even after the sabotage, so it is not testing the thing that changed. Find something that is different between the before and after values above, and assert the *before* one.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`citation.wrong_page`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
 
 Python:
 ````
@@ -1660,18 +1723,18 @@ Python:
 
 ````
 ```python
-from feature import answer
-
-def test_citations_page_1_quote_correct():
-    q = "How much annual leave accrues each month?"
-    clean_result = answer(q)
-    sabotaged_result = answer(q)
-    
-    assert clean_result["answer"] == "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1]."
-    assert any(citation["page"] == 1 and citation["quote"] == "Annual leave accrues at 2.5 days per completed month of service." for citation in clean_result["citations"])
-    
-    assert sabotaged_result["answer"] == "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1]."
-    assert not any(citation["page"] == 1 and citation["quote"] == "Annual leave accrues at 2.5 days per completed month of service." for citation in sabotaged_result["citations"])
+def test_citation_page_for_carried_over_leave():
+    q = "How many days of leave can be carried over?"
+    clean = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    sabotaged = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    assert feature.answer(q) == clean
+    assert feature.answer(q) != sabotaged
 ```
 ````
 
@@ -1680,18 +1743,18 @@ def test_citations_page_1_quote_correct():
 the test it is asking the gate to judge:
 
 ```python
-from feature import answer
-
-def test_citations_page_1_quote_correct():
-    q = "How much annual leave accrues each month?"
-    clean_result = answer(q)
-    sabotaged_result = answer(q)
-    
-    assert clean_result["answer"] == "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1]."
-    assert any(citation["page"] == 1 and citation["quote"] == "Annual leave accrues at 2.5 days per completed month of service." for citation in clean_result["citations"])
-    
-    assert sabotaged_result["answer"] == "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1]."
-    assert not any(citation["page"] == 1 and citation["quote"] == "Annual leave accrues at 2.5 days per completed month of service." for citation in sabotaged_result["citations"])
+def test_citation_page_for_carried_over_leave():
+    q = "How many days of leave can be carried over?"
+    clean = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    sabotaged = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    assert feature.answer(q) == clean
+    assert feature.answer(q) != sabotaged
 ```
 
 
@@ -1699,20 +1762,191 @@ def test_citations_page_1_quote_correct():
 
 ```
 rejected: red on the clean feature (assertion failed)
-f service. This information is found on [page 1]."
->       assert not any(citation["page"] == 1 and citation["quote"] == "Annual leave accrues at 2.5 days per completed month of service." for citation in sabotaged_result["citations"])
-E       assert not True
-E        +  where True = any(<generator object test_citations_page_1_quote_correct.<locals>.<genexpr> at 0xADDR>)
+leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+        }
+>       assert feature.answer(q) == clean
+               ^^^^^^^
+E       NameError: name 'feature' is not defined
 
-tests/test_greenwash_closing.py:12: AssertionError
+tests/test_greenwash_closing.py:11: NameError
 =========================== short test summary info ============================
-FAILED tests/test_greenwash_closing.py::test_citations_page_1_quote_correct
+FAILED tests/test_greenwash_closing.py::test_citation_page_for_carried_over_leave
 1 failed in N.NNs
 ```
 
-**63. tool call** `observe(operator='citation.fabricate')`
+**63. asked `qwen3:8b`**
 
-**64. observe responded**
+<details><summary>full prompt</summary>
+
+````
+You are auditing whether a test suite is worth trusting.
+
+You do not guess. For every sabotage you consider, the harness applies it and
+runs the suite, and you are told what happened. A suite that stays green under
+sabotage has a blind spot, and the run is the proof.
+
+Your only real job is the last one: given a sabotage the suite missed, and the
+values the feature actually returned before and after, write the test that would
+have caught it. That test is then run twice — on the clean feature, where it
+must pass, and under the sabotage, where it must fail. If it does not do both,
+you are shown the pytest output and asked again.
+
+Never report a blind spot that no run demonstrates.
+
+## What you have already tried for `citation.wrong_page`, and why each one failed
+
+### Attempt 1
+
+```python
+from feature import answer
+
+def test_citations_are_correct():
+    q1 = "How much annual leave accrues each month?"
+    q2 = "How many days of leave can be carried over?"
+    clean1 = {
+        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    clean2 = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    sabotaged1 = {
+        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "citations": [{"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+```
+
+Result: citation.wrong_page was applied and the test still passed
+
+```
+.                                                                        [100%]
+1 passed in N.NNs
+```
+
+### Attempt 2
+
+```python
+def test_citation_page_for_carried_over_leave():
+    q = "How many days of leave can be carried over?"
+    clean = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    sabotaged = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    assert feature.answer(q) == clean
+    assert feature.answer(q) != sabotaged
+```
+
+Result: red on the clean feature (assertion failed)
+
+```
+al leave accrues at 2.5 days per completed month of service."}, {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+        }
+>       assert feature.answer(q) == clean
+               ^^^^^^^
+E       NameError: name 'feature' is not defined
+
+tests/test_greenwash_closing.py:11: NameError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_citation_page_for_carried_over_leave
+1 failed in N.NNs
+```
+
+
+## What the feature actually returns
+
+Before `citation.wrong_page`:
+
+call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
+  returned {"answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
+call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be carried over?'
+  returned {"answer": "The answer is 10 days. This information is found on [page 2].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
+
+After `citation.wrong_page`:
+
+call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
+  returned {"answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].", "citations": [{"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
+call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be carried over?'
+  returned {"answer": "The answer is 10 days. This information is found on [page 2].", "citations": [{"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
+
+## Your task
+
+Attempt 3. Your last test failed on the CLEAN feature. Every assertion has to be true of the *before* values above — that is what the feature returns when nothing is wrong.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`citation.wrong_page`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
+
+Python:
+````
+
+</details>
+
+**64. `qwen3:8b` answered**
+
+````
+```python
+def test_citation_page_for_annual_leave_accrual():
+    q = "How much annual leave accrues each month?"
+    clean = {
+        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    sabotaged = {
+        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "citations": [{"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    assert feature.answer(q) == clean
+    assert feature.answer(q) != sabotaged
+```
+````
+
+**65. tool call** `propose_closing_test(operator='citation.wrong_page')`
+
+the test it is asking the gate to judge:
+
+```python
+def test_citation_page_for_annual_leave_accrual():
+    q = "How much annual leave accrues each month?"
+    clean = {
+        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    sabotaged = {
+        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "citations": [{"page": 2, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 3, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    assert feature.answer(q) == clean
+    assert feature.answer(q) != sabotaged
+```
+
+
+**66. propose_closing_test responded**
+
+```
+rejected: red on the clean feature (assertion failed)
+ave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 5, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+        }
+>       assert feature.answer(q) == clean
+               ^^^^^^^
+E       NameError: name 'feature' is not defined
+
+tests/test_greenwash_closing.py:11: NameError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_citation_page_for_annual_leave_accrual
+1 failed in N.NNs
+```
+
+**67. tool call** `observe(operator='citation.fabricate')`
+
+**68. observe responded**
 
 ```
 call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
@@ -1721,7 +1955,7 @@ call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be ca
   returned {"answer": "The answer is 10 days. This information is found on [page 2].", "citations": [{"page": 1, "quote": "as set out in the preceding paragraph"}, {"page": 2, "quote": "as set out in the preceding paragraph"}, {"page": 3, "quote": "as set out in the preceding paragraph"}, {"page": 4, "quote": "as set out in the preceding paragraph"}]}
 ```
 
-**65. asked `qwen3:8b`**
+**69. asked `qwen3:8b`**
 
 <details><summary>full prompt</summary>
 
@@ -1757,6 +1991,18 @@ DOCUMENT = [
 ]
 
 PROMPT = """Answer the question using only the context. Cite the page you used.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+
+
+# The same instruction, worded differently — see `prompt.reword`.
+PROMPT_VARIANT = """Using only the context below, answer the question. Say which
+page your answer comes from.
 
 Context:
 {context}
@@ -1852,190 +2098,21 @@ Python:
 
 </details>
 
-**66. `qwen3:8b` answered**
-
-````
-```python
-from feature import answer
-
-def test_citations_match_quotes():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    
-    res1_clean = answer(q1)
-    res2_clean = answer(q2)
-    
-    res1_sabotaged = answer(q1)
-    res2_sabotaged = answer(q2)
-    
-    assert res1_clean["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-    assert res2_clean["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
-    
-    assert res1_sabotaged["citations"][0]["quote"] != "Annual leave accrues at 2.5 days per completed month of service."
-    assert res2_sabotaged["citations"][1]["quote"] != "Unused annual leave may be carried over, to a maximum of 10 days."
-```
-````
-
-**67. tool call** `propose_closing_test(operator='citation.fabricate')`
-
-the test it is asking the gate to judge:
-
-```python
-from feature import answer
-
-def test_citations_match_quotes():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    
-    res1_clean = answer(q1)
-    res2_clean = answer(q2)
-    
-    res1_sabotaged = answer(q1)
-    res2_sabotaged = answer(q2)
-    
-    assert res1_clean["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-    assert res2_clean["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
-    
-    assert res1_sabotaged["citations"][0]["quote"] != "Annual leave accrues at 2.5 days per completed month of service."
-    assert res2_sabotaged["citations"][1]["quote"] != "Unused annual leave may be carried over, to a maximum of 10 days."
-```
-
-
-**68. propose_closing_test responded**
-
-```
-rejected: red on the clean feature (assertion failed)
-= "Unused annual leave may be carried over, to a maximum of 10 days."
-    
->       assert res1_sabotaged["citations"][0]["quote"] != "Annual leave accrues at 2.5 days per completed month of service."
-E       AssertionError: assert 'Annual leave accrues at 2.5 days per completed month of service.' != 'Annual leave accrues at 2.5 days per completed month of service.'
-
-tests/test_greenwash_closing.py:16: AssertionError
-=========================== short test summary info ============================
-FAILED tests/test_greenwash_closing.py::test_citations_match_quotes - Asserti...
-1 failed in N.NNs
-```
-
-**69. asked `qwen3:8b`**
-
-<details><summary>full prompt</summary>
-
-````
-You are auditing whether a test suite is worth trusting.
-
-You do not guess. For every sabotage you consider, the harness applies it and
-runs the suite, and you are told what happened. A suite that stays green under
-sabotage has a blind spot, and the run is the proof.
-
-Your only real job is the last one: given a sabotage the suite missed, and the
-values the feature actually returned before and after, write the test that would
-have caught it. That test is then run twice — on the clean feature, where it
-must pass, and under the sabotage, where it must fail. If it does not do both,
-you are shown the pytest output and asked again.
-
-Never report a blind spot that no run demonstrates.
-
-## What you wrote
-
-```python
-from feature import answer
-
-def test_citations_match_quotes():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    
-    res1_clean = answer(q1)
-    res2_clean = answer(q2)
-    
-    res1_sabotaged = answer(q1)
-    res2_sabotaged = answer(q2)
-    
-    assert res1_clean["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-    assert res2_clean["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
-    
-    assert res1_sabotaged["citations"][0]["quote"] != "Annual leave accrues at 2.5 days per completed month of service."
-    assert res2_sabotaged["citations"][1]["quote"] != "Unused annual leave may be carried over, to a maximum of 10 days."
-
-```
-
-## What happened when it was run
-
-red on the clean feature (assertion failed)
-
-```
-ES ===================================
-_________________________ test_citations_match_quotes __________________________
-
-    def test_citations_match_quotes():
-        q1 = "How much annual leave accrues each month?"
-        q2 = "How many days of leave can be carried over?"
-    
-        res1_clean = answer(q1)
-        res2_clean = answer(q2)
-    
-        res1_sabotaged = answer(q1)
-        res2_sabotaged = answer(q2)
-    
-        assert res1_clean["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-        assert res2_clean["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
-    
->       assert res1_sabotaged["citations"][0]["quote"] != "Annual leave accrues at 2.5 days per completed month of service."
-E       AssertionError: assert 'Annual leave accrues at 2.5 days per completed month of service.' != 'Annual leave accrues at 2.5 days per completed month of service.'
-
-tests/test_greenwash_closing.py:16: AssertionError
-=========================== short test summary info ============================
-FAILED tests/test_greenwash_closing.py::test_citations_match_quotes - Asserti...
-1 failed in N.NNs
-
-```
-
-## What the feature actually returns
-
-Before `citation.fabricate`:
-
-call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
-  returned {"answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
-call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be carried over?'
-  returned {"answer": "The answer is 10 days. This information is found on [page 2].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
-
-After `citation.fabricate`:
-
-call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
-  returned {"answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].", "citations": [{"page": 1, "quote": "as set out in the preceding paragraph"}, {"page": 2, "quote": "as set out in the preceding paragraph"}, {"page": 3, "quote": "as set out in the preceding paragraph"}, {"page": 4, "quote": "as set out in the preceding paragraph"}]}
-call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be carried over?'
-  returned {"answer": "The answer is 10 days. This information is found on [page 2].", "citations": [{"page": 1, "quote": "as set out in the preceding paragraph"}, {"page": 2, "quote": "as set out in the preceding paragraph"}, {"page": 3, "quote": "as set out in the preceding paragraph"}, {"page": 4, "quote": "as set out in the preceding paragraph"}]}
-
-## Your task
-
-Fix it. It must PASS on the clean feature and FAIL after `citation.fabricate`.
-Reply with Python only, the whole test, no explanation, no markdown fences.
-
-Python:
-````
-
-</details>
-
 **70. `qwen3:8b` answered**
 
 ````
 ```python
 from feature import answer
 
-def test_citations_match_quotes():
+def test_citations_are_from_actual_pages():
     q1 = "How much annual leave accrues each month?"
     q2 = "How many days of leave can be carried over?"
     
-    res1_clean = answer(q1)
-    res2_clean = answer(q2)
+    result1 = answer(q1)
+    result2 = answer(q2)
     
-    res1_sabotaged = answer(q1)
-    res2_sabotaged = answer(q2)
-    
-    assert res1_clean["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-    assert res2_clean["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
-    
-    assert res1_sabotaged["citations"][0]["quote"] != "Annual leave accrues at 2.5 days per completed month of service."
-    assert res2_sabotaged["citations"][1]["quote"] != "Unused annual leave may be carried over, to a maximum of 10 days."
+    assert all(c["quote"] in DOCUMENT[c["page"] - 1]["text"] for c in result1["citations"])
+    assert all(c["quote"] in DOCUMENT[c["page"] - 1]["text"] for c in result2["citations"])
 ```
 ````
 
@@ -2046,21 +2123,15 @@ the test it is asking the gate to judge:
 ```python
 from feature import answer
 
-def test_citations_match_quotes():
+def test_citations_are_from_actual_pages():
     q1 = "How much annual leave accrues each month?"
     q2 = "How many days of leave can be carried over?"
     
-    res1_clean = answer(q1)
-    res2_clean = answer(q2)
+    result1 = answer(q1)
+    result2 = answer(q2)
     
-    res1_sabotaged = answer(q1)
-    res2_sabotaged = answer(q2)
-    
-    assert res1_clean["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-    assert res2_clean["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
-    
-    assert res1_sabotaged["citations"][0]["quote"] != "Annual leave accrues at 2.5 days per completed month of service."
-    assert res2_sabotaged["citations"][1]["quote"] != "Unused annual leave may be carried over, to a maximum of 10 days."
+    assert all(c["quote"] in DOCUMENT[c["page"] - 1]["text"] for c in result1["citations"])
+    assert all(c["quote"] in DOCUMENT[c["page"] - 1]["text"] for c in result2["citations"])
 ```
 
 
@@ -2068,14 +2139,20 @@ def test_citations_match_quotes():
 
 ```
 rejected: red on the clean feature (assertion failed)
-= "Unused annual leave may be carried over, to a maximum of 10 days."
-    
->       assert res1_sabotaged["citations"][0]["quote"] != "Annual leave accrues at 2.5 days per completed month of service."
-E       AssertionError: assert 'Annual leave accrues at 2.5 days per completed month of service.' != 'Annual leave accrues at 2.5 days per completed month of service.'
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests/test_greenwash_closing.py:16: AssertionError
+tests/test_greenwash_closing.py:10: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <list_iterator object at 0xADDR>
+
+>   assert all(c["quote"] in DOCUMENT[c["page"] - 1]["text"] for c in result1["citations"])
+                             ^^^^^^^^
+E   NameError: name 'DOCUMENT' is not defined
+
+tests/test_greenwash_closing.py:10: NameError
 =========================== short test summary info ============================
-FAILED tests/test_greenwash_closing.py::test_citations_match_quotes - Asserti...
+FAILED tests/test_greenwash_closing.py::test_citations_are_from_actual_pages
 1 failed in N.NNs
 ```
 
@@ -2098,59 +2175,45 @@ you are shown the pytest output and asked again.
 
 Never report a blind spot that no run demonstrates.
 
-## What you wrote
+## What you have already tried for `citation.fabricate`, and why each one failed
+
+### Attempt 1
 
 ```python
 from feature import answer
 
-def test_citations_match_quotes():
+def test_citations_are_from_actual_pages():
     q1 = "How much annual leave accrues each month?"
     q2 = "How many days of leave can be carried over?"
     
-    res1_clean = answer(q1)
-    res2_clean = answer(q2)
+    result1 = answer(q1)
+    result2 = answer(q2)
     
-    res1_sabotaged = answer(q1)
-    res2_sabotaged = answer(q2)
-    
-    assert res1_clean["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-    assert res2_clean["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
-    
-    assert res1_sabotaged["citations"][0]["quote"] != "Annual leave accrues at 2.5 days per completed month of service."
-    assert res2_sabotaged["citations"][1]["quote"] != "Unused annual leave may be carried over, to a maximum of 10 days."
-
+    assert all(c["quote"] in DOCUMENT[c["page"] - 1]["text"] for c in result1["citations"])
+    assert all(c["quote"] in DOCUMENT[c["page"] - 1]["text"] for c in result2["citations"])
 ```
 
-## What happened when it was run
-
-red on the clean feature (assertion failed)
+Result: red on the clean feature (assertion failed)
 
 ```
-ES ===================================
-_________________________ test_citations_match_quotes __________________________
+] - 1]["text"] for c in result1["citations"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    def test_citations_match_quotes():
-        q1 = "How much annual leave accrues each month?"
-        q2 = "How many days of leave can be carried over?"
-    
-        res1_clean = answer(q1)
-        res2_clean = answer(q2)
-    
-        res1_sabotaged = answer(q1)
-        res2_sabotaged = answer(q2)
-    
-        assert res1_clean["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-        assert res2_clean["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
-    
->       assert res1_sabotaged["citations"][0]["quote"] != "Annual leave accrues at 2.5 days per completed month of service."
-E       AssertionError: assert 'Annual leave accrues at 2.5 days per completed month of service.' != 'Annual leave accrues at 2.5 days per completed month of service.'
+tests/test_greenwash_closing.py:10: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-tests/test_greenwash_closing.py:16: AssertionError
+.0 = <list_iterator object at 0xADDR>
+
+>   assert all(c["quote"] in DOCUMENT[c["page"] - 1]["text"] for c in result1["citations"])
+                             ^^^^^^^^
+E   NameError: name 'DOCUMENT' is not defined
+
+tests/test_greenwash_closing.py:10: NameError
 =========================== short test summary info ============================
-FAILED tests/test_greenwash_closing.py::test_citations_match_quotes - Asserti...
+FAILED tests/test_greenwash_closing.py::test_citations_are_from_actual_pages
 1 failed in N.NNs
-
 ```
+
 
 ## What the feature actually returns
 
@@ -2170,8 +2233,14 @@ call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be ca
 
 ## Your task
 
-Fix it. It must PASS on the clean feature and FAIL after `citation.fabricate`.
-Reply with Python only, the whole test, no explanation, no markdown fences.
+Attempt 2. Your last test failed on the CLEAN feature. Every assertion has to be true of the *before* values above — that is what the feature returns when nothing is wrong.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`citation.fabricate`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
 
 Python:
 ````
@@ -2184,21 +2253,22 @@ Python:
 ```python
 from feature import answer
 
-def test_citations_match_quotes():
+def test_citations_have_valid_quotes():
     q1 = "How much annual leave accrues each month?"
     q2 = "How many days of leave can be carried over?"
     
-    res1_clean = answer(q1)
-    res2_clean = answer(q2)
+    result1 = answer(q1)
+    result2 = answer(q2)
     
-    res1_sabotaged = answer(q1)
-    res2_sabotaged = answer(q2)
+    valid_quotes = {
+        1: "Annual leave accrues at 2.5 days per completed month of service.",
+        2: "Unused annual leave may be carried over, to a maximum of 10 days.",
+        3: "Probation lasts six months. Leave may not be taken during probation.",
+        4: "Sick leave requires a medical certificate from the third consecutive day."
+    }
     
-    assert res1_clean["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-    assert res2_clean["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
-    
-    assert res1_sabotaged["citations"][0]["quote"] != "Annual leave accrues at 2.5 days per completed month of service."
-    assert res2_sabotaged["citations"][1]["quote"] != "Unused annual leave may be carried over, to a maximum of 10 days."
+    assert all(c["quote"] == valid_quotes[c["page"]] for c in result1["citations"])
+    assert all(c["quote"] == valid_quotes[c["page"]] for c in result2["citations"])
 ```
 ````
 
@@ -2209,36 +2279,40 @@ the test it is asking the gate to judge:
 ```python
 from feature import answer
 
-def test_citations_match_quotes():
+def test_citations_have_valid_quotes():
     q1 = "How much annual leave accrues each month?"
     q2 = "How many days of leave can be carried over?"
     
-    res1_clean = answer(q1)
-    res2_clean = answer(q2)
+    result1 = answer(q1)
+    result2 = answer(q2)
     
-    res1_sabotaged = answer(q1)
-    res2_sabotaged = answer(q2)
+    valid_quotes = {
+        1: "Annual leave accrues at 2.5 days per completed month of service.",
+        2: "Unused annual leave may be carried over, to a maximum of 10 days.",
+        3: "Probation lasts six months. Leave may not be taken during probation.",
+        4: "Sick leave requires a medical certificate from the third consecutive day."
+    }
     
-    assert res1_clean["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
-    assert res2_clean["citations"][1]["quote"] == "Unused annual leave may be carried over, to a maximum of 10 days."
-    
-    assert res1_sabotaged["citations"][0]["quote"] != "Annual leave accrues at 2.5 days per completed month of service."
-    assert res2_sabotaged["citations"][1]["quote"] != "Unused annual leave may be carried over, to a maximum of 10 days."
+    assert all(c["quote"] == valid_quotes[c["page"]] for c in result1["citations"])
+    assert all(c["quote"] == valid_quotes[c["page"]] for c in result2["citations"])
 ```
 
 
 **76. propose_closing_test responded**
 
 ```
-rejected: red on the clean feature (assertion failed)
-= "Unused annual leave may be carried over, to a maximum of 10 days."
+accepted: green on the clean feature, red under citation.fabricate
+ave may not be taken during probation.",
+            4: "Sick leave requires a medical certificate from the third consecutive day."
+        }
     
->       assert res1_sabotaged["citations"][0]["quote"] != "Annual leave accrues at 2.5 days per completed month of service."
-E       AssertionError: assert 'Annual leave accrues at 2.5 days per completed month of service.' != 'Annual leave accrues at 2.5 days per completed month of service.'
+>       assert all(c["quote"] == valid_quotes[c["page"]] for c in result1["citations"])
+E       assert False
+E        +  where False = all(<generator object test_citations_have_valid_quotes.<locals>.<genexpr> at 0xADDR>)
 
-tests/test_greenwash_closing.py:16: AssertionError
+tests/test_greenwash_closing.py:17: AssertionError
 =========================== short test summary info ============================
-FAILED tests/test_greenwash_closing.py::test_citations_match_quotes - Asserti...
+FAILED tests/test_greenwash_closing.py::test_citations_have_valid_quotes - as...
 1 failed in N.NNs
 ```
 
@@ -2289,6 +2363,18 @@ DOCUMENT = [
 ]
 
 PROMPT = """Answer the question using only the context. Cite the page you used.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+
+
+# The same instruction, worded differently — see `prompt.reword`.
+PROMPT_VARIANT = """Using only the context below, answer the question. Say which
+page your answer comes from.
 
 Context:
 {context}
@@ -2394,11 +2480,11 @@ def test_citations_include_correct_pages():
     q1 = "How much annual leave accrues each month?"
     q2 = "How many days of leave can be carried over?"
     
-    res1_clean = answer(q1)
-    res2_clean = answer(q2)
+    result1 = answer(q1)
+    result2 = answer(q2)
     
-    assert res1_clean["citations"][0]["page"] == 1
-    assert res2_clean["citations"][1]["page"] == 2
+    assert result1["citations"][0]["page"] == 1
+    assert result2["citations"][1]["page"] == 2
 ```
 ````
 
@@ -2413,11 +2499,11 @@ def test_citations_include_correct_pages():
     q1 = "How much annual leave accrues each month?"
     q2 = "How many days of leave can be carried over?"
     
-    res1_clean = answer(q1)
-    res2_clean = answer(q2)
+    result1 = answer(q1)
+    result2 = answer(q2)
     
-    assert res1_clean["citations"][0]["page"] == 1
-    assert res2_clean["citations"][1]["page"] == 2
+    assert result1["citations"][0]["page"] == 1
+    assert result2["citations"][1]["page"] == 2
 ```
 
 
@@ -2448,7 +2534,9 @@ you are shown the pytest output and asked again.
 
 Never report a blind spot that no run demonstrates.
 
-## What you wrote
+## What you have already tried for `retrieval.truncate`, and why each one failed
+
+### Attempt 1
 
 ```python
 from feature import answer
@@ -2457,23 +2545,20 @@ def test_citations_include_correct_pages():
     q1 = "How much annual leave accrues each month?"
     q2 = "How many days of leave can be carried over?"
     
-    res1_clean = answer(q1)
-    res2_clean = answer(q2)
+    result1 = answer(q1)
+    result2 = answer(q2)
     
-    assert res1_clean["citations"][0]["page"] == 1
-    assert res2_clean["citations"][1]["page"] == 2
-
+    assert result1["citations"][0]["page"] == 1
+    assert result2["citations"][1]["page"] == 2
 ```
 
-## What happened when it was run
-
-retrieval.truncate was applied and the test still passed
+Result: retrieval.truncate was applied and the test still passed
 
 ```
 .                                                                        [100%]
 1 passed in N.NNs
-
 ```
+
 
 ## What the feature actually returns
 
@@ -2493,8 +2578,14 @@ call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be ca
 
 ## Your task
 
-Fix it. It must PASS on the clean feature and FAIL after `retrieval.truncate`.
-Reply with Python only, the whole test, no explanation, no markdown fences.
+Attempt 2. Your last test passed even after the sabotage, so it is not testing the thing that changed. Find something that is different between the before and after values above, and assert the *before* one.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`retrieval.truncate`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
 
 Python:
 ````
@@ -2507,17 +2598,11 @@ Python:
 ```python
 from feature import answer
 
-def test_citations_include_correct_pages_after_truncate():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    
-    res1_clean = answer(q1)
-    res2_clean = answer(q2)
-    
-    assert len(res1_clean["citations"]) == 2
-    assert len(res2_clean["citations"]) == 2
-    assert res1_clean["citations"][0]["page"] == 1
-    assert res2_clean["citations"][1]["page"] == 2
+def test_citations_page_3_exists():
+    q = "How much annual leave accrues each month?"
+    result = answer(q)
+    assert len(result["citations"]) >= 3
+    assert any(citation["page"] == 3 for citation in result["citations"])
 ```
 ````
 
@@ -2528,185 +2613,33 @@ the test it is asking the gate to judge:
 ```python
 from feature import answer
 
-def test_citations_include_correct_pages_after_truncate():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    
-    res1_clean = answer(q1)
-    res2_clean = answer(q2)
-    
-    assert len(res1_clean["citations"]) == 2
-    assert len(res2_clean["citations"]) == 2
-    assert res1_clean["citations"][0]["page"] == 1
-    assert res2_clean["citations"][1]["page"] == 2
+def test_citations_page_3_exists():
+    q = "How much annual leave accrues each month?"
+    result = answer(q)
+    assert len(result["citations"]) >= 3
+    assert any(citation["page"] == 3 for citation in result["citations"])
 ```
 
 
 **86. propose_closing_test responded**
 
 ```
-rejected: red on the clean feature (assertion failed)
- 
->       assert len(res1_clean["citations"]) == 2
-E       AssertionError: assert 4 == 2
-E        +  where 4 = len([{'page': 1, 'quote': 'Annual leave accrues at 2.5 days per completed month of service.'}, {'page': 2, 'quote': 'Unuse...during probation.'}, {'page': 4, 'quote': 'Sick leave requires a medical certificate from the third consecutive day.'}])
+accepted: green on the clean feature, red under retrieval.truncate
+  q = "How much annual leave accrues each month?"
+        result = answer(q)
+>       assert len(result["citations"]) >= 3
+E       AssertionError: assert 2 >= 3
+E        +  where 2 = len([{'page': 1, 'quote': 'Annual leave accrues at 2.5 days per completed month of service.'}, {'page': 2, 'quote': 'Unused annual leave may be carried over, to a maximum of 10 days.'}])
 
-tests/test_greenwash_closing.py:10: AssertionError
+tests/test_greenwash_closing.py:6: AssertionError
 =========================== short test summary info ============================
-FAILED tests/test_greenwash_closing.py::test_citations_include_correct_pages_after_truncate
+FAILED tests/test_greenwash_closing.py::test_citations_page_3_exists - Assert...
 1 failed in N.NNs
 ```
 
-**87. asked `qwen3:8b`**
+**87. tool call** `observe(operator='retrieval.shuffle')`
 
-<details><summary>full prompt</summary>
-
-````
-You are auditing whether a test suite is worth trusting.
-
-You do not guess. For every sabotage you consider, the harness applies it and
-runs the suite, and you are told what happened. A suite that stays green under
-sabotage has a blind spot, and the run is the proof.
-
-Your only real job is the last one: given a sabotage the suite missed, and the
-values the feature actually returned before and after, write the test that would
-have caught it. That test is then run twice — on the clean feature, where it
-must pass, and under the sabotage, where it must fail. If it does not do both,
-you are shown the pytest output and asked again.
-
-Never report a blind spot that no run demonstrates.
-
-## What you wrote
-
-```python
-from feature import answer
-
-def test_citations_include_correct_pages_after_truncate():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    
-    res1_clean = answer(q1)
-    res2_clean = answer(q2)
-    
-    assert len(res1_clean["citations"]) == 2
-    assert len(res2_clean["citations"]) == 2
-    assert res1_clean["citations"][0]["page"] == 1
-    assert res2_clean["citations"][1]["page"] == 2
-
-```
-
-## What happened when it was run
-
-red on the clean feature (assertion failed)
-
-```
-F                                                                        [100%]
-=================================== FAILURES ===================================
-_____________ test_citations_include_correct_pages_after_truncate ______________
-
-    def test_citations_include_correct_pages_after_truncate():
-        q1 = "How much annual leave accrues each month?"
-        q2 = "How many days of leave can be carried over?"
-    
-        res1_clean = answer(q1)
-        res2_clean = answer(q2)
-    
->       assert len(res1_clean["citations"]) == 2
-E       AssertionError: assert 4 == 2
-E        +  where 4 = len([{'page': 1, 'quote': 'Annual leave accrues at 2.5 days per completed month of service.'}, {'page': 2, 'quote': 'Unuse...during probation.'}, {'page': 4, 'quote': 'Sick leave requires a medical certificate from the third consecutive day.'}])
-
-tests/test_greenwash_closing.py:10: AssertionError
-=========================== short test summary info ============================
-FAILED tests/test_greenwash_closing.py::test_citations_include_correct_pages_after_truncate
-1 failed in N.NNs
-
-```
-
-## What the feature actually returns
-
-Before `retrieval.truncate`:
-
-call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
-  returned {"answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
-call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be carried over?'
-  returned {"answer": "The answer is 10 days. This information is found on [page 2].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
-
-After `retrieval.truncate`:
-
-call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
-  returned {"answer": "According to the context, annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}]}
-call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be carried over?'
-  returned {"answer": "The answer is 10 days. This is stated on [page 2].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}]}
-
-## Your task
-
-Fix it. It must PASS on the clean feature and FAIL after `retrieval.truncate`.
-Reply with Python only, the whole test, no explanation, no markdown fences.
-
-Python:
-````
-
-</details>
-
-**88. `qwen3:8b` answered**
-
-````
-```python
-from feature import answer
-
-def test_citations_include_correct_pages_after_truncate():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    
-    res1_clean = answer(q1)
-    res2_clean = answer(q2)
-    
-    assert len(res1_clean["citations"]) == 2
-    assert len(res2_clean["citations"]) == 2
-    assert res1_clean["citations"][0]["page"] == 1
-    assert res2_clean["citations"][1]["page"] == 2
-```
-````
-
-**89. tool call** `propose_closing_test(operator='retrieval.truncate')`
-
-the test it is asking the gate to judge:
-
-```python
-from feature import answer
-
-def test_citations_include_correct_pages_after_truncate():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    
-    res1_clean = answer(q1)
-    res2_clean = answer(q2)
-    
-    assert len(res1_clean["citations"]) == 2
-    assert len(res2_clean["citations"]) == 2
-    assert res1_clean["citations"][0]["page"] == 1
-    assert res2_clean["citations"][1]["page"] == 2
-```
-
-
-**90. propose_closing_test responded**
-
-```
-rejected: red on the clean feature (assertion failed)
- 
->       assert len(res1_clean["citations"]) == 2
-E       AssertionError: assert 4 == 2
-E        +  where 4 = len([{'page': 1, 'quote': 'Annual leave accrues at 2.5 days per completed month of service.'}, {'page': 2, 'quote': 'Unuse...during probation.'}, {'page': 4, 'quote': 'Sick leave requires a medical certificate from the third consecutive day.'}])
-
-tests/test_greenwash_closing.py:10: AssertionError
-=========================== short test summary info ============================
-FAILED tests/test_greenwash_closing.py::test_citations_include_correct_pages_after_truncate
-1 failed in N.NNs
-```
-
-**91. tool call** `observe(operator='retrieval.shuffle')`
-
-**92. observe responded**
+**88. observe responded**
 
 ```
 call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
@@ -2715,7 +2648,7 @@ call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be ca
   returned {"answer": "The answer is 10 days. This information is found on [page 2].", "citations": [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
 ```
 
-**93. asked `qwen3:8b`**
+**89. asked `qwen3:8b`**
 
 <details><summary>full prompt</summary>
 
@@ -2751,6 +2684,18 @@ DOCUMENT = [
 ]
 
 PROMPT = """Answer the question using only the context. Cite the page you used.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+
+
+# The same instruction, worded differently — see `prompt.reword`.
+PROMPT_VARIANT = """Using only the context below, answer the question. Say which
+page your answer comes from.
 
 Context:
 {context}
@@ -2846,22 +2791,174 @@ Python:
 
 </details>
 
-**94. `qwen3:8b` answered**
+**90. `qwen3:8b` answered**
 
 ````
 ```python
 from feature import answer
 
-def test_citations_order_consistent():
+def test_citations_match_answer_content():
     q1 = "How much annual leave accrues each month?"
     q2 = "How many days of leave can be carried over?"
-    clean_citations_1 = [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    clean_citations_2 = [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    shuffled_citations_1 = [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    shuffled_citations_2 = [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    result1 = answer(q1)
-    result2 = answer(q2)
-    assert result1["citations
+    
+    answer1_before = {
+        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    
+    answer2_before = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    
+    answer1_after = {
+        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "citations": [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    
+    answer2_after = {
+        "answer": "The answer is 10 days. This information is
+````
+
+**91. tool call** `propose_closing_test(operator='retrieval.shuffle')`
+
+the test it is asking the gate to judge:
+
+```python
+from feature import answer
+
+def test_citations_match_answer_content():
+    q1 = "How much annual leave accrues each month?"
+    q2 = "How many days of leave can be carried over?"
+    
+    answer1_before = {
+        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    
+    answer2_before = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    
+    answer1_after = {
+        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "citations": [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+```
+
+
+**92. propose_closing_test responded**
+
+```
+rejected: retrieval.shuffle was applied and the test still passed
+.                                                                        [100%]
+1 passed in N.NNs
+```
+
+**93. asked `qwen3:8b`**
+
+<details><summary>full prompt</summary>
+
+````
+You are auditing whether a test suite is worth trusting.
+
+You do not guess. For every sabotage you consider, the harness applies it and
+runs the suite, and you are told what happened. A suite that stays green under
+sabotage has a blind spot, and the run is the proof.
+
+Your only real job is the last one: given a sabotage the suite missed, and the
+values the feature actually returned before and after, write the test that would
+have caught it. That test is then run twice — on the clean feature, where it
+must pass, and under the sabotage, where it must fail. If it does not do both,
+you are shown the pytest output and asked again.
+
+Never report a blind spot that no run demonstrates.
+
+## What you have already tried for `retrieval.shuffle`, and why each one failed
+
+### Attempt 1
+
+```python
+from feature import answer
+
+def test_citations_match_answer_content():
+    q1 = "How much annual leave accrues each month?"
+    q2 = "How many days of leave can be carried over?"
+    
+    answer1_before = {
+        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    
+    answer2_before = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    
+    answer1_after = {
+        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "citations": [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+```
+
+Result: retrieval.shuffle was applied and the test still passed
+
+```
+.                                                                        [100%]
+1 passed in N.NNs
+```
+
+
+## What the feature actually returns
+
+Before `retrieval.shuffle`:
+
+call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
+  returned {"answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
+call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be carried over?'
+  returned {"answer": "The answer is 10 days. This information is found on [page 2].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
+
+After `retrieval.shuffle`:
+
+call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
+  returned {"answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].", "citations": [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
+call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be carried over?'
+  returned {"answer": "The answer is 10 days. This information is found on [page 2].", "citations": [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
+
+## Your task
+
+Attempt 2. Your last test passed even after the sabotage, so it is not testing the thing that changed. Find something that is different between the before and after values above, and assert the *before* one.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`retrieval.shuffle`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
+
+Python:
+````
+
+</details>
+
+**94. `qwen3:8b` answered**
+
+````
+```python
+def test_citations_order_before_shuffle():
+    q = "How many days of leave can be carried over?"
+    before = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    after = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    assert feature.answer(q) == before
+    assert feature.answer(q) != after
+```
 ````
 
 **95. tool call** `propose_closing_test(operator='retrieval.shuffle')`
@@ -2869,26 +2966,35 @@ def test_citations_order_consistent():
 the test it is asking the gate to judge:
 
 ```python
-from feature import answer
-
-def test_citations_order_consistent():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    clean_citations_1 = [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    clean_citations_2 = [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    shuffled_citations_1 = [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    shuffled_citations_2 = [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    result1 = answer(q1)
-    result2 = answer(q2)
+def test_citations_order_before_shuffle():
+    q = "How many days of leave can be carried over?"
+    before = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    after = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    assert feature.answer(q) == before
+    assert feature.answer(q) != after
 ```
 
 
 **96. propose_closing_test responded**
 
 ```
-rejected: retrieval.shuffle was applied and the test still passed
-.                                                                        [100%]
-1 passed in N.NNs
+rejected: red on the clean feature (assertion failed)
+l leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+        }
+>       assert feature.answer(q) == before
+               ^^^^^^^
+E       NameError: name 'feature' is not defined
+
+tests/test_greenwash_closing.py:11: NameError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_citations_order_before_shuffle
+1 failed in N.NNs
 ```
 
 **97. asked `qwen3:8b`**
@@ -2910,32 +3016,72 @@ you are shown the pytest output and asked again.
 
 Never report a blind spot that no run demonstrates.
 
-## What you wrote
+## What you have already tried for `retrieval.shuffle`, and why each one failed
+
+### Attempt 1
 
 ```python
 from feature import answer
 
-def test_citations_order_consistent():
+def test_citations_match_answer_content():
     q1 = "How much annual leave accrues each month?"
     q2 = "How many days of leave can be carried over?"
-    clean_citations_1 = [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    clean_citations_2 = [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    shuffled_citations_1 = [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    shuffled_citations_2 = [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    result1 = answer(q1)
-    result2 = answer(q2)
-
+    
+    answer1_before = {
+        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    
+    answer2_before = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    
+    answer1_after = {
+        "answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
+        "citations": [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
 ```
 
-## What happened when it was run
-
-retrieval.shuffle was applied and the test still passed
+Result: retrieval.shuffle was applied and the test still passed
 
 ```
 .                                                                        [100%]
 1 passed in N.NNs
+```
+
+### Attempt 2
+
+```python
+def test_citations_order_before_shuffle():
+    q = "How many days of leave can be carried over?"
+    before = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    after = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    assert feature.answer(q) == before
+    assert feature.answer(q) != after
+```
+
+Result: red on the clean feature (assertion failed)
 
 ```
+"Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+        }
+>       assert feature.answer(q) == before
+               ^^^^^^^
+E       NameError: name 'feature' is not defined
+
+tests/test_greenwash_closing.py:11: NameError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_citations_order_before_shuffle
+1 failed in N.NNs
+```
+
 
 ## What the feature actually returns
 
@@ -2955,8 +3101,14 @@ call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be ca
 
 ## Your task
 
-Fix it. It must PASS on the clean feature and FAIL after `retrieval.shuffle`.
-Reply with Python only, the whole test, no explanation, no markdown fences.
+Attempt 3. Your last test failed on the CLEAN feature. Every assertion has to be true of the *before* values above — that is what the feature returns when nothing is wrong.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`retrieval.shuffle`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
 
 Python:
 ````
@@ -2965,170 +3117,61 @@ Python:
 
 **98. `qwen3:8b` answered**
 
-````
-```python
-from feature import answer
-
-def test_citations_order_consistent():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    clean_citations_1 = [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    clean_citations_2 = [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    shuffled_citations_1 = [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    shuffled_citations_2 = [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    result1 = answer(q1)
-    result2 = answer(q2)
-    assert result1["citations
-````
+```
+def test_citations_order_before_shuffle():
+    q = "How many days of leave can be carried over?"
+    before = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    assert feature.answer(q) == before
+    after = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    assert feature.answer(q) != after
+```
 
 **99. tool call** `propose_closing_test(operator='retrieval.shuffle')`
 
 the test it is asking the gate to judge:
 
 ```python
-from feature import answer
-
-def test_citations_order_consistent():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    clean_citations_1 = [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    clean_citations_2 = [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    shuffled_citations_1 = [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    shuffled_citations_2 = [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    result1 = answer(q1)
-    result2 = answer(q2)
+def test_citations_order_before_shuffle():
+    q = "How many days of leave can be carried over?"
+    before = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    assert feature.answer(q) == before
+    after = {
+        "answer": "The answer is 10 days. This information is found on [page 2].",
+        "citations": [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+    }
+    assert feature.answer(q) != after
 ```
 
 
 **100. propose_closing_test responded**
 
 ```
-rejected: retrieval.shuffle was applied and the test still passed
-.                                                                        [100%]
-1 passed in N.NNs
-```
+rejected: red on the clean feature (assertion failed)
+nnual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
+        }
+>       assert feature.answer(q) == before
+               ^^^^^^^
+E       NameError: name 'feature' is not defined
 
-**101. asked `qwen3:8b`**
-
-<details><summary>full prompt</summary>
-
-````
-You are auditing whether a test suite is worth trusting.
-
-You do not guess. For every sabotage you consider, the harness applies it and
-runs the suite, and you are told what happened. A suite that stays green under
-sabotage has a blind spot, and the run is the proof.
-
-Your only real job is the last one: given a sabotage the suite missed, and the
-values the feature actually returned before and after, write the test that would
-have caught it. That test is then run twice — on the clean feature, where it
-must pass, and under the sabotage, where it must fail. If it does not do both,
-you are shown the pytest output and asked again.
-
-Never report a blind spot that no run demonstrates.
-
-## What you wrote
-
-```python
-from feature import answer
-
-def test_citations_order_consistent():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    clean_citations_1 = [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    clean_citations_2 = [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    shuffled_citations_1 = [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    shuffled_citations_2 = [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    result1 = answer(q1)
-    result2 = answer(q2)
-
-```
-
-## What happened when it was run
-
-retrieval.shuffle was applied and the test still passed
-
-```
-.                                                                        [100%]
-1 passed in N.NNs
-
-```
-
-## What the feature actually returns
-
-Before `retrieval.shuffle`:
-
-call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
-  returned {"answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
-call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be carried over?'
-  returned {"answer": "The answer is 10 days. This information is found on [page 2].", "citations": [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
-
-After `retrieval.shuffle`:
-
-call 1: lambda q=q: feature.answer(q)   with q='How much annual leave accrues each month?'
-  returned {"answer": "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].", "citations": [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
-call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be carried over?'
-  returned {"answer": "The answer is 10 days. This information is found on [page 2].", "citations": [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]}
-
-## Your task
-
-Fix it. It must PASS on the clean feature and FAIL after `retrieval.shuffle`.
-Reply with Python only, the whole test, no explanation, no markdown fences.
-
-Python:
-````
-
-</details>
-
-**102. `qwen3:8b` answered**
-
-````
-```python
-from feature import answer
-
-def test_citations_order_consistent():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    clean_citations_1 = [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    clean_citations_2 = [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    shuffled_citations_1 = [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    shuffled_citations_2 = [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    result1 = answer(q1)
-    result2 = answer(q2)
-    assert result1["citations
-````
-
-**103. tool call** `propose_closing_test(operator='retrieval.shuffle')`
-
-the test it is asking the gate to judge:
-
-```python
-from feature import answer
-
-def test_citations_order_consistent():
-    q1 = "How much annual leave accrues each month?"
-    q2 = "How many days of leave can be carried over?"
-    clean_citations_1 = [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    clean_citations_2 = [{"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    shuffled_citations_1 = [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    shuffled_citations_2 = [{"page": 3, "quote": "Probation lasts six months. Leave may not be taken during probation."}, {"page": 1, "quote": "Annual leave accrues at 2.5 days per completed month of service."}, {"page": 2, "quote": "Unused annual leave may be carried over, to a maximum of 10 days."}, {"page": 4, "quote": "Sick leave requires a medical certificate from the third consecutive day."}]
-    result1 = answer(q1)
-    result2 = answer(q2)
-```
-
-
-**104. propose_closing_test responded**
-
-```
-rejected: retrieval.shuffle was applied and the test still passed
-.                                                                        [100%]
-1 passed in N.NNs
+tests/test_greenwash_closing.py:7: NameError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_citations_order_before_shuffle
+1 failed in N.NNs
 ```
 
 
 ## Phase 4 — report
 
-**105. result**
+**101. result**
 
 ```json
 {
@@ -3141,7 +3184,8 @@ rejected: retrieval.shuffle was applied and the test still passed
     "retrieval.shuffle"
   ],
   "closed": [
-    "model.echo"
+    "citation.fabricate",
+    "retrieval.truncate"
   ],
   "kill_rate_before": 0.0
 }

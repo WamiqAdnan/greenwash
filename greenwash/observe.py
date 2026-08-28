@@ -124,11 +124,13 @@ def main() -> None:
     ap.add_argument("case", type=Path)
     ap.add_argument("--operator")
     ap.add_argument("--json", action="store_true", help="machine-readable, for the Auditor")
+    ap.add_argument("--fixtures", default="fixtures",
+                    help="which recorded answers to replay")
     args = ap.parse_args()
 
     case_dir = args.case if args.case.is_absolute() else REPO_ROOT / args.case
     os.environ.setdefault("GREENWASH_MODE", "replay")
-    os.environ["GREENWASH_FIXTURES"] = str(case_dir / "fixtures")
+    os.environ["GREENWASH_FIXTURES"] = str(case_dir / args.fixtures)
     os.environ.pop("GREENWASH_MODEL", None)
 
     observations = observe_in_process(case_dir, args.operator)

@@ -50,6 +50,14 @@ Ticket: {ticket}
 
 JSON:"""
 
+# The same instruction, worded differently — see `prompt.reword`.
+PROMPT_VARIANT = """Route this support ticket to exactly one of these queues: {labels}.
+Respond with JSON only: {{"label": "...", "confidence": 0.0-1.0}}
+
+Ticket: {ticket}
+
+JSON:"""
+
 TICKETS = {
     "t1": "I was charged twice for the March subscription. Please refund one.",
     "t2": "The export button spins forever and never downloads the CSV.",
@@ -169,6 +177,14 @@ Ticket: {ticket}
 
 JSON:"""
 
+# The same instruction, worded differently — see `prompt.reword`.
+PROMPT_VARIANT = """Route this support ticket to exactly one of these queues: {labels}.
+Respond with JSON only: {{"label": "...", "confidence": 0.0-1.0}}
+
+Ticket: {ticket}
+
+JSON:"""
+
 TICKETS = {
     "t1": "I was charged twice for the March subscription. Please refund one.",
     "t2": "The export button spins forever and never downloads the CSV.",
@@ -261,7 +277,7 @@ JSON:
 **9. `qwen3:8b` answered**
 
 ```
-{"order": ["model.downgrade", "model.echo", "classify.confidence_pin", "classify.collapse"], "expect_missed": ["classify.collapse"], "why": "The suite checks for reasonable routing and confidence, but doesn't verify label accuracy, so a label collapse would go undetected."}
+{"order": ["model.downgrade", "model.echo", "classify.confidence_pin", "classify.collapse"], "expect_missed": ["classify.confidence_pin"], "why": "The suite checks confidence but only enforces a floor, not a ceiling, so confidence pinning may go undetected."}
 ```
 
 **10. recorded prior** (evidence, never a finding)
@@ -275,9 +291,9 @@ JSON:
     "classify.collapse"
   ],
   "expect_missed": [
-    "classify.collapse"
+    "classify.confidence_pin"
   ],
-  "why": "The suite checks for reasonable routing and confidence, but doesn't verify label accuracy, so a label collapse would go undetected.",
+  "why": "The suite checks confidence but only enforces a floor, not a ceiling, so confidence pinning may go undetected.",
   "invented_ids": []
 }
 ```
@@ -418,6 +434,14 @@ MAJORITY_LABEL = "billing"
 
 PROMPT = """Classify this support ticket into exactly one queue: {labels}.
 Reply with JSON only: {{"label": "...", "confidence": 0.0-1.0}}
+
+Ticket: {ticket}
+
+JSON:"""
+
+# The same instruction, worded differently — see `prompt.reword`.
+PROMPT_VARIANT = """Route this support ticket to exactly one of these queues: {labels}.
+Respond with JSON only: {{"label": "...", "confidence": 0.0-1.0}}
 
 Ticket: {ticket}
 
@@ -654,6 +678,14 @@ Ticket: {ticket}
 
 JSON:"""
 
+# The same instruction, worded differently — see `prompt.reword`.
+PROMPT_VARIANT = """Route this support ticket to exactly one of these queues: {labels}.
+Respond with JSON only: {{"label": "...", "confidence": 0.0-1.0}}
+
+Ticket: {ticket}
+
+JSON:"""
+
 TICKETS = {
     "t1": "I was charged twice for the March subscription. Please refund one.",
     "t2": "The export button spins forever and never downloads the CSV.",
@@ -785,11 +817,9 @@ import json
 import re
 from feature import classify
 
-def test_confidence_after_collapse():
-    assert classify("t2")["label"] == "billing"
-    assert classify("t3")["label"] == "billing"
-    assert classify("t2")["confidence"] >= 0.5
-    assert classify("t3")["confidence"] >= 0.5
+def test_confidence_for_t2():
+    result = classify("t2")
+    assert result["confidence"] == 0.95
 ```
 ````
 
@@ -802,33 +832,18 @@ import json
 import re
 from feature import classify
 
-def test_confidence_after_collapse():
-    assert classify("t2")["label"] == "billing"
-    assert classify("t3")["label"] == "billing"
-    assert classify("t2")["confidence"] >= 0.5
-    assert classify("t3")["confidence"] >= 0.5
+def test_confidence_for_t2():
+    result = classify("t2")
+    assert result["confidence"] == 0.95
 ```
 
 
 **32. propose_closing_test responded**
 
 ```
-rejected: red on the clean feature (assertion failed)
-%]
-=================================== FAILURES ===================================
-________________________ test_confidence_after_collapse ________________________
-
-    def test_confidence_after_collapse():
->       assert classify("t2")["label"] == "billing"
-E       AssertionError: assert 'technical' == 'billing'
-E         
-E         - billing
-E         + technical
-
-tests/test_greenwash_closing.py:6: AssertionError
-=========================== short test summary info ============================
-FAILED tests/test_greenwash_closing.py::test_confidence_after_collapse - Asse...
-1 failed in N.NNs
+rejected: classify.collapse was applied and the test still passed
+.                                                                        [100%]
+1 passed in N.NNs
 ```
 
 **33. asked `qwen3:8b`**
@@ -850,43 +865,27 @@ you are shown the pytest output and asked again.
 
 Never report a blind spot that no run demonstrates.
 
-## What you wrote
+## What you have already tried for `classify.collapse`, and why each one failed
+
+### Attempt 1
 
 ```python
 import json
 import re
 from feature import classify
 
-def test_confidence_after_collapse():
-    assert classify("t2")["label"] == "billing"
-    assert classify("t3")["label"] == "billing"
-    assert classify("t2")["confidence"] >= 0.5
-    assert classify("t3")["confidence"] >= 0.5
-
+def test_confidence_for_t2():
+    result = classify("t2")
+    assert result["confidence"] == 0.95
 ```
 
-## What happened when it was run
-
-red on the clean feature (assertion failed)
+Result: classify.collapse was applied and the test still passed
 
 ```
-F                                                                        [100%]
-=================================== FAILURES ===================================
-________________________ test_confidence_after_collapse ________________________
-
-    def test_confidence_after_collapse():
->       assert classify("t2")["label"] == "billing"
-E       AssertionError: assert 'technical' == 'billing'
-E         
-E         - billing
-E         + technical
-
-tests/test_greenwash_closing.py:6: AssertionError
-=========================== short test summary info ============================
-FAILED tests/test_greenwash_closing.py::test_confidence_after_collapse - Asse...
-1 failed in N.NNs
-
+.                                                                        [100%]
+1 passed in N.NNs
 ```
+
 
 ## What the feature actually returns
 
@@ -920,8 +919,14 @@ call 4: def _judge_calls():
 
 ## Your task
 
-Fix it. It must PASS on the clean feature and FAIL after `classify.collapse`.
-Reply with Python only, the whole test, no explanation, no markdown fences.
+Attempt 2. Your last test passed even after the sabotage, so it is not testing the thing that changed. Find something that is different between the before and after values above, and assert the *before* one.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`classify.collapse`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
 
 Python:
 ````
@@ -936,11 +941,9 @@ import json
 import re
 from feature import classify
 
-def test_confidence_after_collapse():
-    assert classify("t2")["label"] == "billing"
-    assert classify("t3")["label"] == "billing"
-    assert classify("t2")["confidence"] >= 0.5
-    assert classify("t3")["confidence"] >= 0.5
+def test_label_for_t2():
+    result = classify("t2")
+    assert result["label"] == "technical"
 ```
 ````
 
@@ -953,190 +956,37 @@ import json
 import re
 from feature import classify
 
-def test_confidence_after_collapse():
-    assert classify("t2")["label"] == "billing"
-    assert classify("t3")["label"] == "billing"
-    assert classify("t2")["confidence"] >= 0.5
-    assert classify("t3")["confidence"] >= 0.5
+def test_label_for_t2():
+    result = classify("t2")
+    assert result["label"] == "technical"
 ```
 
 
 **36. propose_closing_test responded**
 
 ```
-rejected: red on the clean feature (assertion failed)
-%]
-=================================== FAILURES ===================================
-________________________ test_confidence_after_collapse ________________________
+accepted: green on the clean feature, red under classify.collapse
+========================= FAILURES ===================================
+______________________________ test_label_for_t2 _______________________________
 
-    def test_confidence_after_collapse():
->       assert classify("t2")["label"] == "billing"
-E       AssertionError: assert 'technical' == 'billing'
+    def test_label_for_t2():
+        result = classify("t2")
+>       assert result["label"] == "technical"
+E       AssertionError: assert 'billing' == 'technical'
 E         
-E         - billing
-E         + technical
+E         - technical
+E         + billing
 
-tests/test_greenwash_closing.py:6: AssertionError
+tests/test_greenwash_closing.py:7: AssertionError
 =========================== short test summary info ============================
-FAILED tests/test_greenwash_closing.py::test_confidence_after_collapse - Asse...
-1 failed in N.NNs
-```
-
-**37. asked `qwen3:8b`**
-
-<details><summary>full prompt</summary>
-
-````
-You are auditing whether a test suite is worth trusting.
-
-You do not guess. For every sabotage you consider, the harness applies it and
-runs the suite, and you are told what happened. A suite that stays green under
-sabotage has a blind spot, and the run is the proof.
-
-Your only real job is the last one: given a sabotage the suite missed, and the
-values the feature actually returned before and after, write the test that would
-have caught it. That test is then run twice — on the clean feature, where it
-must pass, and under the sabotage, where it must fail. If it does not do both,
-you are shown the pytest output and asked again.
-
-Never report a blind spot that no run demonstrates.
-
-## What you wrote
-
-```python
-import json
-import re
-from feature import classify
-
-def test_confidence_after_collapse():
-    assert classify("t2")["label"] == "billing"
-    assert classify("t3")["label"] == "billing"
-    assert classify("t2")["confidence"] >= 0.5
-    assert classify("t3")["confidence"] >= 0.5
-
-```
-
-## What happened when it was run
-
-red on the clean feature (assertion failed)
-
-```
-F                                                                        [100%]
-=================================== FAILURES ===================================
-________________________ test_confidence_after_collapse ________________________
-
-    def test_confidence_after_collapse():
->       assert classify("t2")["label"] == "billing"
-E       AssertionError: assert 'technical' == 'billing'
-E         
-E         - billing
-E         + technical
-
-tests/test_greenwash_closing.py:6: AssertionError
-=========================== short test summary info ============================
-FAILED tests/test_greenwash_closing.py::test_confidence_after_collapse - Asse...
-1 failed in N.NNs
-
-```
-
-## What the feature actually returns
-
-Before `classify.collapse`:
-
-call 1: lambda: feature.classify("t1")
-  returned {"confidence": 0.95, "label": "billing"}
-call 2: lambda: feature.classify("t2")
-  returned {"confidence": 0.95, "label": "technical"}
-call 3: lambda: feature.classify("t3")
-  returned {"confidence": 0.95, "label": "technical"}
-call 4: def _judge_calls():
-    from tests.test_feature import JUDGE
-    for label in feature.LABELS:
-        complete(JUDGE.format(label=label))
-  returned null
-
-After `classify.collapse`:
-
-call 1: lambda: feature.classify("t1")
-  returned {"confidence": 0.95, "label": "billing"}
-call 2: lambda: feature.classify("t2")
-  returned {"confidence": 0.95, "label": "billing"}
-call 3: lambda: feature.classify("t3")
-  returned {"confidence": 0.95, "label": "billing"}
-call 4: def _judge_calls():
-    from tests.test_feature import JUDGE
-    for label in feature.LABELS:
-        complete(JUDGE.format(label=label))
-  returned null
-
-## Your task
-
-Fix it. It must PASS on the clean feature and FAIL after `classify.collapse`.
-Reply with Python only, the whole test, no explanation, no markdown fences.
-
-Python:
-````
-
-</details>
-
-**38. `qwen3:8b` answered**
-
-````
-```python
-import json
-import re
-from feature import classify
-
-def test_confidence_after_collapse():
-    assert classify("t2")["label"] == "billing"
-    assert classify("t3")["label"] == "billing"
-    assert classify("t2")["confidence"] >= 0.5
-    assert classify("t3")["confidence"] >= 0.5
-```
-````
-
-**39. tool call** `propose_closing_test(operator='classify.collapse')`
-
-the test it is asking the gate to judge:
-
-```python
-import json
-import re
-from feature import classify
-
-def test_confidence_after_collapse():
-    assert classify("t2")["label"] == "billing"
-    assert classify("t3")["label"] == "billing"
-    assert classify("t2")["confidence"] >= 0.5
-    assert classify("t3")["confidence"] >= 0.5
-```
-
-
-**40. propose_closing_test responded**
-
-```
-rejected: red on the clean feature (assertion failed)
-%]
-=================================== FAILURES ===================================
-________________________ test_confidence_after_collapse ________________________
-
-    def test_confidence_after_collapse():
->       assert classify("t2")["label"] == "billing"
-E       AssertionError: assert 'technical' == 'billing'
-E         
-E         - billing
-E         + technical
-
-tests/test_greenwash_closing.py:6: AssertionError
-=========================== short test summary info ============================
-FAILED tests/test_greenwash_closing.py::test_confidence_after_collapse - Asse...
+FAILED tests/test_greenwash_closing.py::test_label_for_t2 - AssertionError: a...
 1 failed in N.NNs
 ```
 
 
 ## Phase 4 — report
 
-**41. result**
+**37. result**
 
 ```json
 {
@@ -1145,7 +995,8 @@ FAILED tests/test_greenwash_closing.py::test_confidence_after_collapse - Asse...
     "classify.collapse"
   ],
   "closed": [
-    "classify.confidence_pin"
+    "classify.confidence_pin",
+    "classify.collapse"
   ],
   "kill_rate_before": 0.5
 }

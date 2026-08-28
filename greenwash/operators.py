@@ -34,6 +34,16 @@ class Operator:
 
 REGISTRY: dict[str, Operator] = {}
 
+# The other half of the library. A Benign Change is a change a team really makes
+# — reword the prompt, move the model — that does **not** break the Feature. The
+# Suite is supposed to stay green under one. A test that goes red is a False
+# Alarm, and false alarms are how a tool like this loses its user.
+#
+# Deliberately a separate registry: `applicable()` must never hand one of these
+# to the Kill Rate sweep, where "the suite stayed green" would be scored as a
+# Blind Spot. `get()` sees both, so a Corpus Case's conftest needs no changes.
+BENIGN: dict[str, Operator] = {}
+
 
 def operator(id: str, summary: str, tags: tuple[str, ...]):
     def register(fn: Patch) -> Patch:
@@ -42,15 +52,31 @@ def operator(id: str, summary: str, tags: tuple[str, ...]):
     return register
 
 
+def benign(id: str, summary: str, tags: tuple[str, ...]):
+    def register(fn: Patch) -> Patch:
+        BENIGN[id] = Operator(id=id, summary=summary, tags=tags, patch=fn)
+        return fn
+    return register
+
+
 def applicable(tags: set[str]) -> list[Operator]:
-    """Operators whose every tag the case declares."""
+    """Operators whose every tag the case declares. Sabotages only."""
     return [op for op in REGISTRY.values() if set(op.tags) <= tags]
 
 
+def applicable_benign(tags: set[str]) -> list[Operator]:
+    return [op for op in BENIGN.values() if set(op.tags) <= tags]
+
+
 def get(op_id: str) -> Operator:
-    if op_id not in REGISTRY:
-        raise KeyError(f"Unknown operator {op_id!r}. Known: {sorted(REGISTRY)}")
-    return REGISTRY[op_id]
+    if op_id in REGISTRY:
+        return REGISTRY[op_id]
+    if op_id in BENIGN:
+        return BENIGN[op_id]
+    raise KeyError(
+        f"Unknown operator {op_id!r}. Known: {sorted(REGISTRY)} "
+        f"and benign: {sorted(BENIGN)}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -269,6 +295,32 @@ def _drop_field(module) -> None:
         return result
 
     module.extract = mutated
+
+
+# ---------------------------------------------------------------------------
+# Benign Changes — the things that are *not* breakages
+# ---------------------------------------------------------------------------
+
+@benign(
+    "prompt.reword",
+    "The prompt is reworded to say the same thing differently.",
+    ("llm",),
+)
+def _reword(module) -> None:
+    """Swap in the equivalent prompt the Corpus Case declares.
+
+    Hand-written per case and read by a human, because "means the same thing"
+    is not something to leave to a regex. Changing the prompt changes the
+    Fixture key, so a case needs its own recording pass for this — exactly like
+    the `retrieval.*` Operators.
+    """
+    variant = getattr(module, "PROMPT_VARIANT", None)
+    if variant is None:
+        raise AttributeError(
+            f"{module.__name__} declares no PROMPT_VARIANT, so the reworded "
+            f"prompt cannot be applied. Add one, or exclude this case."
+        )
+    module.PROMPT = variant
 
 
 def load_ground_truth(path) -> dict:
