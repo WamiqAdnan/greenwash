@@ -607,14 +607,14 @@ def test_confidence_pin_bypassed():
 **26. propose_closing_test responded**
 
 ```
-accepted: green on the clean feature, red under classify.confidence_pin, no benign change is measurable on this feature
+rejected: false alarm: the feature still works under model.swap and the test went red anyway
 F                                                                        [100%]
 =================================== FAILURES ===================================
 _________________________ test_confidence_pin_bypassed _________________________
 
     def test_confidence_pin_bypassed():
 >       assert classify("t1")["confidence"] == 0.95
-E       assert 0.99 == 0.95
+E       assert 0.9 == 0.95
 
 tests/test_greenwash_closing.py:6: AssertionError
 =========================== short test summary info ============================
@@ -622,9 +622,335 @@ FAILED tests/test_greenwash_closing.py::test_confidence_pin_bypassed - assert...
 1 failed in N.NNs
 ```
 
-**27. tool call** `observe(operator='classify.collapse')`
+**27. asked `qwen3:8b`**
 
-**28. observe responded**
+<details><summary>full prompt</summary>
+
+````
+You are auditing whether a test suite is worth trusting.
+
+You do not guess. For every sabotage you consider, the harness applies it and
+runs the suite, and you are told what happened. A suite that stays green under
+sabotage has a blind spot, and the run is the proof.
+
+Your only real job is the last one: given a sabotage the suite missed, and the
+values the feature actually returned before and after, write the test that would
+have caught it. That test is then run on the clean feature, where it must pass;
+under the sabotage, where it must fail; and under any change that does not break
+the feature at all, where it must pass again. If it does not do all of that, you
+are shown the pytest output and asked again.
+
+Never report a blind spot that no run demonstrates.
+
+## What you have already tried for `classify.confidence_pin`, and why each one failed
+
+### Attempt 1
+
+```python
+import json
+import re
+from feature import classify
+
+def test_confidence_pin_bypassed():
+    assert classify("t1")["confidence"] == 0.95
+    assert classify("t2")["confidence"] == 0.95
+    assert classify("t3")["confidence"] == 0.95
+```
+
+Result: false alarm: the feature still works under model.swap and the test went red anyway
+
+```
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_confidence_pin_bypassed _________________________
+
+    def test_confidence_pin_bypassed():
+>       assert classify("t1")["confidence"] == 0.95
+E       assert 0.9 == 0.95
+
+tests/test_greenwash_closing.py:6: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_confidence_pin_bypassed - assert...
+1 failed in N.NNs
+```
+
+
+## What the feature actually returns
+
+Before `classify.confidence_pin`:
+
+call 1: lambda: feature.classify("t1")
+  returned {"confidence": 0.95, "label": "billing"}
+call 2: lambda: feature.classify("t2")
+  returned {"confidence": 0.95, "label": "technical"}
+call 3: lambda: feature.classify("t3")
+  returned {"confidence": 0.95, "label": "technical"}
+call 4: def _judge_calls():
+    from tests.test_feature import JUDGE
+    for label in feature.LABELS:
+        complete(JUDGE.format(label=label))
+  returned null
+
+After `classify.confidence_pin`:
+
+call 1: lambda: feature.classify("t1")
+  returned {"confidence": 0.99, "label": "billing"}
+call 2: lambda: feature.classify("t2")
+  returned {"confidence": 0.99, "label": "technical"}
+call 3: lambda: feature.classify("t3")
+  returned {"confidence": 0.99, "label": "technical"}
+call 4: def _judge_calls():
+    from tests.test_feature import JUDGE
+    for label in feature.LABELS:
+        complete(JUDGE.format(label=label))
+  returned null
+
+## Your task
+
+Attempt 2. Your last test went red under `model.swap`, which does NOT break the feature — the values it returned were still correct, only worded differently, and your test called that a failure. It is pinned to the exact output this model happened to produce. Assert something that stays true when the wording changes: a fact from the source, a page number, a quote, a number, a structural property — never the model's prose.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`classify.confidence_pin`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
+
+Python:
+````
+
+</details>
+
+**28. `qwen3:8b` answered**
+
+````
+```python
+import json
+import re
+from feature import classify
+
+def test_confidence_pin_bypassed():
+    assert classify("t1")["confidence"] == 0.95
+    assert classify("t2")["confidence"] == 0.95
+    assert classify("t3")["confidence"] == 0.95
+```
+````
+
+**29. tool call** `propose_closing_test(operator='classify.confidence_pin')`
+
+the test it is asking the gate to judge:
+
+```python
+import json
+import re
+from feature import classify
+
+def test_confidence_pin_bypassed():
+    assert classify("t1")["confidence"] == 0.95
+    assert classify("t2")["confidence"] == 0.95
+    assert classify("t3")["confidence"] == 0.95
+```
+
+
+**30. propose_closing_test responded**
+
+```
+rejected: false alarm: the feature still works under model.swap and the test went red anyway
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_confidence_pin_bypassed _________________________
+
+    def test_confidence_pin_bypassed():
+>       assert classify("t1")["confidence"] == 0.95
+E       assert 0.9 == 0.95
+
+tests/test_greenwash_closing.py:6: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_confidence_pin_bypassed - assert...
+1 failed in N.NNs
+```
+
+**31. asked `qwen3:8b`**
+
+<details><summary>full prompt</summary>
+
+````
+You are auditing whether a test suite is worth trusting.
+
+You do not guess. For every sabotage you consider, the harness applies it and
+runs the suite, and you are told what happened. A suite that stays green under
+sabotage has a blind spot, and the run is the proof.
+
+Your only real job is the last one: given a sabotage the suite missed, and the
+values the feature actually returned before and after, write the test that would
+have caught it. That test is then run on the clean feature, where it must pass;
+under the sabotage, where it must fail; and under any change that does not break
+the feature at all, where it must pass again. If it does not do all of that, you
+are shown the pytest output and asked again.
+
+Never report a blind spot that no run demonstrates.
+
+## What you have already tried for `classify.confidence_pin`, and why each one failed
+
+### Attempt 1
+
+```python
+import json
+import re
+from feature import classify
+
+def test_confidence_pin_bypassed():
+    assert classify("t1")["confidence"] == 0.95
+    assert classify("t2")["confidence"] == 0.95
+    assert classify("t3")["confidence"] == 0.95
+```
+
+Result: false alarm: the feature still works under model.swap and the test went red anyway
+
+```
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_confidence_pin_bypassed _________________________
+
+    def test_confidence_pin_bypassed():
+>       assert classify("t1")["confidence"] == 0.95
+E       assert 0.9 == 0.95
+
+tests/test_greenwash_closing.py:6: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_confidence_pin_bypassed - assert...
+1 failed in N.NNs
+```
+
+### Attempt 2
+
+```python
+import json
+import re
+from feature import classify
+
+def test_confidence_pin_bypassed():
+    assert classify("t1")["confidence"] == 0.95
+    assert classify("t2")["confidence"] == 0.95
+    assert classify("t3")["confidence"] == 0.95
+```
+
+Result: false alarm: the feature still works under model.swap and the test went red anyway
+
+```
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_confidence_pin_bypassed _________________________
+
+    def test_confidence_pin_bypassed():
+>       assert classify("t1")["confidence"] == 0.95
+E       assert 0.9 == 0.95
+
+tests/test_greenwash_closing.py:6: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_confidence_pin_bypassed - assert...
+1 failed in N.NNs
+```
+
+
+## What the feature actually returns
+
+Before `classify.confidence_pin`:
+
+call 1: lambda: feature.classify("t1")
+  returned {"confidence": 0.95, "label": "billing"}
+call 2: lambda: feature.classify("t2")
+  returned {"confidence": 0.95, "label": "technical"}
+call 3: lambda: feature.classify("t3")
+  returned {"confidence": 0.95, "label": "technical"}
+call 4: def _judge_calls():
+    from tests.test_feature import JUDGE
+    for label in feature.LABELS:
+        complete(JUDGE.format(label=label))
+  returned null
+
+After `classify.confidence_pin`:
+
+call 1: lambda: feature.classify("t1")
+  returned {"confidence": 0.99, "label": "billing"}
+call 2: lambda: feature.classify("t2")
+  returned {"confidence": 0.99, "label": "technical"}
+call 3: lambda: feature.classify("t3")
+  returned {"confidence": 0.99, "label": "technical"}
+call 4: def _judge_calls():
+    from tests.test_feature import JUDGE
+    for label in feature.LABELS:
+        complete(JUDGE.format(label=label))
+  returned null
+
+## Your task
+
+Attempt 3. Your last test went red under `model.swap`, which does NOT break the feature — the values it returned were still correct, only worded differently, and your test called that a failure. It is pinned to the exact output this model happened to produce. Assert something that stays true when the wording changes: a fact from the source, a page number, a quote, a number, a structural property — never the model's prose.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`classify.confidence_pin`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
+
+Python:
+````
+
+</details>
+
+**32. `qwen3:8b` answered**
+
+````
+```python
+import json
+import re
+from feature import classify
+
+def test_confidence_pin_bypassed():
+    assert classify("t1")["confidence"] == 0.95
+    assert classify("t2")["confidence"] == 0.95
+    assert classify("t3")["confidence"] == 0.95
+```
+````
+
+**33. tool call** `propose_closing_test(operator='classify.confidence_pin')`
+
+the test it is asking the gate to judge:
+
+```python
+import json
+import re
+from feature import classify
+
+def test_confidence_pin_bypassed():
+    assert classify("t1")["confidence"] == 0.95
+    assert classify("t2")["confidence"] == 0.95
+    assert classify("t3")["confidence"] == 0.95
+```
+
+
+**34. propose_closing_test responded**
+
+```
+rejected: false alarm: the feature still works under model.swap and the test went red anyway
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________________ test_confidence_pin_bypassed _________________________
+
+    def test_confidence_pin_bypassed():
+>       assert classify("t1")["confidence"] == 0.95
+E       assert 0.9 == 0.95
+
+tests/test_greenwash_closing.py:6: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_confidence_pin_bypassed - assert...
+1 failed in N.NNs
+```
+
+**35. tool call** `observe(operator='classify.collapse')`
+
+**36. observe responded**
 
 ```
 call 1: lambda: feature.classify("t1")
@@ -640,7 +966,7 @@ call 4: def _judge_calls():
   returned null
 ```
 
-**29. asked `qwen3:8b`**
+**37. asked `qwen3:8b`**
 
 <details><summary>full prompt</summary>
 
@@ -813,7 +1139,7 @@ Python:
 
 </details>
 
-**30. `qwen3:8b` answered**
+**38. `qwen3:8b` answered**
 
 ````
 ```python
@@ -827,7 +1153,7 @@ def test_confidence_for_t2():
 ```
 ````
 
-**31. tool call** `propose_closing_test(operator='classify.collapse')`
+**39. tool call** `propose_closing_test(operator='classify.collapse')`
 
 the test it is asking the gate to judge:
 
@@ -842,7 +1168,7 @@ def test_confidence_for_t2():
 ```
 
 
-**32. propose_closing_test responded**
+**40. propose_closing_test responded**
 
 ```
 rejected: classify.collapse was applied and the test still passed
@@ -850,7 +1176,7 @@ rejected: classify.collapse was applied and the test still passed
 1 passed in N.NNs
 ```
 
-**33. asked `qwen3:8b`**
+**41. asked `qwen3:8b`**
 
 <details><summary>full prompt</summary>
 
@@ -938,7 +1264,7 @@ Python:
 
 </details>
 
-**34. `qwen3:8b` answered**
+**42. `qwen3:8b` answered**
 
 ````
 ```python
@@ -952,7 +1278,7 @@ def test_label_for_t2():
 ```
 ````
 
-**35. tool call** `propose_closing_test(operator='classify.collapse')`
+**43. tool call** `propose_closing_test(operator='classify.collapse')`
 
 the test it is asking the gate to judge:
 
@@ -967,10 +1293,10 @@ def test_label_for_t2():
 ```
 
 
-**36. propose_closing_test responded**
+**44. propose_closing_test responded**
 
 ```
-accepted: green on the clean feature, red under classify.collapse, no benign change is measurable on this feature
+accepted: green on the clean feature, red under classify.collapse, green under model.swap, model.pin_previous
 ========================= FAILURES ===================================
 ______________________________ test_label_for_t2 _______________________________
 
@@ -991,7 +1317,7 @@ FAILED tests/test_greenwash_closing.py::test_label_for_t2 - AssertionError: a...
 
 ## Phase 4 — report
 
-**37. result**
+**45. result**
 
 ```json
 {
@@ -1000,7 +1326,6 @@ FAILED tests/test_greenwash_closing.py::test_label_for_t2 - AssertionError: a...
     "classify.collapse"
   ],
   "closed": [
-    "classify.confidence_pin",
     "classify.collapse"
   ],
   "kill_rate_before": 0.5

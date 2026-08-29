@@ -211,32 +211,37 @@ def test_an_inert_benign_change_is_not_run_at_all():
     assert VerificationGate(CASE).observable_benign() == []
 
 
-CLASSIFIER = harness.Case(ROOT / "corpus" / "02_ticket_classifier")
+MODERATOR = harness.Case(ROOT / "corpus" / "08_content_moderation")
 
-CLASSIFIER_TEST = """
-from feature import classify
+MODERATOR_TEST = """
+from feature import moderate
 
 
-def test_t2_is_technical():
-    assert classify("t2")["label"] == "technical"
+def test_p1_is_harassment():
+    result = moderate("p1")
+    assert result["flagged"] is True
+    assert result["category"] == "harassment"
 """
 
 
 def test_a_case_with_no_benign_check_says_so_rather_than_claiming_one(tmp_path):
-    """Nothing the Gate may apply is usable on the classifier, for two reasons.
+    """Some Features have no room to vary, and the verdict has to admit it.
 
-    `prompt.reword` is Inert on it — an extraction-shaped feature returns the
-    same JSON however you ask. `model.swap` does move its output, but that
-    case's own Suite goes red under it, because the Suite's LLM judge changed
-    its mind and not because the Feature did. Judging a candidate on that run
-    would reject it on evidence about the judge.
+    Every Benign Change is Inert on the moderator, and not by accident. Its
+    Suite exercises three posts whose correct answer is a boolean and one of
+    four categories — a single point, with nothing around it. A change that
+    moves that output has made it *wrong*, so it was not benign; a change that
+    keeps it right cannot have moved it. There is no third option, which is why
+    no Benign Change will ever reach this case.
 
-    So this Closing Test has never been held to a Benign Change, and the verdict
-    has to say so rather than quietly imply a check that did not happen.
+    The Gate therefore holds this Closing Test to two runs, and says so instead
+    of implying a check that could not have happened. The reassuring corollary
+    is that a test asserting the one correct answer cannot be brittle in the way
+    the third run looks for.
     """
-    gate_ = VerificationGate(CLASSIFIER, scratch=tmp_path)
+    gate_ = VerificationGate(MODERATOR, scratch=tmp_path)
     assert gate_.observable_benign() == []
-    verdict = gate_.judge("classify.collapse", CLASSIFIER_TEST)
+    verdict = gate_.judge("moderation.category_collapse", MODERATOR_TEST)
     assert verdict.accepted, verdict.reason
     assert verdict.benign_checked == ()
     assert "no benign change is measurable" in verdict.reason

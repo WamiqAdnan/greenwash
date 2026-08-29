@@ -8,34 +8,29 @@
 
 2 ways this feature can break without your suite going red. Every one below was applied to the real feature and the suite was run; it stayed green.
 
-2 of them now have a test that would have caught it.
+1 of them now has a test that would have caught it.
 
 ## `classify.confidence_pin`
 
 Confidence is pinned high regardless of how uncertain the model was.
 
 - suite under this sabotage: **suite stayed green**
-- closing test: verified green on the clean feature, red under classify.confidence_pin, no benign change is measurable on this feature
-- it fails as: `FAILED tests/test_greenwash_closing.py::test_confidence_pin_bypassed - assert...`
-- attempts needed: 1
+- **no closing test.** 3 attempt(s), last verdict: false alarm: the feature still works under model.swap and the test went red anyway
 
-```python
-import json
-import re
-from feature import classify
+This one is still open. The blind spot is real — the run above proves it — but the auditor could not write a test that closed it.
 
-def test_confidence_pin_bypassed():
-    assert classify("t1")["confidence"] == 0.95
-    assert classify("t2")["confidence"] == 0.95
-    assert classify("t3")["confidence"] == 0.95
-```
+Rejected by the gate along the way:
+
+1. false alarm: the feature still works under model.swap and the test went red anyway
+2. false alarm: the feature still works under model.swap and the test went red anyway
+3. false alarm: the feature still works under model.swap and the test went red anyway
 
 ## `classify.collapse`
 
 Every input is classified into the single most common label.
 
 - suite under this sabotage: **suite stayed green**
-- closing test: verified green on the clean feature, red under classify.collapse, no benign change is measurable on this feature
+- closing test: verified green on the clean feature, red under classify.collapse, green under model.swap, model.pin_previous
 - it fails as: `FAILED tests/test_greenwash_closing.py::test_label_for_t2 - AssertionError: a...`
 - attempts needed: 2
 

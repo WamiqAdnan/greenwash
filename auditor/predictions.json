@@ -62,7 +62,6 @@
       "value.transpose_digits"
     ],
     "02_ticket_classifier": [
-      "classify.confidence_pin",
       "classify.collapse"
     ],
     "03_rag_citations": [

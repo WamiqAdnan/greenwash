@@ -11,21 +11,8 @@ Merged onto an Overlay by `evals/uplift.py`. Never written into a Suite.
 """
 
 
-# closes: classify.confidence_pin — Confidence is pinned high regardless of how uncertain the model was.
-# gate: green on the clean feature, red under classify.confidence_pin, no benign change is measurable on this feature
-# fails as: FAILED tests/test_greenwash_closing.py::test_confidence_pin_bypassed - assert...
-import json
-import re
-from feature import classify
-
-def test_confidence_pin_bypassed():
-    assert classify("t1")["confidence"] == 0.95
-    assert classify("t2")["confidence"] == 0.95
-    assert classify("t3")["confidence"] == 0.95
-
-
 # closes: classify.collapse — Every input is classified into the single most common label.
-# gate: green on the clean feature, red under classify.collapse, no benign change is measurable on this feature
+# gate: green on the clean feature, red under classify.collapse, green under model.swap, model.pin_previous
 # fails as: FAILED tests/test_greenwash_closing.py::test_label_for_t2 - AssertionError: a...
 import json
 import re

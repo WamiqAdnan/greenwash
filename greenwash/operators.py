@@ -577,10 +577,17 @@ def _swap(module) -> None:
     and both are exactly the snapshot the Gate exists to reject. A change that
     catches real brittleness belongs in front of the tests, not behind them —
     so `model.pin_previous` took over the held-out seat.
+
+    Bound to the Feature's own `complete`, not to `GREENWASH_MODEL`. Setting the
+    environment variable swaps the model for everything in the process — which
+    on `02_ticket_classifier` includes the **LLM judge inside its own suite**, so
+    the suite went red because the judge changed its mind and the Gate had to
+    skip the case entirely. A Benign Change has to move the Feature and nothing
+    else, or it is not measuring what it claims to.
     """
-    os.environ["GREENWASH_MODEL"] = os.environ.get(
+    _swap_feature_model(module, os.environ.get(
         "GREENWASH_OTHER_MODEL", "llama3.1:8b"
-    )
+    ))
 
 
 @benign(
@@ -599,10 +606,12 @@ def _pin_previous(module) -> None:
     output of every Corpus Case whose Feature produces prose or generated code,
     which is where snapshots get written. `schema.add_field` holds the held-out
     seat instead — see `HELD_OUT` for what that seat is for and what it costs.
+
+    Bound to the Feature's own `complete` for the same reason as `model.swap`.
     """
-    os.environ["GREENWASH_MODEL"] = os.environ.get(
+    _swap_feature_model(module, os.environ.get(
         "GREENWASH_PREVIOUS_MODEL", "qwen2.5:7b"
-    )
+    ))
 
 
 @benign(
@@ -619,6 +628,20 @@ def _reword(module) -> None:
     the `retrieval.*` Operators.
     """
     _swap_prompt(module, "PROMPT_VARIANT")
+
+
+def _swap_feature_model(module, model: str) -> None:
+    """Move this Feature onto another model, and only this Feature.
+
+    `model.downgrade` sets `GREENWASH_MODEL` because a sabotage is allowed to be
+    blunt — the claim is "the model got worse", and if that takes a suite's judge
+    with it, the suite noticing is a fair Kill. A **Benign Change** cannot be
+    blunt. Its whole job is to leave a correct Feature correct so that a Closing
+    Test going red means the test is brittle, and a change that also swaps the
+    judge inside the suite produces a red run that says nothing about the test.
+    """
+    inner = module.complete
+    module.complete = lambda prompt, model=None, _m=model: inner(prompt, model=_m)
 
 
 def _swap_prompt(module, attribute: str) -> None:

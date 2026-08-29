@@ -33,15 +33,17 @@
       "case": "02_ticket_classifier",
       "change": "model.swap",
       "held_out": false,
-      "measured": false,
-      "why": "the original suite went red"
+      "measured": true,
+      "closing_tests": 1,
+      "false_alarms": []
     },
     {
       "case": "02_ticket_classifier",
       "change": "model.pin_previous",
       "held_out": false,
-      "measured": false,
-      "why": "the original suite went red"
+      "measured": true,
+      "closing_tests": 1,
+      "false_alarms": []
     },
     {
       "case": "02_ticket_classifier",

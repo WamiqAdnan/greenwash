@@ -79,11 +79,15 @@
         "operator": "classify.confidence_pin",
         "summary": "Confidence is pinned high regardless of how uncertain the model was.",
         "receipt": "suite stayed green",
-        "closing_test": "import json\nimport re\nfrom feature import classify\n\ndef test_confidence_pin_bypassed():\n    assert classify(\"t1\")[\"confidence\"] == 0.95\n    assert classify(\"t2\")[\"confidence\"] == 0.95\n    assert classify(\"t3\")[\"confidence\"] == 0.95\n",
-        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_confidence_pin_bypassed - assert...",
-        "attempts": 1,
-        "gate": "green on the clean feature, red under classify.confidence_pin, no benign change is measurable on this feature",
-        "rejections": []
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "false alarm: the feature still works under model.swap and the test went red anyway",
+        "rejections": [
+          "false alarm: the feature still works under model.swap and the test went red anyway",
+          "false alarm: the feature still works under model.swap and the test went red anyway",
+          "false alarm: the feature still works under model.swap and the test went red anyway"
+        ]
       },
       {
         "operator": "classify.collapse",
@@ -92,7 +96,7 @@
         "closing_test": "import json\nimport re\nfrom feature import classify\n\ndef test_label_for_t2():\n    result = classify(\"t2\")\n    assert result[\"label\"] == \"technical\"\n",
         "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_label_for_t2 - AssertionError: a...",
         "attempts": 2,
-        "gate": "green on the clean feature, red under classify.collapse, no benign change is measurable on this feature",
+        "gate": "green on the clean feature, red under classify.collapse, green under model.swap, model.pin_previous",
         "rejections": [
           "classify.collapse was applied and the test still passed"
         ]

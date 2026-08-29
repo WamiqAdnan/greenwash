@@ -169,8 +169,9 @@ $ .venv/bin/python evals/uplift.py
   kill rate 33% -> 100%   (4 of 4 blind spots closed)
   closed: model.downgrade, value.null_fields, value.transpose_digits, value.zero_amounts
 02_ticket_classifier
-  kill rate 50% -> 100%   (2 of 2 blind spots closed)
-  closed: classify.collapse, classify.confidence_pin
+  kill rate 50% -> 75%   (1 of 2 blind spots closed)
+  closed: classify.collapse
+  still blind: classify.confidence_pin
 03_rag_citations
   kill rate 0% -> 50%   (3 of 6 blind spots closed)
   closed: citation.fabricate, citation.wrong_page, retrieval.shuffle
@@ -193,8 +194,8 @@ $ .venv/bin/python evals/uplift.py
 10_few_shot_leak
   no closing tests — nothing to merge
 ====================================================
-corpus mean kill rate  51% -> 75%   (10 of 10 case(s) reported)
-  of which had blind spots to close: 30% -> 64%   (7 case(s))
+corpus mean kill rate  51% -> 72%   (10 of 10 case(s) reported)
+  of which had blind spots to close: 30% -> 61%   (7 case(s))
 
 $ .venv/bin/python evals/brittleness.py
 01_invoice_extractor
@@ -207,8 +208,16 @@ $ .venv/bin/python evals/brittleness.py
   model.pin_previous: the feature returned exactly the same thing — no variation to probe, not measured
   prompt.reword: the feature returned exactly the same thing — no variation to probe, not measured
 02_ticket_classifier
-  ! model.swap: the case's OWN suite goes red under this. Either the change is not benign or that suite is brittle too — not scored.
-  ! model.pin_previous: the case's OWN suite goes red under this. Either the change is not benign or that suite is brittle too — not scored.
+  model.swap: The model behind the feature is swapped for a different one of comparable quality.
+    the gate applies this too — a regression check, not a second opinion
+    the feature's output moved, and it is still correct
+    the case's own suite: green
+    closing tests: 0 of 1 raised a FALSE ALARM
+  model.pin_previous: The feature is pinned to the previous generation of the same model family.
+    the gate applies this too — a regression check, not a second opinion
+    the feature's output moved, and it is still correct
+    the case's own suite: green
+    closing tests: 0 of 1 raised a FALSE ALARM
   prompt.reword: the feature returned exactly the same thing — no variation to probe, not measured
 03_rag_citations
   model.swap: The model behind the feature is swapped for a different one of comparable quality.
@@ -254,7 +263,7 @@ $ .venv/bin/python evals/brittleness.py
   no closing tests — nothing to probe
 ====================================================
 false alarm rate  0/3 (0%)  under HELD-OUT benign changes — the gate never saw these, so this is the number that counts
-                  0/8 (0%)  under benign changes the gate applies itself — a regression check on the gate
+                  0/10 (0%)  under benign changes the gate applies itself — a regression check on the gate
 
 $ .venv/bin/python evals/leakage.py
 10_few_shot_leak
@@ -294,11 +303,19 @@ its own rule, read back, so a zero there only says the Gate ran. The second is
 under the **held-out** change, which the Gate never sees, and that is the honest
 figure for over-fitting.
 
-Both are zero now, and getting there took twenty points off Uplift. The probe
-first reported **2 of 5**: two shipped tests that go red on output that is still
-correct. Fixing them meant giving the Gate the changes that catch them, and four
-of the thirteen Closing Tests the agent used to ship stopped being accepted.
-`51% -> 95%` became `51% -> 75%`. That difference was over-fitting.
+Both are zero now, and getting there took twenty-three points off Uplift. The
+probe first reported **2 of 5**: two shipped tests that go red on output that is
+still correct. Fixing them meant giving the Gate the changes that catch them, and
+five of the thirteen Closing Tests the agent used to ship stopped being accepted.
+`51% -> 95%` became `51% -> 72%`. That difference was over-fitting.
+
+The Gate reaches six of the ten cases. Two of the others are a deliberate trade —
+the held-out change is the one that would cover them. The other two cannot be
+reached by any Benign Change, because their Features have no room to vary
+correctly: `08_content_moderation` returns a boolean and one of four categories
+with a single right answer per post, so moving that output makes it wrong. Their
+Closing Tests say `no benign change is measurable on this feature` in their own
+`# gate:` line.
 
 The Gate does work where it can see. During the recorded run it rejected a
 candidate on case 03 that had hard-coded both of the model's answers verbatim —

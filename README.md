@@ -112,15 +112,15 @@ re-records it has scored 0.24, 0.35, 0.42, 0.46 and 0.47, moved by nothing but
 rewordings of the prompt that asks it the question. Prediction with this model
 lands somewhere in that band. Verification lands on 1.00 every time.
 
-**Kill rate across the corpus: 51% → 75%**, measured by `evals/uplift.py` from
+**Kill rate across the corpus: 51% → 72%**, measured by `evals/uplift.py` from
 the tests the agent wrote, outside the agent, on a scratch copy — your suite is
 evidence and is never edited. Over the seven cases that had blind spots to close
-at all: 30% → 64%.
+at all: 30% → 61%.
 
-That number used to read 95%. It came down because four of the thirteen tests it
+That number used to read 95%. It came down because five of the thirteen tests it
 counted were brittle — they would have fired the next time somebody changed a
 model — and the gate now rejects tests like that instead of shipping them.
-**Twenty points of the old number was over-fitting.** See `CHANGELOG.md`.
+**Twenty-three points of the old number was over-fitting.** See `CHANGELOG.md`.
 
 ### The comparison, in one table
 
@@ -128,8 +128,8 @@ model — and the gate now rejects tests like that instead of shipping them.
 |---|---|---|---|
 | blind spots found (F1 against hand-confirmed truth) | 0.63 | **1.00** | +0.37 |
 | — of 22 real ones | 16, plus 13 false alarms | **22, and no false alarms** | |
-| kill rate after the run | 51% — it writes no tests | **75%** | +24 pts |
-| false alarms in the tests it ships | n/a — ships none | **0 of 3 held out, 0 of 8 checked** | measured, not assumed |
+| kill rate after the run | 51% — it writes no tests | **72%** | +21 pts |
+| false alarms in the tests it ships | n/a — ships none | **0 of 3 held out, 0 of 10 checked** | measured, not assumed |
 | human time per case | — | 7 s replayed, one pass to record | see below |
 | API cost per case | $0 | $0 | runs on a laptop |
 
@@ -209,20 +209,30 @@ So the gate got the change that catches them, and a third one besides. Both are
 gone now, along with two more the next held-out change turned up:
 
 ```
-0 of 8   under the benign changes the gate checks
+0 of 10  under the benign changes the gate checks
 0 of 3   under the benign change it never sees
 ```
 
-That took twenty points off the headline, because four of the thirteen tests the
-agent used to ship were the brittle ones. **A tool that reports a lower number
-after being made more honest is working.**
+That took twenty-three points off the headline, because five of the thirteen
+tests the agent used to ship were the brittle ones. **A tool that reports a lower
+number after being made more honest is working.**
 
-Two things that cost is buying, and one it is not. The gate now rejects nine
-candidates as false alarms across the corpus. The tests that survive are checked
-against two different model swaps and a reworded prompt. And the `0 of 3` is a
-narrower audit than the `2 of 5` it replaced — three tests on one capability —
-so it is not proof that nothing is brittle, just the strongest thing the
-remaining slot can say.
+The gate now rejects twelve candidates as false alarms across the corpus, and
+covers six of the ten cases. Of the four it does not: two are a deliberate trade,
+since the held-out change is the one that would cover them, and two cannot be
+reached at all.
+
+That last part is worth a sentence, because it is a real limit rather than a
+to-do. **A benign change can only exist where the correct output has room to
+vary.** The moderation feature returns a boolean and one of four categories, and
+for its three test posts there is exactly one right answer — so a change that
+moves the output has made it wrong, and a change that keeps it right cannot have
+moved it. No third run is possible there, and none is needed: a test asserting
+the one correct answer cannot be brittle in the way the third run looks for.
+
+And the `0 of 3` is a narrower audit than the `2 of 5` it replaced — three tests
+on one capability — so it is not proof that nothing is brittle, just the
+strongest thing the remaining slot can say.
 
 ## What it cannot do
 
