@@ -2,19 +2,44 @@
   "cases": [
     {
       "case": "01_invoice_extractor",
+      "change": "model.swap",
+      "held_out": true,
+      "measured": false,
+      "why": "the change was inert"
+    },
+    {
+      "case": "01_invoice_extractor",
       "change": "prompt.reword",
+      "held_out": false,
       "measured": false,
       "why": "the change was inert"
     },
     {
       "case": "02_ticket_classifier",
+      "change": "model.swap",
+      "held_out": true,
+      "measured": false,
+      "why": "the original suite went red"
+    },
+    {
+      "case": "02_ticket_classifier",
       "change": "prompt.reword",
+      "held_out": false,
       "measured": false,
       "why": "the change was inert"
     },
     {
       "case": "03_rag_citations",
+      "change": "model.swap",
+      "held_out": true,
+      "measured": true,
+      "closing_tests": 2,
+      "false_alarms": []
+    },
+    {
+      "case": "03_rag_citations",
       "change": "prompt.reword",
+      "held_out": false,
       "measured": true,
       "closing_tests": 2,
       "false_alarms": []

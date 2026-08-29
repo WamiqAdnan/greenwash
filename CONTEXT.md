@@ -73,11 +73,21 @@ _Avoid_: error, skipped
 
 **Benign Change**:
 A change a team really makes that does **not** break the Feature — rewording the
-prompt, moving to a better model. Lives in its own registry so `applicable()`
+prompt, moving the feature onto another model. Lives in its own registry so `applicable()`
 can never hand one to the Kill Rate sweep, where a green Suite would be scored as
 a Blind Spot. A Corpus Case declares its own reworded prompt and a human has read
 both, because "means the same thing" is not something to leave to a regex.
 _Avoid_: non-mutation, control mutation, no-op
+
+**Held-Out Benign Change**:
+A Benign Change the **Verification Gate** is not allowed to apply, reserved for
+`evals/brittleness.py`. Without one the probe measures the rule the Gate already
+enforces and a False Alarm rate of zero says only that the Gate ran — the
+measurement and the thing measured are the same code. Holding one back is what
+keeps the number a second opinion. Which change is held out is a decision about
+the experiment, not a property of the change: `held_out=True` on its
+registration, and moving it into the Gate is a one-word edit.
+_Avoid_: control, reserved, validation set
 
 **False Alarm**:
 A test that goes red under a **Benign Change**. The Feature is fine and the test
@@ -85,9 +95,9 @@ says it is broken. Kill Rate cannot see this — a test that pins the model's ex
 prose kills every Mutant and is, by that measure, perfect. False Alarms are how a
 tool like this loses its user, so the **Verification Gate** rejects a Closing
 Test that raises one, and `evals/brittleness.py` counts any that reach the disk
-anyway. Note what that costs: the probe now measures the Gate's own rule, so a
-zero there is a regression check and not independent evidence until some Benign
-Change is held out of the Gate.
+anyway. The probe counts two populations separately, because they are different
+claims: under a Benign Change the Gate applies itself, a zero only says the Gate
+ran; under a **Held-Out Benign Change** it is evidence.
 _Avoid_: flake, false positive
 
 ### The agent

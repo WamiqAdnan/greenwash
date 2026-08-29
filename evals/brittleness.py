@@ -13,13 +13,13 @@ So this probe asks the opposite question to `run_eval.py`:
     brittleness   apply a Benign Change. The suite SHOULD stay green. Red is a
                   False Alarm.
 
-Read the result knowing what it now is. Until v1.2 this probe was the only thing
-in the project that could see over-fitting, and its number was independent
-evidence about the tests the Auditor shipped. The Verification Gate now applies
-the same Benign Changes before accepting a Closing Test, so a zero here is
-mostly the Gate's own rule reported back — a regression check on the Gate, which
-is worth having and is not the same claim. It becomes independent evidence again
-the moment a Benign Change exists that the Gate does not run.
+Read each row for which kind of Benign Change produced it. The Verification Gate
+applies most of them itself before accepting a Closing Test, so those rows are
+the Gate's own rule reported back — a regression check, worth having, but not a
+second opinion. A row marked **held out** is one the Gate is not allowed to
+touch: nothing upstream has already enforced it, so a False Alarm there is a
+finding and a zero there is evidence. The summary counts them separately for
+that reason.
 
 A Benign Change is a change a team really makes that does not break anything —
 today, rewording the prompt. The Corpus Case declares the reworded prompt itself
@@ -75,7 +75,11 @@ def main() -> None:
         if not cases:
             raise SystemExit(f"no such case: {args.case}")
 
-    rows, total_tests, total_alarms = [], 0, 0
+    # Held out from the Gate and applied by it are counted apart, because they
+    # are different claims and averaging them would hide the only one that is
+    # independent evidence.
+    rows = []
+    tally = {True: [0, 0], False: [0, 0]}   # held_out -> [tests, alarms]
     for case in cases:
         print(f"\n{case.name}")
         path = CLOSING / f"{case.name}.py"
@@ -91,12 +95,14 @@ def main() -> None:
         clean = observe.observe(case.path)
 
         for change in ops.applicable_benign(case.tags):
+            held_out = change.id in ops.HELD_OUT
             changed = observe.observe(case.path, change.id)
             if observe.failed(changed) or changed == clean:
                 print(f"  {change.id}: the feature returned exactly the same thing — "
                       f"no variation to probe, not measured")
                 rows.append({"case": case.name, "change": change.id,
-                             "measured": False, "why": "the change was inert"})
+                             "held_out": held_out, "measured": False,
+                             "why": "the change was inert"})
                 continue
 
             suite_green, suite_out = case.run_suite(change.id)
@@ -107,29 +113,46 @@ def main() -> None:
                 if args.verbose:
                     print(f"    {harness._first_failure(suite_out)}")
                 rows.append({"case": case.name, "change": change.id,
-                             "measured": False, "why": "the original suite went red"})
+                             "held_out": held_out, "measured": False,
+                             "why": "the original suite went red"})
                 continue
 
             green, out = merged.run_suite(change.id, select=f"tests/{CLOSING_TEST_FILE}")
             alarms = sorted(set(FAILED.findall(out)))
-            total_tests += len(names)
-            total_alarms += len(alarms)
+            tally[held_out][0] += len(names)
+            tally[held_out][1] += len(alarms)
+            standing = (
+                "HELD OUT of the gate — nothing upstream enforced this"
+                if held_out else
+                "the gate applies this too — a regression check, not a second opinion"
+            )
             print(f"  {change.id}: {change.summary}")
+            print(f"    {standing}")
             print(f"    the feature still returns a correct answer, worded differently")
             print(f"    the case's own suite: green")
             print(f"    closing tests: {len(alarms)} of {len(names)} raised a "
                   f"FALSE ALARM")
             for name in alarms:
                 print(f"      - {name}")
-            rows.append({"case": case.name, "change": change.id, "measured": True,
+            rows.append({"case": case.name, "change": change.id,
+                         "held_out": held_out, "measured": True,
                          "closing_tests": len(names), "false_alarms": alarms})
 
     print(f"\n{'=' * 52}")
-    if total_tests:
-        print(f"false alarm rate  {total_alarms}/{total_tests} "
-              f"({total_alarms / total_tests:.0%}) of closing tests go red on "
-              f"output that is correct")
+    held_tests, held_alarms = tally[True]
+    gate_tests, gate_alarms = tally[False]
+    if held_tests:
+        print(f"false alarm rate  {held_alarms}/{held_tests} "
+              f"({held_alarms / held_tests:.0%})  under HELD-OUT benign changes "
+              f"— the gate never saw these, so this is the number that counts")
     else:
+        print("no held-out benign change moved any feature's output — nothing "
+              "here is independent of the gate")
+    if gate_tests:
+        print(f"                  {gate_alarms}/{gate_tests} "
+              f"({gate_alarms / gate_tests:.0%})  under benign changes the gate "
+              f"applies itself — a regression check on the gate")
+    if not held_tests and not gate_tests:
         print("nothing measurable — no benign change moved any feature's output")
     args.json.write_text(json.dumps({"cases": rows}, indent=2))
     print(f"wrote {args.json}")

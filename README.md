@@ -153,13 +153,23 @@ under a change that breaks nothing — and it is dropped if it fails any of them
 On its first run the gate caught a test that had hard-coded both of the model's
 answers verbatim. It would have shipped under the old two runs. It did not ship.
 
-Two things to know about that, because the tidy version would be misleading.
-Rewording a prompt does not change what an extraction feature returns, so the new
-check only bites on **one case in four** — the other three are judged by the old
-two runs and can still be snapshots. And `brittleness.py` now applies the same
-benign change the gate does, so its `0 of 2` has stopped being an independent
-measurement and is a regression check on the gate. Both are fixed the same way,
-by more benign changes, one of them held out. `CHANGELOG.md` has the receipts.
+A gate that enforces a rule and a probe that checks the same rule are one thing
+wearing two hats, so one benign change is **held out** of the gate: `model.swap`
+moves the feature onto a different vendor's model, and only `brittleness.py` is
+allowed to apply it. Its `0 of 2` is therefore evidence about the tests rather
+than a report that the gate ran. The probe prints the two populations apart, and
+you should read the held-out line.
+
+What is *not* fixed is coverage, and here is the receipt. Neither benign change
+moves what an extraction feature returns — the same JSON comes back however you
+word the prompt and whichever model reads the invoice — so the gate still only
+bites on **one case in four**. Run case 02's closing tests under `model.swap` by
+hand and one of them goes red on `assert 0.9 == 0.95`: a shipped test pinning the
+model's exact confidence values, on a case the gate never checked. The probe
+declines to count it, correctly, because that case's own suite goes red too and
+a brittle test and a brittle suite look identical from outside. So: the failure
+mode is structural where it can be seen, and there is a known blind spot in where
+it can be seen. `CHANGELOG.md` has the receipts.
 
 ## Run it
 

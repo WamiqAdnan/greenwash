@@ -44,6 +44,19 @@ REGISTRY: dict[str, Operator] = {}
 # Blind Spot. `get()` sees both, so a Corpus Case's conftest needs no changes.
 BENIGN: dict[str, Operator] = {}
 
+# Benign Changes the Verification Gate is not allowed to apply, reserved for
+# `evals/brittleness.py`. Once the Gate started rejecting Closing Tests that go
+# red under a Benign Change, the probe that counts False Alarms was measuring
+# the Gate's own rule: same change, same runs, so zero was guaranteed and meant
+# only that the Gate had executed. Holding one back is what makes that number a
+# second opinion again.
+#
+# This is a statement about the experiment rather than about the change. Moving
+# `model.swap` inside the Gate is deleting one keyword — and the day there are
+# several Benign Changes, whichever is held out should be the one whose False
+# Alarms you would most regret shipping.
+HELD_OUT: set[str] = set()
+
 
 def operator(id: str, summary: str, tags: tuple[str, ...]):
     def register(fn: Patch) -> Patch:
@@ -52,9 +65,11 @@ def operator(id: str, summary: str, tags: tuple[str, ...]):
     return register
 
 
-def benign(id: str, summary: str, tags: tuple[str, ...]):
+def benign(id: str, summary: str, tags: tuple[str, ...], held_out: bool = False):
     def register(fn: Patch) -> Patch:
         BENIGN[id] = Operator(id=id, summary=summary, tags=tags, patch=fn)
+        if held_out:
+            HELD_OUT.add(id)
         return fn
     return register
 
@@ -64,8 +79,18 @@ def applicable(tags: set[str]) -> list[Operator]:
     return [op for op in REGISTRY.values() if set(op.tags) <= tags]
 
 
-def applicable_benign(tags: set[str]) -> list[Operator]:
-    return [op for op in BENIGN.values() if set(op.tags) <= tags]
+def applicable_benign(tags: set[str], *, include_held_out: bool = True) -> list[Operator]:
+    """Benign Changes this Corpus Case declares the tags for.
+
+    Everything gets them all — the brittleness probe, which is what a Held-Out
+    Benign Change exists for, and `record_fixtures.py`, which has to record a
+    pass for every change that rewrites a prompt whether the Gate applies it or
+    not. Only the Gate passes `include_held_out=False`.
+    """
+    return [
+        op for op in BENIGN.values()
+        if set(op.tags) <= tags and (include_held_out or op.id not in HELD_OUT)
+    ]
 
 
 def get(op_id: str) -> Operator:
@@ -300,6 +325,31 @@ def _drop_field(module) -> None:
 # ---------------------------------------------------------------------------
 # Benign Changes — the things that are *not* breakages
 # ---------------------------------------------------------------------------
+
+@benign(
+    "model.swap",
+    "The model behind the feature is swapped for a different one of comparable "
+    "quality.",
+    ("llm",),
+    held_out=True,
+)
+def _swap(module) -> None:
+    """Move the Feature onto another vendor's model of the same class.
+
+    The most ordinary change there is — a team switches models roughly whenever
+    a new one lands — and the one a snapshot test cannot survive, because two
+    models never word an answer the same way. `qwen3:8b` to `llama3.1:8b` is
+    deliberately a sideways move and not a better model: "better" is a claim
+    that would need a benchmark behind it, and nothing here rests on the new
+    model being stronger, only on it still being right. That it still is, is
+    checked by hand and by the Corpus Case's own suite staying green.
+
+    Held out of the Verification Gate on purpose — see `HELD_OUT`.
+    """
+    os.environ["GREENWASH_MODEL"] = os.environ.get(
+        "GREENWASH_OTHER_MODEL", "llama3.1:8b"
+    )
+
 
 @benign(
     "prompt.reword",

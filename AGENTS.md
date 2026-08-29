@@ -40,8 +40,16 @@ Recording new fixtures *does* need Ollama running (`ollama serve`):
 .venv/bin/python scripts/record_fixtures.py --case 03_rag_citations --model qwen3:0.6b
 ```
 
-Both models are required for every case — `model.downgrade` swaps the feature
-onto `qwen3:0.6b` and dies without its fixtures.
+Two passes, three models. `qwen3:8b` is the baseline and `qwen3:0.6b` is what
+`model.downgrade` swaps in, so each needs its own pass. `llama3.1:8b` does not:
+the held-out `model.swap` is a Benign Change, and `record_fixtures.py` already
+runs every Benign Change inside the baseline pass — the swap sets the model
+itself, so its fixtures land there. You still have to have pulled it.
+
+    ollama pull qwen3:8b && ollama pull qwen3:0.6b && ollama pull llama3.1:8b
+
+A missing recording does not fail loudly. The Mutant dies of a fixture miss and
+reports Invalid, which is correct and useless.
 
 ## The rules that matter
 
@@ -81,9 +89,11 @@ Closing Tests committed on disk. An agent that scores itself is not evidence.
 model's exact prose kills every Mutant and would go red the next time someone
 rewords a prompt. `evals/brittleness.py` is the other side of the measurement:
 apply a **Benign Change**, and every Closing Test that goes red is a False Alarm.
-Never quote Uplift without it — and since the Gate started applying the same
-Benign Changes, never quote the False Alarm number as independent evidence
-either. It is a regression check on the Gate until a Benign Change is held out.
+Never quote Uplift without it — and quote the right half of it. The probe splits
+its result: under a Benign Change the Gate applies itself, a zero only says the
+Gate ran; under a **Held-Out Benign Change** it is evidence. `model.swap` is the
+held-out one. Keep at least one held out — `selftests/test_benign_changes.py`
+fails if none is.
 
 **Re-recording never deletes.** `record_or_replay` writes fixtures by key and
 leaves the old ones, so any change to a prompt orphans everything downstream of

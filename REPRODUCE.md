@@ -139,18 +139,27 @@ corpus mean kill rate  46% -> 88%   (4 of 4 case(s) reported)
 
 $ .venv/bin/python evals/brittleness.py
 01_invoice_extractor
+  model.swap: the feature returned exactly the same thing — no variation to probe, not measured
   prompt.reword: the feature returned exactly the same thing — no variation to probe, not measured
 02_ticket_classifier
+  ! model.swap: the case's OWN suite goes red under this. Either the change is not benign or that suite is brittle too — not scored.
   prompt.reword: the feature returned exactly the same thing — no variation to probe, not measured
 03_rag_citations
+  model.swap: The model behind the feature is swapped for a different one of comparable quality.
+    HELD OUT of the gate — nothing upstream enforced this
+    the feature still returns a correct answer, worded differently
+    the case's own suite: green
+    closing tests: 0 of 2 raised a FALSE ALARM
   prompt.reword: The prompt is reworded to say the same thing differently.
+    the gate applies this too — a regression check, not a second opinion
     the feature still returns a correct answer, worded differently
     the case's own suite: green
     closing tests: 0 of 2 raised a FALSE ALARM
 04_purchase_orders
   no closing tests — nothing to probe
 ====================================================
-false alarm rate  0/2 (0%) of closing tests go red on output that is correct
+false alarm rate  0/2 (0%)  under HELD-OUT benign changes — the gate never saw these, so this is the number that counts
+                  0/2 (0%)  under benign changes the gate applies itself — a regression check on the gate
 ```
 
 Three predictors, one scorer, one ground truth: the baseline predicting (0.48),
@@ -175,14 +184,34 @@ citation's quote against the document, so it also catches `citation.wrong_page`.
 reach case 03 — rewording a prompt does not change what an extraction feature
 returns, so those cases are reported *not measured* rather than passing.
 
-Read its `0/2` for what it now is. Since v1.2 the Verification Gate applies the
-same benign change before accepting a closing test, so this probe is checking the
-gate's own rule rather than giving a second opinion. The gate rejected exactly one
-candidate on that rule during the recorded run — case 03, `model.echo`, attempt 1,
-which had hard-coded both of the model's answers verbatim — and you can read the
-rejection and the pytest output that caused it in
-`trajectories/audit-03_rag_citations.md`. That survivor ends with no closing test,
+Read the two lines apart. The Verification Gate applies `prompt.reword` itself
+before accepting a closing test, so that line is the gate's own rule reported
+back. `model.swap` is **held out** — the gate is not allowed to apply it — so
+that line is a second opinion, and it is the one to quote. The gate rejected
+exactly one candidate on this rule during the recorded run: case 03,
+`model.echo`, attempt 1, which had hard-coded both of the model's answers
+verbatim. The rejection and the pytest output that caused it are in
+`trajectories/audit-03_rag_citations.md`; that survivor ends with no closing test,
 which is why the report lists it as still open.
+
+Both changes reach only case 03, and the gap is worth seeing for yourself:
+
+```bash
+.venv/bin/python -c "
+import sys; sys.path.insert(0,'.')
+from auditor.agent import CLOSING_TEST_FILE, DEFAULT_SCRATCH
+from greenwash import harness; from pathlib import Path
+case = harness.Case(Path('corpus/02_ticket_classifier'))
+code = Path('auditor/closing_tests/02_ticket_classifier.py').read_text()
+m = harness.overlay(case, {CLOSING_TEST_FILE: code}, DEFAULT_SCRATCH/'manual')
+print(m.run_suite('model.swap', select=f'tests/{CLOSING_TEST_FILE}')[1][-400:])"
+```
+
+`test_confidence_pin_bypassed` goes red on `assert 0.9 == 0.95` — a shipped test
+pinning the model's exact confidence values, on a case the gate never checked
+because neither benign change moves an extraction feature's output. The probe
+refuses to score it, because that case's own suite goes red under the same change
+and a brittle test cannot be told from a brittle suite when both are red.
 
 ## Reproducing the recordings (needs Ollama)
 

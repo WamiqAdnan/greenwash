@@ -52,3 +52,35 @@ def test_the_case_s_own_suite_stays_green_under_a_benign_change():
     """It is only benign if the feature still works."""
     green, _out = CASE.run_suite("prompt.reword")
     assert green
+
+
+# --- holding one back from the Gate -----------------------------------------
+
+def test_at_least_one_benign_change_is_held_out_of_the_gate():
+    """The invariant that makes `evals/brittleness.py` worth running.
+
+    The Gate rejects a Closing Test that goes red under a Benign Change. If the
+    probe then applies only the same changes, it is grading the Gate's own
+    homework: zero False Alarms is guaranteed and says nothing about the tests.
+    Something has to be held back, or the number is decoration.
+    """
+    assert ops.HELD_OUT, (
+        "no Held-Out Benign Change — brittleness.py can only confirm the "
+        "gate's own rule"
+    )
+    assert ops.HELD_OUT <= set(ops.BENIGN), "held out, but not registered"
+
+
+def test_the_gate_never_applies_a_held_out_benign_change():
+    for case in harness.discover():
+        gated = {op.id for op in ops.applicable_benign(case.tags, include_held_out=False)}
+        assert not (gated & ops.HELD_OUT), f"{case.name} would let the gate see one"
+
+
+def test_the_probe_still_sees_every_benign_change():
+    """Held out of the Gate, not out of the measurement — that is the point."""
+    for case in harness.discover():
+        everything = {op.id for op in ops.applicable_benign(case.tags)}
+        gated = {op.id for op in ops.applicable_benign(case.tags, include_held_out=False)}
+        assert gated <= everything
+        assert everything - gated == ops.HELD_OUT & everything

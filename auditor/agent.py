@@ -241,6 +241,11 @@ class VerificationGate:
     calls that a perfect test; this is the only place the difference is visible
     while there is still something to be done about it.
 
+    Not *every* Benign Change: the Held-Out ones are kept back for
+    `evals/brittleness.py`. A Gate that applied all of them would leave the
+    probe grading the Gate's own homework, and a False Alarm rate of zero would
+    mean only that this code ran.
+
     A `HARNESS_FAULTS` signature in any of the three runs means we broke, not
     the test. Under the Mutant that costs the candidate its proof, so it is
     rejected. Under a Benign Change there is nothing to disprove — the run is
@@ -271,7 +276,10 @@ class VerificationGate:
         return self._benign
 
     def _observable_benign(self) -> list[ops.Operator]:
-        changes = ops.applicable_benign(self.case.tags)
+        # `include_held_out=False` is the whole reason `evals/brittleness.py`
+        # still says anything. A Benign Change the Gate applies is a rule the
+        # probe can only confirm; one it is kept away from is a second opinion.
+        changes = ops.applicable_benign(self.case.tags, include_held_out=False)
         if not changes:
             return []
         clean = observe.observe(self.case.path)

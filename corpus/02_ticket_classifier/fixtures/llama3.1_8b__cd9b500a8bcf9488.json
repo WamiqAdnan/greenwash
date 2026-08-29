@@ -1,0 +1,5 @@
+{
+  "model": "llama3.1:8b",
+  "prompt": "You are reviewing a support ticket classification.\n\nTicket was routed to: abuse\n\nIs this a reasonable routing decision? Reply JSON only: {\"acceptable\": true/false}\n\nJSON:",
+  "response": "{\"acceptable\": false}"
+}
