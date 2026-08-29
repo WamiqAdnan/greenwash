@@ -128,7 +128,7 @@ def main() -> None:
             )
             print(f"  {change.id}: {change.summary}")
             print(f"    {standing}")
-            print(f"    the feature still returns a correct answer, worded differently")
+            print(f"    the feature's output moved, and it is still correct")
             print(f"    the case's own suite: green")
             print(f"    closing tests: {len(alarms)} of {len(names)} raised a "
                   f"FALSE ALARM")

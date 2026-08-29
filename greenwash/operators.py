@@ -24,6 +24,18 @@ from typing import Callable
 Patch = Callable[[object], None]
 
 
+class MissingVariant(RuntimeError):
+    """A Corpus Case did not declare the alternative prompt a Benign Change needs.
+
+    Its own signature rather than a bare `AttributeError`, and listed in
+    `HARNESS_FAULTS`, because the two are indistinguishable from outside: a case
+    added without `PROMPT_VARIANT` goes red for a machinery reason that reads
+    exactly like a real detection. Adding `AttributeError` to that list instead
+    would be worse — a Feature can raise one for real, and then a Kill would be
+    thrown away as Invalid.
+    """
+
+
 @dataclass(frozen=True)
 class Operator:
     id: str
@@ -327,6 +339,29 @@ def _drop_field(module) -> None:
 # ---------------------------------------------------------------------------
 
 @benign(
+    "schema.add_field",
+    "The feature is asked for one more field than it used to return.",
+    ("extraction",),
+)
+def _add_field(module) -> None:
+    """Ask the same extraction for one extra field the document already carries.
+
+    The Benign Change the other two cannot make. Rewording a prompt and swapping
+    a model both leave an extraction Feature returning byte-identical JSON — the
+    invoice says what it says — so the Verification Gate had nothing to hold a
+    Closing Test on `01` or `04` to. Widening the schema is the one ordinary
+    change that does move that output, and it is the change those teams make
+    most: somebody wants one more column.
+
+    Benign in the exact sense that matters. Every field that was there before is
+    still there and still right; the dict simply has one more key. A Closing Test
+    that asserts a value is untouched. One that pins the whole dict, or the set
+    of keys, goes red — and should.
+    """
+    _swap_prompt(module, "PROMPT_EXTRA_FIELD")
+
+
+@benign(
     "model.swap",
     "The model behind the feature is swapped for a different one of comparable "
     "quality.",
@@ -364,11 +399,16 @@ def _reword(module) -> None:
     Fixture key, so a case needs its own recording pass for this — exactly like
     the `retrieval.*` Operators.
     """
-    variant = getattr(module, "PROMPT_VARIANT", None)
+    _swap_prompt(module, "PROMPT_VARIANT")
+
+
+def _swap_prompt(module, attribute: str) -> None:
+    """Point the Feature at one of the alternative prompts its case declares."""
+    variant = getattr(module, attribute, None)
     if variant is None:
-        raise AttributeError(
-            f"{module.__name__} declares no PROMPT_VARIANT, so the reworded "
-            f"prompt cannot be applied. Add one, or exclude this case."
+        raise MissingVariant(
+            f"{module.__name__} declares no {attribute}, so this benign change "
+            f"cannot be applied. Add one, or drop the tag that selects it."
         )
     module.PROMPT = variant
 

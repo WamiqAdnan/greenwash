@@ -2,6 +2,14 @@
   "cases": [
     {
       "case": "01_invoice_extractor",
+      "change": "schema.add_field",
+      "held_out": false,
+      "measured": true,
+      "closing_tests": 3,
+      "false_alarms": []
+    },
+    {
+      "case": "01_invoice_extractor",
       "change": "model.swap",
       "held_out": true,
       "measured": false,

@@ -194,18 +194,39 @@ def test_a_harness_fault_under_a_benign_change_is_not_a_false_alarm(tmp_path):
 
 
 def test_an_inert_benign_change_is_not_run_at_all():
-    """Rewording the prompt does not move what an extraction feature returns.
+    """Each case is held to the Benign Changes that actually move *its* output.
 
     Running a candidate under a Benign Change that changes nothing is the clean
-    run a second time — a wasted subprocess that looks like evidence. Three of
-    the four Corpus Cases are this case, so it is the common path.
+    run a second time — a wasted subprocess that looks like evidence. So the two
+    cases below see different lists, and neither sees a Held-Out change:
+    rewording the prompt does not move an extraction feature, and widening the
+    schema does not apply to one that answers questions.
     """
     assert [c.id for c in VerificationGate(RAG).observable_benign()] == ["prompt.reword"]
-    assert VerificationGate(CASE).observable_benign() == []
+    assert [c.id for c in VerificationGate(CASE).observable_benign()] == ["schema.add_field"]
+
+
+CLASSIFIER = harness.Case(ROOT / "corpus" / "02_ticket_classifier")
+
+CLASSIFIER_TEST = """
+from feature import classify
+
+
+def test_t2_is_technical():
+    assert classify("t2")["label"] == "technical"
+"""
 
 
 def test_a_case_with_no_benign_check_says_so_rather_than_claiming_one(tmp_path):
-    verdict = gate(tmp_path).judge(OPERATOR, REAL)
+    """Nothing moves the classifier's output that the Gate is allowed to apply.
+
+    `prompt.reword` is Inert on it and `model.swap` is Held Out, so this Closing
+    Test has never been held to one — and the verdict has to say so rather than
+    quietly imply a check that did not happen.
+    """
+    gate_ = VerificationGate(CLASSIFIER, scratch=tmp_path)
+    assert gate_.observable_benign() == []
+    verdict = gate_.judge("classify.collapse", CLASSIFIER_TEST)
     assert verdict.accepted, verdict.reason
     assert verdict.benign_checked == ()
     assert "no benign change is measurable" in verdict.reason

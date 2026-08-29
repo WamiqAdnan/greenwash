@@ -112,10 +112,13 @@ prompts is how the Changelog once reported the wrong number of model calls.
 4. `tests/test_feature.py` — a suite a real team would plausibly have written.
    No strawmen. Every assertion must be one people actually write.
 5. `record_plan.py` — every model call the suite makes
-6. `PROMPT_VARIANT` in `feature.py` — the same instruction worded differently,
-   for the `prompt.reword` Benign Change. Read both and satisfy yourself they
-   mean the same thing; that judgement is the whole basis of the False Alarm
-   number
+6. The alternative prompts in `feature.py`, one per Benign Change whose tags the
+   case declares. `PROMPT_VARIANT` is the same instruction worded differently
+   (`prompt.reword`); `PROMPT_EXTRA_FIELD` asks for one more field the source
+   document really carries (`schema.add_field`, extraction cases only). Read
+   each against `PROMPT` and satisfy yourself the Feature is still correct under
+   it — that judgement is the whole basis of the False Alarm number, and a
+   missing one is a `MissingVariant` fault rather than a silent red suite
 7. Record fixtures for **both** models
 8. Run the eval, look at each Survivor by hand, then write `blindspots.json`.
    A Survivor is only a Blind Spot if the sabotage actually changed what the

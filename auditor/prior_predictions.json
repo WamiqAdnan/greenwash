@@ -4,7 +4,8 @@
   "verified": false,
   "predictions": {
     "01_invoice_extractor": [
-      "schema.drop_field"
+      "schema.drop_field",
+      "model.downgrade"
     ],
     "02_ticket_classifier": [
       "classify.confidence_pin"
@@ -13,8 +14,7 @@
       "citation.fabricate"
     ],
     "04_purchase_orders": [
-      "schema.drop_field",
-      "model.downgrade"
+      "schema.drop_field"
     ]
   },
   "hallucinated_ids": {

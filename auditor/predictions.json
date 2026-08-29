@@ -4,9 +4,9 @@
   "verified": true,
   "predictions": {
     "01_invoice_extractor": [
-      "value.null_fields",
       "model.downgrade",
       "value.zero_amounts",
+      "value.null_fields",
       "value.transpose_digits"
     ],
     "02_ticket_classifier": [
@@ -31,7 +31,6 @@
   },
   "closed": {
     "01_invoice_extractor": [
-      "value.null_fields",
       "model.downgrade",
       "value.zero_amounts",
       "value.transpose_digits"
@@ -49,16 +48,17 @@
   "prior": {
     "01_invoice_extractor": {
       "order": [
-        "value.null_fields",
-        "model.downgrade",
         "schema.drop_field",
+        "model.downgrade",
         "value.zero_amounts",
+        "value.null_fields",
         "value.transpose_digits"
       ],
       "expect_missed": [
-        "schema.drop_field"
+        "schema.drop_field",
+        "model.downgrade"
       ],
-      "why": "The suite lacks checks for field presence and structure, making schema changes more likely to slip through undetected.",
+      "why": "The suite lacks checks for field presence and model behavior, making schema changes and model degradation the most likely to slip through undetected.",
       "invented_ids": []
     },
     "02_ticket_classifier": {
@@ -97,10 +97,9 @@
         "model.downgrade"
       ],
       "expect_missed": [
-        "schema.drop_field",
-        "model.downgrade"
+        "schema.drop_field"
       ],
-      "why": "The suite checks for presence of fields and their types, but does not verify that all required fields are present, making schema.drop_field and model.downgrade likely to slip through.",
+      "why": "The suite checks for presence of fields but does not verify that all required fields are present, making it blind to silently dropped fields.",
       "invented_ids": []
     }
   }

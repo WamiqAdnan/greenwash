@@ -35,6 +35,21 @@ Purchase order:
 JSON:"""
 
 
+# The same instruction asking for one more field — see `schema.add_field`. Both
+# sample purchase orders print the vendor's address under its name, so this is a
+# field the documents really carry. Nothing that was already returned changes.
+PROMPT_EXTRA_FIELD = """Extract these fields from the purchase order below and reply with JSON only:
+vendor (string, exactly as written), vendor_address (string), po_number (string),
+date (YYYY-MM-DD string), currency (3-letter code string), subtotal (number),
+tax (number), total (number),
+line_items (list of objects with description, quantity, unit_price, line_total).
+
+Purchase order:
+{text}
+
+JSON:"""
+
+
 def read_po(name: str) -> str:
     return (Path(__file__).parent / "samples" / name).read_text()
 

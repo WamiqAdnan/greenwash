@@ -34,6 +34,21 @@ Invoice:
 JSON:"""
 
 
+# The same instruction asking for one more field — what `schema.add_field` swaps
+# in. Both sample invoices print a subtotal, so this is a field the documents
+# really carry and the extraction really can return. Widening the schema is the
+# most ordinary change a team makes to a feature like this, and it does not make
+# any previously correct answer wrong.
+PROMPT_EXTRA_FIELD = """Extract these fields from the invoice below and reply with JSON only:
+vendor (string), invoice_number (string), date (YYYY-MM-DD string), total (number),
+subtotal (number).
+
+Invoice:
+{text}
+
+JSON:"""
+
+
 def read_invoice(name: str) -> str:
     return (Path(__file__).parent / "samples" / name).read_text()
 

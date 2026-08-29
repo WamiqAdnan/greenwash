@@ -86,7 +86,7 @@ harness's job, not the model's.
 | | precision | recall | F1 | blind spots found |
 |---|---|---|---|---|
 | the same model, predicting (baseline) | 41% | 58% | 0.48 | 7 / 12 |
-| the same model, predicting (inside the agent, before it ran anything) | 40% | 17% | 0.24 | 2 / 12 |
+| the same model, predicting (inside the agent, before it ran anything) | 60% | 25% | 0.35 | 3 / 12 |
 | **the agent, after running them** | **100%** | **100%** | **1.00** | **12 / 12** |
 
 One scorer, one ground truth, three predictors. Reaching 12/12 is not cleverness
@@ -94,10 +94,11 @@ and is not claimed as any — it is what happens when you stop guessing and run
 the thing. The number that took work is the next one.
 
 The middle row is worth a second look: it is the *same model on the same cases*,
-and the only thing taken away from it is the ability to run anything. It has also
-scored 0.42 on this corpus — rewording the prompt that asks the question moved it
-that far. Prediction with this model lands somewhere between 0.24 and 0.61
-depending on how you ask it. Verification lands on 1.00 every time.
+and the only thing taken away from it is the ability to run anything. It has now
+scored 0.24, 0.35, 0.42 and 0.47 on this corpus, moved by nothing but rewordings
+of the prompt that asks it the question. Prediction with this model lands
+somewhere between 0.24 and 0.61 depending on how you ask. Verification lands on
+1.00 every time.
 
 **Kill rate across the corpus: 46% → 88%**, measured by `evals/uplift.py` from
 the tests the agent wrote, outside the agent, on a scratch copy — your suite is
@@ -160,16 +161,23 @@ allowed to apply it. Its `0 of 2` is therefore evidence about the tests rather
 than a report that the gate ran. The probe prints the two populations apart, and
 you should read the held-out line.
 
-What is *not* fixed is coverage, and here is the receipt. Neither benign change
-moves what an extraction feature returns — the same JSON comes back however you
-word the prompt and whichever model reads the invoice — so the gate still only
-bites on **one case in four**. Run case 02's closing tests under `model.swap` by
-hand and one of them goes red on `assert 0.9 == 0.95`: a shipped test pinning the
-model's exact confidence values, on a case the gate never checked. The probe
-declines to count it, correctly, because that case's own suite goes red too and
-a brittle test and a brittle suite look identical from outside. So: the failure
-mode is structural where it can be seen, and there is a known blind spot in where
-it can be seen. `CHANGELOG.md` has the receipts.
+A benign change only helps where it actually moves the feature's output, and an
+invoice says what it says however you word the prompt. So there is a third one
+for exactly that: `schema.add_field` asks the extraction for one more field the
+document already carries. Everything it returned before is unchanged and still
+right; the dict has one more key. That put the extraction cases inside the gate,
+and their tests now say `green under schema.add_field` where they used to say
+nothing had been checked.
+
+One case is still outside, and it is the one that matters. Run case 02's closing
+tests under `model.swap` by hand and one goes red on `assert 0.9 == 0.95` — a
+shipped test pinning the model's exact confidence values, which the gate never
+checked. Nothing it is allowed to apply moves that feature's output: the schema
+change is for extraction, the rewording does nothing there, and the model swap
+takes the suite's own LLM judge down with it, so the probe declines to score it.
+You can read that gap in the deliverable itself — those two tests carry
+`no benign change is measurable on this feature`, which is the truth printed on
+the tests that have the problem. `CHANGELOG.md` has the receipts.
 
 ## Run it
 

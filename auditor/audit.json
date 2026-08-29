@@ -4,34 +4,38 @@
     "kill_rate_before": 0.3333,
     "findings": [
       {
-        "operator": "value.null_fields",
-        "summary": "Every extracted field is present but null.",
-        "receipt": "suite stayed green",
-        "closing_test": "from feature import extract\n\ndef test_total_is_number_not_null():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert isinstance(result1[\"total\"], float)\n    assert isinstance(result2[\"total\"], float)\n",
-        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_total_is_number_not_null - asser...",
-        "attempts": 1,
-        "gate": "green on the clean feature, red under value.null_fields, no benign change is measurable on this feature",
-        "rejections": []
-      },
-      {
         "operator": "model.downgrade",
         "summary": "The model behind the feature is swapped for a much weaker one.",
         "receipt": "suite stayed green",
         "closing_test": "from feature import extract\n\ndef test_date_format_consistency():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"date\"] == \"2026-03-14\"\n    assert result2[\"date\"] == \"2026-04-02\"\n",
         "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_date_format_consistency - Assert...",
         "attempts": 1,
-        "gate": "green on the clean feature, red under model.downgrade, no benign change is measurable on this feature",
+        "gate": "green on the clean feature, red under model.downgrade, green under schema.add_field",
         "rejections": []
       },
       {
         "operator": "value.zero_amounts",
         "summary": "Every monetary amount comes back as zero.",
         "receipt": "suite stayed green",
-        "closing_test": "from feature import extract\n\ndef test_total_is_non_zero():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"total\"] != 0\n    assert result2[\"total\"] != 0\n",
-        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_total_is_non_zero - assert 0 != 0",
+        "closing_test": "from feature import extract\n\ndef test_total_amount_not_zero():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"total\"] != 0 and result2[\"total\"] != 0\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_total_amount_not_zero - assert (...",
         "attempts": 1,
-        "gate": "green on the clean feature, red under value.zero_amounts, no benign change is measurable on this feature",
+        "gate": "green on the clean feature, red under value.zero_amounts, green under schema.add_field",
         "rejections": []
+      },
+      {
+        "operator": "value.null_fields",
+        "summary": "Every extracted field is present but null.",
+        "receipt": "suite stayed green",
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "red on the clean feature (assertion failed)",
+        "rejections": [
+          "value.null_fields was applied and the test still passed",
+          "red on the clean feature (assertion failed)",
+          "red on the clean feature (assertion failed)"
+        ]
       },
       {
         "operator": "value.transpose_digits",
@@ -40,7 +44,7 @@
         "closing_test": "from feature import extract\n\ndef test_total_amount_is_correct():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"total\"] == 1284.5 and result2[\"total\"] == 375.9\n",
         "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_total_amount_is_correct - assert...",
         "attempts": 1,
-        "gate": "green on the clean feature, red under value.transpose_digits, no benign change is measurable on this feature",
+        "gate": "green on the clean feature, red under value.transpose_digits, green under schema.add_field",
         "rejections": []
       }
     ],
@@ -51,16 +55,17 @@
     "invalid": [],
     "prior": {
       "order": [
-        "value.null_fields",
-        "model.downgrade",
         "schema.drop_field",
+        "model.downgrade",
         "value.zero_amounts",
+        "value.null_fields",
         "value.transpose_digits"
       ],
       "expect_missed": [
-        "schema.drop_field"
+        "schema.drop_field",
+        "model.downgrade"
       ],
-      "why": "The suite lacks checks for field presence and structure, making schema changes more likely to slip through undetected.",
+      "why": "The suite lacks checks for field presence and model behavior, making schema changes and model degradation the most likely to slip through undetected.",
       "invented_ids": []
     },
     "skipped": [],
@@ -239,10 +244,9 @@
         "model.downgrade"
       ],
       "expect_missed": [
-        "schema.drop_field",
-        "model.downgrade"
+        "schema.drop_field"
       ],
-      "why": "The suite checks for presence of fields and their types, but does not verify that all required fields are present, making schema.drop_field and model.downgrade likely to slip through.",
+      "why": "The suite checks for presence of fields but does not verify that all required fields are present, making it blind to silently dropped fields.",
       "invented_ids": []
     },
     "skipped": [],

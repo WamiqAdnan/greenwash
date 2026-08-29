@@ -84,3 +84,28 @@ def test_the_probe_still_sees_every_benign_change():
         gated = {op.id for op in ops.applicable_benign(case.tags, include_held_out=False)}
         assert gated <= everything
         assert everything - gated == ops.HELD_OUT & everything
+
+
+def test_a_case_missing_its_variant_is_a_harness_fault_not_a_detection():
+    """The trap a new Corpus Case walks into, closed.
+
+    A Benign Change that swaps in an alternative prompt cannot be applied to a
+    case that never declared one. That used to raise a bare `AttributeError`,
+    which is not a `HARNESS_FAULTS` signature, so the suite went red for a
+    machinery reason that reads exactly like a real detection. `MissingVariant`
+    is in the list; `AttributeError` deliberately is not, because a Feature can
+    raise one for real and a Kill thrown away as Invalid is the same bug facing
+    the other way.
+    """
+    class Bare:
+        __name__ = "feature"
+
+    for change in ("prompt.reword", "schema.add_field"):
+        try:
+            ops.get(change).patch(Bare())
+        except ops.MissingVariant as exc:
+            assert any(f in f"{type(exc).__name__}: {exc}" for f in harness.HARNESS_FAULTS)
+        else:
+            raise AssertionError(f"{change} accepted a case with no variant")
+
+    assert "AttributeError" not in harness.HARNESS_FAULTS

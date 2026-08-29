@@ -112,8 +112,8 @@ OVERALL   precision 41%   recall 58%   f1 0.48
 
 $ .venv/bin/python evals/score_predictions.py auditor/prior_predictions.json
 auditor-v1-prior  model=qwen3:8b  verified=False
-OVERALL   precision 40%   recall 17%   f1 0.24
-          found 2/12 confirmed blind spots
+OVERALL   precision 60%   recall 25%   f1 0.35
+          found 3/12 confirmed blind spots
 
 $ .venv/bin/python evals/score_predictions.py auditor/predictions.json
 auditor-v1  model=qwen3:8b  verified=True
@@ -139,6 +139,11 @@ corpus mean kill rate  46% -> 88%   (4 of 4 case(s) reported)
 
 $ .venv/bin/python evals/brittleness.py
 01_invoice_extractor
+  schema.add_field: The feature is asked for one more field than it used to return.
+    the gate applies this too — a regression check, not a second opinion
+    the feature's output moved, and it is still correct
+    the case's own suite: green
+    closing tests: 0 of 3 raised a FALSE ALARM
   model.swap: the feature returned exactly the same thing — no variation to probe, not measured
   prompt.reword: the feature returned exactly the same thing — no variation to probe, not measured
 02_ticket_classifier
@@ -147,29 +152,29 @@ $ .venv/bin/python evals/brittleness.py
 03_rag_citations
   model.swap: The model behind the feature is swapped for a different one of comparable quality.
     HELD OUT of the gate — nothing upstream enforced this
-    the feature still returns a correct answer, worded differently
+    the feature's output moved, and it is still correct
     the case's own suite: green
     closing tests: 0 of 2 raised a FALSE ALARM
   prompt.reword: The prompt is reworded to say the same thing differently.
     the gate applies this too — a regression check, not a second opinion
-    the feature still returns a correct answer, worded differently
+    the feature's output moved, and it is still correct
     the case's own suite: green
     closing tests: 0 of 2 raised a FALSE ALARM
 04_purchase_orders
   no closing tests — nothing to probe
 ====================================================
 false alarm rate  0/2 (0%)  under HELD-OUT benign changes — the gate never saw these, so this is the number that counts
-                  0/2 (0%)  under benign changes the gate applies itself — a regression check on the gate
+                  0/5 (0%)  under benign changes the gate applies itself — a regression check on the gate
 ```
 
 Three predictors, one scorer, one ground truth: the baseline predicting (0.48),
-the *same model* predicting inside the agent before it ran anything (0.24), and
+the *same model* predicting inside the agent before it ran anything (0.35), and
 the agent after verification (1.00). The gap between the first two and the third
 is the harness, not the model. The prior's score is unstable across re-recordings
-— it has been 0.42 and 0.24 on identical cases, moved only by rewording the
-prompt that asks for it — which is itself part of the argument: prediction with
-this model lands somewhere between 0.24 and 0.61 depending on how you ask, and
-verification lands on 1.00 every time.
+— it has been 0.24, 0.35, 0.42 and 0.47 on identical cases, moved by nothing but
+rewordings of the prompt that asks for it — which is itself part of the argument:
+prediction with this model lands somewhere between 0.24 and 0.61 depending on how
+you ask, and verification lands on 1.00 every time.
 
 `04_purchase_orders` is the control — a suite that catches everything. The agent
 reports nothing there. The baseline reports all six sabotages as missed, which is
@@ -194,7 +199,8 @@ verbatim. The rejection and the pytest output that caused it are in
 `trajectories/audit-03_rag_citations.md`; that survivor ends with no closing test,
 which is why the report lists it as still open.
 
-Both changes reach only case 03, and the gap is worth seeing for yourself:
+Case 02 is the one case no benign change can reach, and the gap is worth seeing
+for yourself:
 
 ```bash
 .venv/bin/python -c "
@@ -208,10 +214,13 @@ print(m.run_suite('model.swap', select=f'tests/{CLOSING_TEST_FILE}')[1][-400:])"
 ```
 
 `test_confidence_pin_bypassed` goes red on `assert 0.9 == 0.95` — a shipped test
-pinning the model's exact confidence values, on a case the gate never checked
-because neither benign change moves an extraction feature's output. The probe
-refuses to score it, because that case's own suite goes red under the same change
-and a brittle test cannot be told from a brittle suite when both are red.
+pinning the model's exact confidence values, on the one case the gate cannot
+check. `schema.add_field` is for extraction features, `prompt.reword` is inert
+there, and `model.swap` takes the suite's own LLM judge down with it, so the
+probe refuses to score it: a brittle test cannot be told from a brittle suite
+when both are red. The two closing tests in
+`auditor/closing_tests/02_ticket_classifier.py` say so themselves — their
+`# gate:` line reads `no benign change is measurable on this feature`.
 
 ## Reproducing the recordings (needs Ollama)
 

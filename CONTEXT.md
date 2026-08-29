@@ -73,7 +73,7 @@ _Avoid_: error, skipped
 
 **Benign Change**:
 A change a team really makes that does **not** break the Feature — rewording the
-prompt, moving the feature onto another model. Lives in its own registry so `applicable()`
+prompt, moving the feature onto another model, asking it for one more field. Lives in its own registry so `applicable()`
 can never hand one to the Kill Rate sweep, where a green Suite would be scored as
 a Blind Spot. A Corpus Case declares its own reworded prompt and a human has read
 both, because "means the same thing" is not something to leave to a regex.

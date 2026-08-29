@@ -38,6 +38,7 @@ HARNESS_FAULTS = (
     "GREENWASH_FIXTURES is unset",
     "GREENWASH_MODE must be",
     "Unknown operator",
+    "MissingVariant",
     "ModuleNotFoundError",
     "INTERNALERROR",
 )
