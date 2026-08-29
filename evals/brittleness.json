@@ -3,7 +3,7 @@
     {
       "case": "01_invoice_extractor",
       "change": "schema.add_field",
-      "held_out": false,
+      "held_out": true,
       "measured": true,
       "closing_tests": 3,
       "false_alarms": []
@@ -11,7 +11,14 @@
     {
       "case": "01_invoice_extractor",
       "change": "model.swap",
-      "held_out": true,
+      "held_out": false,
+      "measured": false,
+      "why": "the change was inert"
+    },
+    {
+      "case": "01_invoice_extractor",
+      "change": "model.pin_previous",
+      "held_out": false,
       "measured": false,
       "why": "the change was inert"
     },
@@ -25,7 +32,14 @@
     {
       "case": "02_ticket_classifier",
       "change": "model.swap",
-      "held_out": true,
+      "held_out": false,
+      "measured": false,
+      "why": "the original suite went red"
+    },
+    {
+      "case": "02_ticket_classifier",
+      "change": "model.pin_previous",
+      "held_out": false,
       "measured": false,
       "why": "the original suite went red"
     },
@@ -39,7 +53,15 @@
     {
       "case": "03_rag_citations",
       "change": "model.swap",
-      "held_out": true,
+      "held_out": false,
+      "measured": true,
+      "closing_tests": 2,
+      "false_alarms": []
+    },
+    {
+      "case": "03_rag_citations",
+      "change": "model.pin_previous",
+      "held_out": false,
       "measured": true,
       "closing_tests": 2,
       "false_alarms": []
@@ -53,45 +75,20 @@
       "false_alarms": []
     },
     {
-      "case": "05_meeting_summariser",
+      "case": "07_tool_router",
       "change": "model.swap",
-      "held_out": true,
+      "held_out": false,
       "measured": true,
       "closing_tests": 1,
-      "false_alarms": [
-        "test_summary_contains_key_decisions"
-      ]
-    },
-    {
-      "case": "05_meeting_summariser",
-      "change": "prompt.reword",
-      "held_out": false,
-      "measured": false,
-      "why": "the original suite went red"
-    },
-    {
-      "case": "06_sql_generator",
-      "change": "model.swap",
-      "held_out": true,
-      "measured": false,
-      "why": "the change was inert"
-    },
-    {
-      "case": "06_sql_generator",
-      "change": "prompt.reword",
-      "held_out": false,
-      "measured": false,
-      "why": "the change was inert"
+      "false_alarms": []
     },
     {
       "case": "07_tool_router",
-      "change": "model.swap",
-      "held_out": true,
+      "change": "model.pin_previous",
+      "held_out": false,
       "measured": true,
-      "closing_tests": 2,
-      "false_alarms": [
-        "test_issue_refund_arguments_are_correct"
-      ]
+      "closing_tests": 1,
+      "false_alarms": []
     },
     {
       "case": "07_tool_router",
@@ -103,7 +100,14 @@
     {
       "case": "08_content_moderation",
       "change": "model.swap",
-      "held_out": true,
+      "held_out": false,
+      "measured": false,
+      "why": "the change was inert"
+    },
+    {
+      "case": "08_content_moderation",
+      "change": "model.pin_previous",
+      "held_out": false,
       "measured": false,
       "why": "the change was inert"
     },

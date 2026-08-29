@@ -32,6 +32,7 @@ Measurement is always `python evals/run_eval.py`, corpus mean Kill Rate.
 | **The Held-Out Benign Change earns out: 2 of 5** | With only four cases, `model.swap` was held out of the Gate and found nothing — `0 of 2`, which proved the mechanism worked and not that it was needed. Ten cases put five measurable Closing Tests in front of it. | **2 of 5 (40%) raise a False Alarm under the held-out change**, against **0 of 5** under the Benign Changes the Gate applies itself. Both are shipped tests. `05::test_summary_contains_key_decisions` asserts the literal string `"starter tier price"`; the other model writes "the price of the starter tier at $29" — same fact, still correct, test red. `07::test_issue_refund_arguments_are_correct` pins the whole argument dict. | Kept, and it settles the question the previous entry could only pose. The Gate's coverage gap is **not theoretical and not small**: 40% of the Closing Tests it could not check are brittle, against 0% of the ones it could. Two things follow. The Gate demonstrably works where it can see — that 0 of 5 is its own rule, but the contrast with 2 of 5 is the evidence that the rule does something. And **the honest headline for over-fitting is 40%, not 0%**, because the population that matters is the one nothing enforced. Quoting the gate-applied number alone would be exactly the greenwashing this project is named after. |
 | **The hard case: a suite that tests its own prompt** | Required by the brief and the one this project most needed. `10_few_shot_leak` routes tickets under a house convention — refunds go to `account`, not `billing` — taught to the model by five few-shot examples. Those five examples are, exactly, the suite's five test cases. Nothing about the suite looks weak: exact-label assertions, every label covered, the convention asserted explicitly. | **Kill Rate 100%, zero Blind Spots, and Greenwash reports a clean bill of health** — which is a *correct* answer. `model.downgrade` is **Inert**: swapping in a model 13× smaller changes not one of the five answers, because the answers are in the prompt. `evals/leakage.py` is what sees it — on tickets the suite has never seen, that same small model gets **4 of 5** while the shipped model gets 5 of 5. | Kept, and it is the limitation to state out loud rather than bury. **Mutation testing scores the assertions you wrote against the cases you chose. It cannot audit the cases.** No Operator can find this, by construction: every sabotage breaks the in-prompt examples too, so the suite goes red and looks healthy. The same blindness shows up a second time in `08`, where `moderation.miss_implicit` is reported **Inert** — letting implicit abuse through changes nothing the suite could observe, because the suite has no implicit posts. Both are the same hole seen from two sides, and the fix is not a better Operator. It is holding examples back, which is what `evals/leakage.py` does and what no amount of mutation can substitute for. |
 | **The reproducibility claim was false for one case** | `auditor/audit.py && git diff --stat trajectories/` is the check a judge is invited to run, and it came back with one line changed on `07_tool_router`. | pytest reports a failed dict comparison by listing the differing items in **set-iteration order**, which moves with `PYTHONHASHSEED`. That output is captured, quoted into the Auditor's next prompt, and keyed into a Fixture, so two identical replays wrote different Trajectories — and on a different machine it could have been a `FixtureMiss` instead. | Fixed by pinning `PYTHONHASHSEED=0` for the pytest subprocess. Same family as the wall-clock leak `_stable()` was written for, with one difference worth noting: that one could be normalised after capture and this one cannot, because by the time you see the text the ordering decision has already been made. **The check earned its place by failing.** It had passed on every previous run, which is the only reason this was ever committed — a reproducibility claim you never see fail is a reproducibility claim you have not tested. |
+| **Fixing the two False Alarms cost 20 points of Uplift, and that is the result** | The probe had found two shipped Closing Tests that go red under a change that does not break the Feature. They are the agent's own output, so the fix could not be to edit them — it had to be a Gate that rejects them. `model.swap` moved **into** the Gate (it is what catches both), and a third Benign Change joined it: `model.pin_previous`, the feature pinned back to `qwen2.5:7b`, the most boring change any team makes. `schema.add_field` took the held-out seat. Verified benign by hand on all ten cases first: it moves output on five, the Suite stays green on four of those, and every moved output was read and is still correct. | **All four brittle tests are gone and there are no False Alarms anywhere: 0 of 3 held out, 0 of 8 gate-applied.** The Gate now rejects **9** candidates as False Alarms, against 3 before. And the price is on the headline: **Uplift 95% → 75%** (over the cases with holes, 93% → 64%), because Closing Tests shipped went 13 → 9. Kill Rate 51%, F1 1.00, 103 selftests. | Kept, and the drop *is* the finding. **20 points of that 95% was over-fitting.** The old number counted four tests that would have paged somebody the next time a model changed; the new one does not count them, because they no longer exist. A tool that reports a lower number after being made more honest is behaving correctly, and this is the row to point at when someone asks why Uplift is not higher. Two things learned on the way. **The coverage gap moves before it closes**: putting `model.swap` in the Gate fixed cases 05 and 07, and the newly held-out change immediately found two *different* snapshots on case 06 — `assert generate("q1") == "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"`, pinned SQL down to the whitespace — because nothing the Gate could apply moved that Feature. Gating `model.pin_previous` closed it. The rule is now written down: **gate every Benign Change verified benign, except one, and give the held-out seat to whichever leaves the Gate covering the most cases.** And the honest cost: the held-out population is now three tests on one capability, weaker evidence than the five it replaced. `0 of 3` is not proof that nothing is brittle; it is the strongest statement the remaining slot can make. |
 
 ## Main failure mode: mutation testing rewards over-fitting
 
@@ -41,27 +42,33 @@ honestly, and fires the next time somebody rewords a prompt. By Kill Rate it is
 a perfect test. To the engineer who owns the feature it is a pager at 3am for
 nothing, and after two of those they stop believing the tool.
 
-**Fixed where it can be seen, and measured where it cannot.** The Verification
-Gate now runs a Closing Test three ways — green on the clean Feature, red under
-its Mutant, and green again under every Benign Change that moves that Feature's
-output. It caught a snapshot on its first run and it does not ship. Under the
-Benign Changes the Gate applies, the False Alarm rate is **0 of 5**.
-
-That number is the Gate's own rule read back, so on its own it proves nothing.
-The number that proves something is the **Held-Out** one — a Benign Change the
-Gate is not allowed to apply, reserved for `evals/brittleness.py`:
+**Fixed, and the fix has a price tag.** The Verification Gate runs a Closing Test
+three ways — green on the clean Feature, red under its Mutant, and green again
+under every Benign Change that moves that Feature's output. It rejects **9**
+candidates across the corpus on that third run alone.
 
 ```
-0 of 5   under the benign changes the gate checks      <- its own rule
-2 of 5   under the benign change it never sees         <- 40%, and the real one
+0 of 8   under the benign changes the gate checks      <- its own rule
+0 of 3   under the benign change it never sees         <- the honest one
 ```
 
-**40% of the Closing Tests the Gate could not check are brittle.** Both are
-shipped. One asserts the literal string `"starter tier price"` where a different
-model writes "the price of the starter tier at $29" — same fact, still correct,
-test red. The contrast between 0% and 40% is the evidence that the Gate does
-something; the 40% is the evidence that its coverage is the open problem. Quoting
-the 0 alone would be exactly the greenwashing this project is named after.
+Both are zero now. Getting there cost twenty points of the headline:
+
+```
+Uplift 51% -> 95%    with four brittle tests shipped
+Uplift 51% -> 75%    without them
+```
+
+**That 20 points was over-fitting.** The 95% counted four Closing Tests that
+would have paged somebody the next time a model changed — one pinned SQL down to
+the whitespace, one asserted the literal string `"starter tier price"`. They do
+not exist any more, so the number they were inflating went down. A tool that
+reports a lower number after being made more honest is working.
+
+Read the `0 of 3` for what it is. The held-out population is three tests on one
+capability, because the seat now holds a narrower change than it used to. It is
+not proof that nothing is brittle. It is the strongest statement the remaining
+slot can make, and saying so is the difference between this and greenwashing.
 
 ## Hot take: your eval suite is a claim, and mutation testing only audits half of it
 

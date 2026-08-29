@@ -8,32 +8,29 @@
 
 2 ways this feature can break without your suite going red. Every one below was applied to the real feature and the suite was run; it stayed green.
 
-2 of them now have a test that would have caught it.
+1 of them now has a test that would have caught it.
 
 ## `tool.swap_args`
 
 Two argument values are swapped — the refund goes to the wrong account.
 
 - suite under this sabotage: **suite stayed green**
-- closing test: verified green on the clean feature, red under tool.swap_args, no benign change is measurable on this feature
-- it fails as: `FAILED tests/test_greenwash_closing.py::test_issue_refund_arguments_are_correct`
-- attempts needed: 1
+- **no closing test.** 3 attempt(s), last verdict: red on the clean feature (assertion failed)
 
-```python
-from feature import route
+This one is still open. The blind spot is real — the run above proves it — but the auditor could not write a test that closed it.
 
-def test_issue_refund_arguments_are_correct():
-    call = route("r1")
-    assert call["tool"] == "issue_refund"
-    assert call["arguments"] == {"amount": 84.0, "order_id": "A-4471"}
-```
+Rejected by the gate along the way:
+
+1. false alarm: the feature still works under model.swap and the test went red anyway
+2. red on the clean feature (assertion failed)
+3. red on the clean feature (assertion failed)
 
 ## `tool.blank_args`
 
 The right tool is called with empty arguments.
 
 - suite under this sabotage: **suite stayed green**
-- closing test: verified green on the clean feature, red under tool.blank_args, no benign change is measurable on this feature
+- closing test: verified green on the clean feature, red under tool.blank_args, green under model.swap, model.pin_previous
 - it fails as: `FAILED tests/test_greenwash_closing.py::test_arguments_are_non_empty - Assert...`
 - attempts needed: 1
 

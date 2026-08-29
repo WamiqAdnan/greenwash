@@ -153,7 +153,7 @@ def test_a_test_that_pins_the_models_prose_is_rejected(tmp_path):
     assert verdict.clean_green and verdict.kills_mutant, (
         "it does everything the two-run gate asked of it"
     )
-    assert verdict.false_alarm_under == "prompt.reword"
+    assert verdict.false_alarm_under in set(ops.BENIGN), verdict.reason
 
 
 def test_a_test_that_asserts_the_documents_facts_is_still_accepted(tmp_path):
@@ -161,7 +161,7 @@ def test_a_test_that_asserts_the_documents_facts_is_still_accepted(tmp_path):
         "citation.fabricate", GROUNDED
     )
     assert verdict.accepted, verdict.reason
-    assert verdict.benign_checked == ("prompt.reword",)
+    assert "prompt.reword" in verdict.benign_checked, verdict.reason
 
 
 def test_a_harness_fault_under_a_benign_change_is_not_a_false_alarm(tmp_path):
@@ -202,8 +202,13 @@ def test_an_inert_benign_change_is_not_run_at_all():
     rewording the prompt does not move an extraction feature, and widening the
     schema does not apply to one that answers questions.
     """
-    assert [c.id for c in VerificationGate(RAG).observable_benign()] == ["prompt.reword"]
-    assert [c.id for c in VerificationGate(CASE).observable_benign()] == ["schema.add_field"]
+    rag = {c.id for c in VerificationGate(RAG).observable_benign()}
+    assert "prompt.reword" in rag and "schema.add_field" not in rag
+    assert not (rag & ops.HELD_OUT)
+    # Every benign change is Inert on the invoice extractor except the one that
+    # widens its schema — and that one is currently the held-out seat, so the
+    # Gate has nothing here at all.
+    assert VerificationGate(CASE).observable_benign() == []
 
 
 CLASSIFIER = harness.Case(ROOT / "corpus" / "02_ticket_classifier")
@@ -218,11 +223,16 @@ def test_t2_is_technical():
 
 
 def test_a_case_with_no_benign_check_says_so_rather_than_claiming_one(tmp_path):
-    """Nothing moves the classifier's output that the Gate is allowed to apply.
+    """Nothing the Gate may apply is usable on the classifier, for two reasons.
 
-    `prompt.reword` is Inert on it and `model.swap` is Held Out, so this Closing
-    Test has never been held to one — and the verdict has to say so rather than
-    quietly imply a check that did not happen.
+    `prompt.reword` is Inert on it — an extraction-shaped feature returns the
+    same JSON however you ask. `model.swap` does move its output, but that
+    case's own Suite goes red under it, because the Suite's LLM judge changed
+    its mind and not because the Feature did. Judging a candidate on that run
+    would reject it on evidence about the judge.
+
+    So this Closing Test has never been held to a Benign Change, and the verdict
+    has to say so rather than quietly imply a check that did not happen.
     """
     gate_ = VerificationGate(CLASSIFIER, scratch=tmp_path)
     assert gate_.observable_benign() == []

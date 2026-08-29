@@ -45,7 +45,7 @@ Rejected by the gate along the way:
 Every citation points at a real but wrong location in the source.
 
 - suite under this sabotage: **suite stayed green**
-- closing test: verified green on the clean feature, red under citation.wrong_page, green under prompt.reword
+- closing test: verified green on the clean feature, red under citation.wrong_page, green under model.swap, model.pin_previous, prompt.reword
 - it fails as: `FAILED tests/test_greenwash_closing.py::test_citations_page_1_quote_correct`
 - attempts needed: 2
 
@@ -83,7 +83,7 @@ Rejected by the gate along the way:
 Citations are invented: plausible quotes that appear nowhere in the source.
 
 - suite under this sabotage: **suite stayed green**
-- closing test: verified green on the clean feature, red under citation.fabricate, green under prompt.reword
+- closing test: verified green on the clean feature, red under citation.fabricate, green under model.swap, model.pin_previous, prompt.reword
 - it fails as: `FAILED tests/test_greenwash_closing.py::test_citations_quotes_are_specific - ...`
 - attempts needed: 2
 
@@ -119,7 +119,7 @@ This one is still open. The blind spot is real — the run above proves it — b
 
 Rejected by the gate along the way:
 
-1. false alarm: the feature still works under prompt.reword and the test went red anyway
+1. false alarm: the feature still works under model.swap and the test went red anyway
 2. red on the clean feature (assertion failed)
 3. red on the clean feature (assertion failed)
 

@@ -290,8 +290,19 @@ class VerificationGate:
             changed = observe.observe(self.case.path, change.id)
             # A change we could not even apply is not a change we can hold a
             # test to, so it drops out here rather than becoming a rejection.
-            if not observe.failed(changed) and changed != clean:
-                live.append(change)
+            if observe.failed(changed) or changed == clean:
+                continue
+            # And a change is only benign *for this case* if the case's own
+            # Suite stays green under it. Where it does not, either the change
+            # broke the Feature or that Suite is brittle too — and a candidate
+            # going red there would be rejected as a False Alarm on evidence
+            # that says nothing about the candidate. `evals/brittleness.py` has
+            # always refused to score that situation; the Gate must refuse to
+            # judge on it, which is the stronger obligation of the two.
+            suite_green, suite_out = self.case.run_suite(change.id)
+            if _fault(suite_out) or not suite_green:
+                continue
+            live.append(change)
         return live
 
     def judge(self, operator_id: str, code: str) -> Verdict:

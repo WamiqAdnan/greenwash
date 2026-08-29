@@ -8,26 +8,22 @@
 
 4 ways this feature can break without your suite going red. Every one below was applied to the real feature and the suite was run; it stayed green.
 
-1 of them now has a test that would have caught it.
+0 of them now have a test that would have caught it.
 
 ## `model.echo`
 
 The model is replaced by one that echoes its input back.
 
 - suite under this sabotage: **suite stayed green**
-- closing test: verified green on the clean feature, red under model.echo, green under prompt.reword
-- it fails as: `FAILED tests/test_greenwash_closing.py::test_summary_contains_key_decisions`
-- attempts needed: 1
+- **no closing test.** 3 attempt(s), last verdict: red on the clean feature (assertion failed)
 
-```python
-from feature import read_transcript, summarise
+This one is still open. The blind spot is real — the run above proves it — but the auditor could not write a test that closed it.
 
-def test_summary_contains_key_decisions():
-    standup = summarise("standup.txt")
-    pricing = summarise("pricing.txt")
-    assert "exponential backoff" in standup and "Kafka upgrade" in standup
-    assert "starter tier price" in pricing and "discount experiment" in pricing
-```
+Rejected by the gate along the way:
+
+1. false alarm: the feature still works under model.swap and the test went red anyway
+2. red on the clean feature (assertion failed)
+3. red on the clean feature (assertion failed)
 
 ## `summary.drop_decisions`
 
@@ -55,7 +51,7 @@ This one is still open. The blind spot is real — the run above proves it — b
 
 Rejected by the gate along the way:
 
-1. false alarm: the feature still works under prompt.reword and the test went red anyway
+1. false alarm: the feature still works under model.swap and the test went red anyway
 2. red on the clean feature (assertion failed)
 3. red on the clean feature (assertion failed)
 
@@ -70,7 +66,7 @@ This one is still open. The blind spot is real — the run above proves it — b
 
 Rejected by the gate along the way:
 
-1. false alarm: the feature still works under prompt.reword and the test went red anyway
+1. false alarm: the feature still works under model.swap and the test went red anyway
 2. red on the clean feature (assertion failed)
 3. red on the clean feature (assertion failed)
 

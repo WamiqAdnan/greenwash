@@ -12,7 +12,7 @@ Merged onto an Overlay by `evals/uplift.py`. Never written into a Suite.
 
 
 # closes: citation.wrong_page — Every citation points at a real but wrong location in the source.
-# gate: green on the clean feature, red under citation.wrong_page, green under prompt.reword
+# gate: green on the clean feature, red under citation.wrong_page, green under model.swap, model.pin_previous, prompt.reword
 # fails as: FAILED tests/test_greenwash_closing.py::test_citations_page_1_quote_correct
 from feature import answer
 
@@ -24,7 +24,7 @@ def test_citations_page_1_quote_correct():
 
 
 # closes: citation.fabricate — Citations are invented: plausible quotes that appear nowhere in the source.
-# gate: green on the clean feature, red under citation.fabricate, green under prompt.reword
+# gate: green on the clean feature, red under citation.fabricate, green under model.swap, model.pin_previous, prompt.reword
 # fails as: FAILED tests/test_greenwash_closing.py::test_citations_quotes_are_specific - ...
 from feature import answer
 

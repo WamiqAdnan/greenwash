@@ -47,7 +47,8 @@ the held-out `model.swap` is a Benign Change, and `record_fixtures.py` already
 runs every Benign Change inside the baseline pass — the swap sets the model
 itself, so its fixtures land there. You still have to have pulled it.
 
-    ollama pull qwen3:8b && ollama pull qwen3:0.6b && ollama pull llama3.1:8b
+    ollama pull qwen3:8b && ollama pull qwen3:0.6b
+    ollama pull llama3.1:8b && ollama pull qwen2.5:7b
 
 A missing recording does not fail loudly. The Mutant dies of a fixture miss and
 reports Invalid, which is correct and useless.
@@ -92,9 +93,10 @@ rewords a prompt. `evals/brittleness.py` is the other side of the measurement:
 apply a **Benign Change**, and every Closing Test that goes red is a False Alarm.
 Never quote Uplift without it — and quote the right half of it. The probe splits
 its result: under a Benign Change the Gate applies itself, a zero only says the
-Gate ran; under a **Held-Out Benign Change** it is evidence. `model.swap` is the
-held-out one. Keep at least one held out — `selftests/test_benign_changes.py`
-fails if none is.
+Gate ran; under a **Held-Out Benign Change** it is evidence. `schema.add_field`
+currently holds that seat. Keep at least one held out —
+`selftests/test_benign_changes.py` fails if none is — and gate everything else,
+because a brittle test the Gate rejects never reaches anybody.
 
 **Re-recording never deletes.** `record_or_replay` writes fixtures by key and
 leaves the old ones, so any change to a prompt orphans everything downstream of

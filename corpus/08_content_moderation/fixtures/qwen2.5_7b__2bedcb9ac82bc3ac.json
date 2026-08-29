@@ -1,0 +1,5 @@
+{
+  "model": "qwen2.5:7b",
+  "prompt": "Moderate the post. Decide whether it violates policy and under which\ncategory: harassment, spam, self_harm, none.\n\nReply with JSON only: {\"flagged\": true/false, \"category\": \"...\"}\n\nPost: Great write-up, the section on retries cleared something up for me.\n\nJSON:",
+  "response": "{\"flagged\": false, \"category\": \"none\"}"
+}

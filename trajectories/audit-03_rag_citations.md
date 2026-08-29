@@ -1702,7 +1702,7 @@ def test_citations_page_1_quote_correct():
 **62. propose_closing_test responded**
 
 ```
-accepted: green on the clean feature, red under citation.wrong_page, green under prompt.reword
+accepted: green on the clean feature, red under citation.wrong_page, green under model.swap, model.pin_previous, prompt.reword
  [100%]
 =================================== FAILURES ===================================
 _____________________ test_citations_page_1_quote_correct ______________________
@@ -2622,7 +2622,7 @@ def test_citations_quotes_are_specific():
 **86. propose_closing_test responded**
 
 ```
-accepted: green on the clean feature, red under citation.fabricate, green under prompt.reword
+accepted: green on the clean feature, red under citation.fabricate, green under model.swap, model.pin_previous, prompt.reword
 wer(q2)
     
 >       assert res1_clean["citations"][0]["quote"] == "Annual leave accrues at 2.5 days per completed month of service."
@@ -2840,11 +2840,9 @@ def test_answer_quotes_match_clean():
 **92. propose_closing_test responded**
 
 ```
-rejected: false alarm: the feature still works under prompt.reword and the test went red anyway
-er?"]:
-            result = answer(q)
->           assert result["answer"] in clean_answers
-E           AssertionError: assert 'The answer is 2.5 days. This information comes from page 1.' in ['The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].', 'The answer is 10 days. This information is found on [page 2].']
+rejected: false alarm: the feature still works under model.swap and the test went red anyway
+ clean_answers
+E           AssertionError: assert 'According to page 1, Annual leave accrues at 2.5 days per completed month of service. \n\nSo, the answer is: 2.5 days. (Source: Page 1)' in ['The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].', 'The answer is 10 days. This information is found on [page 2].']
 
 tests/test_greenwash_closing.py:14: AssertionError
 =========================== short test summary info ============================
@@ -2894,13 +2892,13 @@ def test_answer_quotes_match_clean():
         assert result["answer"] not in echo_answers
 ```
 
-Result: false alarm: the feature still works under prompt.reword and the test went red anyway
+Result: false alarm: the feature still works under model.swap and the test went red anyway
 
 ```
-for q in ["How much annual leave accrues each month?", "How many days of leave can be carried over?"]:
+leave can be carried over?"]:
             result = answer(q)
 >           assert result["answer"] in clean_answers
-E           AssertionError: assert 'The answer is 2.5 days. This information comes from page 1.' in ['The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].', 'The answer is 10 days. This information is found on [page 2].']
+E           AssertionError: assert 'According to page 1, Annual leave accrues at 2.5 days per completed month of service. \n\nSo, the answer is: 2.5 days. (Source: Page 1)' in ['The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].', 'The answer is 10 days. This information is found on [page 2].']
 
 tests/test_greenwash_closing.py:14: AssertionError
 =========================== short test summary info ============================
@@ -2927,7 +2925,7 @@ call 2: lambda q=q: feature.answer(q)   with q='How many days of leave can be ca
 
 ## Your task
 
-Attempt 2. Your last test went red under `prompt.reword`, which does NOT break the feature — the values it returned were still correct, only worded differently, and your test called that a failure. It is pinned to the exact output this model happened to produce. Assert something that stays true when the wording changes: a fact from the source, a page number, a quote, a number, a structural property — never the model's prose.
+Attempt 2. Your last test went red under `model.swap`, which does NOT break the feature — the values it returned were still correct, only worded differently, and your test called that a failure. It is pinned to the exact output this model happened to produce. Assert something that stays true when the wording changes: a fact from the source, a page number, a quote, a number, a structural property — never the model's prose.
 
 Every attempt above has already been run and failed for the reason given. Do not
 send one of them again — an answer you have already given is a wasted attempt.
@@ -3041,13 +3039,13 @@ def test_answer_quotes_match_clean():
         assert result["answer"] not in echo_answers
 ```
 
-Result: false alarm: the feature still works under prompt.reword and the test went red anyway
+Result: false alarm: the feature still works under model.swap and the test went red anyway
 
 ```
-for q in ["How much annual leave accrues each month?", "How many days of leave can be carried over?"]:
+leave can be carried over?"]:
             result = answer(q)
 >           assert result["answer"] in clean_answers
-E           AssertionError: assert 'The answer is 2.5 days. This information comes from page 1.' in ['The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].', 'The answer is 10 days. This information is found on [page 2].']
+E           AssertionError: assert 'According to page 1, Annual leave accrues at 2.5 days per completed month of service. \n\nSo, the answer is: 2.5 days. (Source: Page 1)' in ['The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].', 'The answer is 10 days. This information is found on [page 2].']
 
 tests/test_greenwash_closing.py:14: AssertionError
 =========================== short test summary info ============================
@@ -3132,14 +3130,10 @@ def test_answer_quotes_match_clean():
         "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
         "The answer is 10 days. This information is found on [page 2]."
     ]
-    echo_answers = [
-        "ts six months. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How much annual leave accrues each month?\n\nAnswer:",
-        "six months. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How many days of leave can be carried over?\n\nAnswer:"
-    ]
     for q in ["How much annual leave accrues each month?", "How many days of leave can be carried over?"]:
         result = feature.answer(q)
         assert result["answer"] in clean_answers
-        assert result["answer"] not in echo_answers
+        assert "page" not in result["answer"]
 ```
 ````
 
@@ -3153,14 +3147,10 @@ def test_answer_quotes_match_clean():
         "The annual leave accrues at 2.5 days per completed month of service. This information is found on [page 1].",
         "The answer is 10 days. This information is found on [page 2]."
     ]
-    echo_answers = [
-        "ts six months. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How much annual leave accrues each month?\n\nAnswer:",
-        "six months. Leave may not be taken during probation.\n[page 4] Sick leave requires a medical certificate from the third consecutive day.\n\nQuestion: How many days of leave can be carried over?\n\nAnswer:"
-    ]
     for q in ["How much annual leave accrues each month?", "How many days of leave can be carried over?"]:
         result = feature.answer(q)
         assert result["answer"] in clean_answers
-        assert result["answer"] not in echo_answers
+        assert "page" not in result["answer"]
 ```
 
 
@@ -3168,14 +3158,15 @@ def test_answer_quotes_match_clean():
 
 ```
 rejected: red on the clean feature (assertion failed)
-equires a medical certificate from the third consecutive day.\n\nQuestion: How many days of leave can be carried over?\n\nAnswer:"
+th of service. This information is found on [page 1].",
+            "The answer is 10 days. This information is found on [page 2]."
         ]
         for q in ["How much annual leave accrues each month?", "How many days of leave can be carried over?"]:
 >           result = feature.answer(q)
                      ^^^^^^^
 E           NameError: name 'feature' is not defined
 
-tests/test_greenwash_closing.py:11: NameError
+tests/test_greenwash_closing.py:7: NameError
 =========================== short test summary info ============================
 FAILED tests/test_greenwash_closing.py::test_answer_quotes_match_clean - Name...
 1 failed in N.NNs

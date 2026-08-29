@@ -615,7 +615,7 @@ def test_date_format_consistency():
 **30. propose_closing_test responded**
 
 ```
-accepted: green on the clean feature, red under model.downgrade, green under schema.add_field
+accepted: green on the clean feature, red under model.downgrade, no benign change is measurable on this feature
 ________________________
 
     def test_date_format_consistency():
@@ -838,7 +838,7 @@ def test_total_amount_not_zero():
 **36. propose_closing_test responded**
 
 ```
-accepted: green on the clean feature, red under value.zero_amounts, green under schema.add_field
+accepted: green on the clean feature, red under value.zero_amounts, no benign change is measurable on this feature
 ============================== FAILURES ===================================
 __________________________ test_total_amount_not_zero __________________________
 
@@ -1523,7 +1523,7 @@ def test_total_amount_is_correct():
 **56. propose_closing_test responded**
 
 ```
-accepted: green on the clean feature, red under value.transpose_digits, green under schema.add_field
+accepted: green on the clean feature, red under value.transpose_digits, no benign change is measurable on this feature
 ========= FAILURES ===================================
 _________________________ test_total_amount_is_correct _________________________
 

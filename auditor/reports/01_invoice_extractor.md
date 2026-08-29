@@ -15,7 +15,7 @@
 The model behind the feature is swapped for a much weaker one.
 
 - suite under this sabotage: **suite stayed green**
-- closing test: verified green on the clean feature, red under model.downgrade, green under schema.add_field
+- closing test: verified green on the clean feature, red under model.downgrade, no benign change is measurable on this feature
 - it fails as: `FAILED tests/test_greenwash_closing.py::test_date_format_consistency - Assert...`
 - attempts needed: 1
 
@@ -34,7 +34,7 @@ def test_date_format_consistency():
 Every monetary amount comes back as zero.
 
 - suite under this sabotage: **suite stayed green**
-- closing test: verified green on the clean feature, red under value.zero_amounts, green under schema.add_field
+- closing test: verified green on the clean feature, red under value.zero_amounts, no benign change is measurable on this feature
 - it fails as: `FAILED tests/test_greenwash_closing.py::test_total_amount_not_zero - assert (...`
 - attempts needed: 1
 
@@ -67,7 +67,7 @@ Rejected by the gate along the way:
 Digits inside extracted numbers are transposed — 1284.50 becomes 1248.50.
 
 - suite under this sabotage: **suite stayed green**
-- closing test: verified green on the clean feature, red under value.transpose_digits, green under schema.add_field
+- closing test: verified green on the clean feature, red under value.transpose_digits, no benign change is measurable on this feature
 - it fails as: `FAILED tests/test_greenwash_closing.py::test_total_amount_is_correct - assert...`
 - attempts needed: 1
 

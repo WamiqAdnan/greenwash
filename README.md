@@ -112,10 +112,15 @@ re-records it has scored 0.24, 0.35, 0.42, 0.46 and 0.47, moved by nothing but
 rewordings of the prompt that asks it the question. Prediction with this model
 lands somewhere in that band. Verification lands on 1.00 every time.
 
-**Kill rate across the corpus: 51% → 95%**, measured by `evals/uplift.py` from
+**Kill rate across the corpus: 51% → 75%**, measured by `evals/uplift.py` from
 the tests the agent wrote, outside the agent, on a scratch copy — your suite is
 evidence and is never edited. Over the seven cases that had blind spots to close
-at all: 30% → 93%.
+at all: 30% → 64%.
+
+That number used to read 95%. It came down because four of the thirteen tests it
+counted were brittle — they would have fired the next time somebody changed a
+model — and the gate now rejects tests like that instead of shipping them.
+**Twenty points of the old number was over-fitting.** See `CHANGELOG.md`.
 
 ### The comparison, in one table
 
@@ -123,8 +128,8 @@ at all: 30% → 93%.
 |---|---|---|---|
 | blind spots found (F1 against hand-confirmed truth) | 0.63 | **1.00** | +0.37 |
 | — of 22 real ones | 16, plus 13 false alarms | **22, and no false alarms** | |
-| kill rate after the run | 51% — it writes no tests | **95%** | +44 pts |
-| false alarms in the tests it ships | n/a — ships none | 2 of 5 held-out | measured, not zero |
+| kill rate after the run | 51% — it writes no tests | **75%** | +24 pts |
+| false alarms in the tests it ships | n/a — ships none | **0 of 3 held out, 0 of 8 checked** | measured, not assumed |
 | human time per case | — | 7 s replayed, one pass to record | see below |
 | API cost per case | $0 | $0 | runs on a laptop |
 
@@ -194,24 +199,30 @@ On its first run the gate caught a test that had hard-coded both of the model's
 answers verbatim. It would have shipped under the old two runs. It did not ship.
 
 A gate that enforces a rule and a probe that checks the same rule are one thing
-wearing two hats, so one benign change is **held out** of the gate: `model.swap`
-moves the feature onto a different vendor's model, and only `brittleness.py` may
-apply it. That split is what makes the probe's number mean anything, and here is
-what it says:
+wearing two hats, so one benign change is always **held out** of the gate and
+reserved for `brittleness.py`. That split is what makes the probe's number mean
+anything, and the first time it had a real corpus to work on it found **two of
+five** shipped tests brittle — a snapshot of the model's prose, and a pinned
+argument dict.
+
+So the gate got the change that catches them, and a third one besides. Both are
+gone now, along with two more the next held-out change turned up:
 
 ```
-0 of 5   under the benign changes the gate checks      <- the gate's own rule
-2 of 5   under the benign change it never sees         <- 40%, and the real one
+0 of 8   under the benign changes the gate checks
+0 of 3   under the benign change it never sees
 ```
 
-**Forty percent of the tests the gate could not check are brittle**, against zero
-percent of the ones it could. The contrast is the evidence that the gate works.
-The 40% is the evidence that its coverage, not its logic, is the open problem.
+That took twenty points off the headline, because four of the thirteen tests the
+agent used to ship were the brittle ones. **A tool that reports a lower number
+after being made more honest is working.**
 
-Both are shipped tests, and both fail the way a snapshot fails. One asserts the
-literal string `"starter tier price"`; the other model writes "the price of the
-starter tier at $29" — same fact, still correct, test red. Quoting the 0 without
-the 40 would be exactly the greenwashing this project is named after.
+Two things that cost is buying, and one it is not. The gate now rejects nine
+candidates as false alarms across the corpus. The tests that survive are checked
+against two different model swaps and a reworded prompt. And the `0 of 3` is a
+narrower audit than the `2 of 5` it replaced — three tests on one capability —
+so it is not proof that nothing is brittle, just the strongest thing the
+remaining slot can say.
 
 ## What it cannot do
 

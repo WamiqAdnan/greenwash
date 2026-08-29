@@ -70,15 +70,9 @@
       "citation.fabricate"
     ],
     "04_purchase_orders": [],
-    "05_meeting_summariser": [
-      "model.echo"
-    ],
-    "06_sql_generator": [
-      "sql.swap_aggregate",
-      "model.downgrade"
-    ],
+    "05_meeting_summariser": [],
+    "06_sql_generator": [],
     "07_tool_router": [
-      "tool.swap_args",
       "tool.blank_args"
     ],
     "08_content_moderation": [

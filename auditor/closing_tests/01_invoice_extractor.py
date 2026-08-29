@@ -12,7 +12,7 @@ Merged onto an Overlay by `evals/uplift.py`. Never written into a Suite.
 
 
 # closes: model.downgrade — The model behind the feature is swapped for a much weaker one.
-# gate: green on the clean feature, red under model.downgrade, green under schema.add_field
+# gate: green on the clean feature, red under model.downgrade, no benign change is measurable on this feature
 # fails as: FAILED tests/test_greenwash_closing.py::test_date_format_consistency - Assert...
 from feature import extract
 
@@ -24,7 +24,7 @@ def test_date_format_consistency():
 
 
 # closes: value.zero_amounts — Every monetary amount comes back as zero.
-# gate: green on the clean feature, red under value.zero_amounts, green under schema.add_field
+# gate: green on the clean feature, red under value.zero_amounts, no benign change is measurable on this feature
 # fails as: FAILED tests/test_greenwash_closing.py::test_total_amount_not_zero - assert (...
 from feature import extract
 
@@ -35,7 +35,7 @@ def test_total_amount_not_zero():
 
 
 # closes: value.transpose_digits — Digits inside extracted numbers are transposed — 1284.50 becomes 1248.50.
-# gate: green on the clean feature, red under value.transpose_digits, green under schema.add_field
+# gate: green on the clean feature, red under value.transpose_digits, no benign change is measurable on this feature
 # fails as: FAILED tests/test_greenwash_closing.py::test_total_amount_is_correct - assert...
 from feature import extract
 

@@ -64,10 +64,17 @@ BENIGN: dict[str, Operator] = {}
 # only that the Gate had executed. Holding one back is what makes that number a
 # second opinion again.
 #
-# This is a statement about the experiment rather than about the change. Moving
-# `model.swap` inside the Gate is deleting one keyword — and the day there are
-# several Benign Changes, whichever is held out should be the one whose False
-# Alarms you would most regret shipping.
+# This is a statement about the experiment rather than about the change, and the
+# seat rotates as the corpus grows. The rule: **gate every Benign Change that has
+# been verified benign, except one.** Prevention beats measurement — a brittle
+# test the Gate rejects never reaches anybody — so the held-out seat goes to the
+# change that leaves the Gate covering the most Corpus Cases.
+#
+# What that costs is worth knowing. Each held-out change finds brittleness on the
+# cases the Gate cannot reach, and moving a change into the Gate to fix those
+# moves the blind spot rather than closing it. Coverage is per capability: you
+# need a Benign Change that moves *each kind of Feature*, or some suite is being
+# judged on two runs and shipping snapshots. See the changelog.
 HELD_OUT: set[str] = set()
 
 
@@ -527,6 +534,7 @@ def _category_collapse(module) -> None:
     "schema.add_field",
     "The feature is asked for one more field than it used to return.",
     ("extraction",),
+    held_out=True,
 )
 def _add_field(module) -> None:
     """Ask the same extraction for one extra field the document already carries.
@@ -551,7 +559,6 @@ def _add_field(module) -> None:
     "The model behind the feature is swapped for a different one of comparable "
     "quality.",
     ("llm",),
-    held_out=True,
 )
 def _swap(module) -> None:
     """Move the Feature onto another vendor's model of the same class.
@@ -564,10 +571,37 @@ def _swap(module) -> None:
     model being stronger, only on it still being right. That it still is, is
     checked by hand and by the Corpus Case's own suite staying green.
 
-    Held out of the Verification Gate on purpose — see `HELD_OUT`.
+    Applied by the Verification Gate. It was held out until the corpus grew
+    large enough to show what it catches: on ten cases the probe found two
+    shipped Closing Tests that go red under it while the Feature stays correct,
+    and both are exactly the snapshot the Gate exists to reject. A change that
+    catches real brittleness belongs in front of the tests, not behind them —
+    so `model.pin_previous` took over the held-out seat.
     """
     os.environ["GREENWASH_MODEL"] = os.environ.get(
         "GREENWASH_OTHER_MODEL", "llama3.1:8b"
+    )
+
+
+@benign(
+    "model.pin_previous",
+    "The feature is pinned to the previous generation of the same model family.",
+    ("llm",),
+)
+def _pin_previous(module) -> None:
+    """The most boring change on this list, and one every team makes.
+
+    A new model lands, something regresses, and you pin back a generation until
+    you have time to look. `qwen3:8b` to `qwen2.5:7b` is that move: same family,
+    same class, a year apart. Nothing about it should break a correct Feature.
+
+    Applied by the Gate, alongside `model.swap`. Between them they move the
+    output of every Corpus Case whose Feature produces prose or generated code,
+    which is where snapshots get written. `schema.add_field` holds the held-out
+    seat instead — see `HELD_OUT` for what that seat is for and what it costs.
+    """
+    os.environ["GREENWASH_MODEL"] = os.environ.get(
+        "GREENWASH_PREVIOUS_MODEL", "qwen2.5:7b"
     )
 
 

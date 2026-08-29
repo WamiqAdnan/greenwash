@@ -604,15 +604,14 @@ def test_q1_sum_amount():
 **26. propose_closing_test responded**
 
 ```
-accepted: green on the clean feature, red under sql.swap_aggregate, no benign change is measurable on this feature
-= sql_before, "Test failed on clean feature"
+rejected: false alarm: the feature still works under model.pin_previous and the test went red anyway
+"Test failed on clean feature"
 E       AssertionError: Test failed on clean feature
-E       assert "SELECT COUNT...gion = 'EMEA'" == "SELECT SUM(a...gion = 'EMEA'"
+E       assert "SELECT SUM(a...gion = 'EMEA'" == "SELECT SUM(a...gion = 'EMEA'"
 E         
 E         - SELECT SUM(amount) FROM orders WHERE region = 'EMEA'
-E         ?        ^ ^
-E         + SELECT COUNT(amount) FROM orders WHERE region = 'EMEA'
-E         ?        ^^ ^^
+E         + SELECT SUM(amount) AS total_amount FROM orders WHERE region = 'EMEA'
+E         ?                    ++++++++++++++++
 
 tests/test_greenwash_closing.py:7: AssertionError
 =========================== short test summary info ============================
@@ -620,9 +619,312 @@ FAILED tests/test_greenwash_closing.py::test_q1_sum_amount - AssertionError: ...
 1 failed in N.NNs
 ```
 
-**27. tool call** `observe(operator='sql.drop_where')`
+**27. asked `qwen3:8b`**
 
-**28. observe responded**
+<details><summary>full prompt</summary>
+
+````
+You are auditing whether a test suite is worth trusting.
+
+You do not guess. For every sabotage you consider, the harness applies it and
+runs the suite, and you are told what happened. A suite that stays green under
+sabotage has a blind spot, and the run is the proof.
+
+Your only real job is the last one: given a sabotage the suite missed, and the
+values the feature actually returned before and after, write the test that would
+have caught it. That test is then run on the clean feature, where it must pass;
+under the sabotage, where it must fail; and under any change that does not break
+the feature at all, where it must pass again. If it does not do all of that, you
+are shown the pytest output and asked again.
+
+Never report a blind spot that no run demonstrates.
+
+## What you have already tried for `sql.swap_aggregate`, and why each one failed
+
+### Attempt 1
+
+```python
+import sqlite3
+from feature import generate
+
+def test_q1_sum_amount():
+    sql_before = "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+    sql_after = "SELECT COUNT(amount) FROM orders WHERE region = 'EMEA'"
+    assert generate("q1") == sql_before, "Test failed on clean feature"
+    assert generate("q1") != sql_after, "Test failed on clean feature"
+```
+
+Result: false alarm: the feature still works under model.pin_previous and the test went red anyway
+
+```
+ELECT COUNT(amount) FROM orders WHERE region = 'EMEA'"
+>       assert generate("q1") == sql_before, "Test failed on clean feature"
+E       AssertionError: Test failed on clean feature
+E       assert "SELECT SUM(a...gion = 'EMEA'" == "SELECT SUM(a...gion = 'EMEA'"
+E         
+E         - SELECT SUM(amount) FROM orders WHERE region = 'EMEA'
+E         + SELECT SUM(amount) AS total_amount FROM orders WHERE region = 'EMEA'
+E         ?                    ++++++++++++++++
+
+tests/test_greenwash_closing.py:7: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_q1_sum_amount - AssertionError: ...
+1 failed in N.NNs
+```
+
+
+## What the feature actually returns
+
+Before `sql.swap_aggregate`:
+
+call 1: lambda q=q: feature.generate(q)   with q='q1'
+  returned "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+call 2: lambda q=q: feature.generate(q)   with q='q2'
+  returned "SELECT COUNT(*) FROM orders WHERE status = 'cancelled'"
+
+After `sql.swap_aggregate`:
+
+call 1: lambda q=q: feature.generate(q)   with q='q1'
+  returned "SELECT COUNT(amount) FROM orders WHERE region = 'EMEA'"
+call 2: lambda q=q: feature.generate(q)   with q='q2'
+  returned "SELECT COUNT(*) FROM orders WHERE status = 'cancelled'"
+
+## Your task
+
+Attempt 2. Your last test went red under `model.pin_previous`, which does NOT break the feature — the values it returned were still correct, only worded differently, and your test called that a failure. It is pinned to the exact output this model happened to produce. Assert something that stays true when the wording changes: a fact from the source, a page number, a quote, a number, a structural property — never the model's prose.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`sql.swap_aggregate`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
+
+Python:
+````
+
+</details>
+
+**28. `qwen3:8b` answered**
+
+````
+```python
+import sqlite3
+from feature import generate
+
+def test_q1_aggregate_type():
+    sql_before = "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+    sql_after = "SELECT COUNT(amount) FROM orders WHERE region = 'EMEA'"
+    assert "SUM" in generate("q1"), "Test failed on clean feature"
+    assert "SUM" not in generate("q1"), "Test failed on sabotaged feature"
+```
+````
+
+**29. tool call** `propose_closing_test(operator='sql.swap_aggregate')`
+
+the test it is asking the gate to judge:
+
+```python
+import sqlite3
+from feature import generate
+
+def test_q1_aggregate_type():
+    sql_before = "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+    sql_after = "SELECT COUNT(amount) FROM orders WHERE region = 'EMEA'"
+    assert "SUM" in generate("q1"), "Test failed on clean feature"
+    assert "SUM" not in generate("q1"), "Test failed on sabotaged feature"
+```
+
+
+**30. propose_closing_test responded**
+
+```
+rejected: red on the clean feature (assertion failed)
+ate("q1"), "Test failed on clean feature"
+>       assert "SUM" not in generate("q1"), "Test failed on sabotaged feature"
+E       AssertionError: Test failed on sabotaged feature
+E       assert 'SUM' not in "SELECT SUM(...ion = 'EMEA'"
+E         
+E         'SUM' is contained here:
+E           SELECT SUM(amount) FROM orders WHERE region = 'EMEA'
+E         ?        +++
+
+tests/test_greenwash_closing.py:8: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_q1_aggregate_type - AssertionErr...
+1 failed in N.NNs
+```
+
+**31. asked `qwen3:8b`**
+
+<details><summary>full prompt</summary>
+
+````
+You are auditing whether a test suite is worth trusting.
+
+You do not guess. For every sabotage you consider, the harness applies it and
+runs the suite, and you are told what happened. A suite that stays green under
+sabotage has a blind spot, and the run is the proof.
+
+Your only real job is the last one: given a sabotage the suite missed, and the
+values the feature actually returned before and after, write the test that would
+have caught it. That test is then run on the clean feature, where it must pass;
+under the sabotage, where it must fail; and under any change that does not break
+the feature at all, where it must pass again. If it does not do all of that, you
+are shown the pytest output and asked again.
+
+Never report a blind spot that no run demonstrates.
+
+## What you have already tried for `sql.swap_aggregate`, and why each one failed
+
+### Attempt 1
+
+```python
+import sqlite3
+from feature import generate
+
+def test_q1_sum_amount():
+    sql_before = "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+    sql_after = "SELECT COUNT(amount) FROM orders WHERE region = 'EMEA'"
+    assert generate("q1") == sql_before, "Test failed on clean feature"
+    assert generate("q1") != sql_after, "Test failed on clean feature"
+```
+
+Result: false alarm: the feature still works under model.pin_previous and the test went red anyway
+
+```
+ELECT COUNT(amount) FROM orders WHERE region = 'EMEA'"
+>       assert generate("q1") == sql_before, "Test failed on clean feature"
+E       AssertionError: Test failed on clean feature
+E       assert "SELECT SUM(a...gion = 'EMEA'" == "SELECT SUM(a...gion = 'EMEA'"
+E         
+E         - SELECT SUM(amount) FROM orders WHERE region = 'EMEA'
+E         + SELECT SUM(amount) AS total_amount FROM orders WHERE region = 'EMEA'
+E         ?                    ++++++++++++++++
+
+tests/test_greenwash_closing.py:7: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_q1_sum_amount - AssertionError: ...
+1 failed in N.NNs
+```
+
+### Attempt 2
+
+```python
+import sqlite3
+from feature import generate
+
+def test_q1_aggregate_type():
+    sql_before = "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+    sql_after = "SELECT COUNT(amount) FROM orders WHERE region = 'EMEA'"
+    assert "SUM" in generate("q1"), "Test failed on clean feature"
+    assert "SUM" not in generate("q1"), "Test failed on sabotaged feature"
+```
+
+Result: red on the clean feature (assertion failed)
+
+```
+sql_after = "SELECT COUNT(amount) FROM orders WHERE region = 'EMEA'"
+        assert "SUM" in generate("q1"), "Test failed on clean feature"
+>       assert "SUM" not in generate("q1"), "Test failed on sabotaged feature"
+E       AssertionError: Test failed on sabotaged feature
+E       assert 'SUM' not in "SELECT SUM(...ion = 'EMEA'"
+E         
+E         'SUM' is contained here:
+E           SELECT SUM(amount) FROM orders WHERE region = 'EMEA'
+E         ?        +++
+
+tests/test_greenwash_closing.py:8: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_q1_aggregate_type - AssertionErr...
+1 failed in N.NNs
+```
+
+
+## What the feature actually returns
+
+Before `sql.swap_aggregate`:
+
+call 1: lambda q=q: feature.generate(q)   with q='q1'
+  returned "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+call 2: lambda q=q: feature.generate(q)   with q='q2'
+  returned "SELECT COUNT(*) FROM orders WHERE status = 'cancelled'"
+
+After `sql.swap_aggregate`:
+
+call 1: lambda q=q: feature.generate(q)   with q='q1'
+  returned "SELECT COUNT(amount) FROM orders WHERE region = 'EMEA'"
+call 2: lambda q=q: feature.generate(q)   with q='q2'
+  returned "SELECT COUNT(*) FROM orders WHERE status = 'cancelled'"
+
+## Your task
+
+Attempt 3. Your last test failed on the CLEAN feature. Every assertion has to be true of the *before* values above — that is what the feature returns when nothing is wrong.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`sql.swap_aggregate`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
+
+Python:
+````
+
+</details>
+
+**32. `qwen3:8b` answered**
+
+````
+```python
+import sqlite3
+from feature import generate
+
+def test_q1_aggregate_function():
+    sql_before = "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+    assert generate("q1") == sql_before, "Test failed on clean feature"
+    assert "SUM" in generate("q1"), "Test failed on clean feature"
+    assert "COUNT" not in generate("q1"), "Test failed on clean feature"
+```
+````
+
+**33. tool call** `propose_closing_test(operator='sql.swap_aggregate')`
+
+the test it is asking the gate to judge:
+
+```python
+import sqlite3
+from feature import generate
+
+def test_q1_aggregate_function():
+    sql_before = "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+    assert generate("q1") == sql_before, "Test failed on clean feature"
+    assert "SUM" in generate("q1"), "Test failed on clean feature"
+    assert "COUNT" not in generate("q1"), "Test failed on clean feature"
+```
+
+
+**34. propose_closing_test responded**
+
+```
+rejected: false alarm: the feature still works under model.pin_previous and the test went red anyway
+"Test failed on clean feature"
+E       AssertionError: Test failed on clean feature
+E       assert "SELECT SUM(a...gion = 'EMEA'" == "SELECT SUM(a...gion = 'EMEA'"
+E         
+E         - SELECT SUM(amount) FROM orders WHERE region = 'EMEA'
+E         + SELECT SUM(amount) AS total_amount FROM orders WHERE region = 'EMEA'
+E         ?                    ++++++++++++++++
+
+tests/test_greenwash_closing.py:6: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_q1_aggregate_function - Assertio...
+1 failed in N.NNs
+```
+
+**35. tool call** `observe(operator='sql.drop_where')`
+
+**36. observe responded**
 
 ```
 call 1: lambda q=q: feature.generate(q)   with q='q1'
@@ -631,7 +933,7 @@ call 2: lambda q=q: feature.generate(q)   with q='q2'
   returned "SELECT COUNT(*) FROM orders"
 ```
 
-**29. asked `qwen3:8b`**
+**37. asked `qwen3:8b`**
 
 <details><summary>full prompt</summary>
 
@@ -802,7 +1104,7 @@ Python:
 
 </details>
 
-**30. `qwen3:8b` answered**
+**38. `qwen3:8b` answered**
 
 ````
 ```python
@@ -835,7 +1137,7 @@ def test_the_query_filters_data():
 ```
 ````
 
-**31. tool call** `propose_closing_test(operator='sql.drop_where')`
+**39. tool call** `propose_closing_test(operator='sql.drop_where')`
 
 the test it is asking the gate to judge:
 
@@ -869,7 +1171,7 @@ def test_the_query_filters_data():
 ```
 
 
-**32. propose_closing_test responded**
+**40. propose_closing_test responded**
 
 ```
 rejected: red on the clean feature (assertion failed)
@@ -892,7 +1194,7 @@ FAILED tests/test_greenwash_closing.py::test_the_query_filters_data - assert ...
 1 failed in N.NNs
 ```
 
-**33. asked `qwen3:8b`**
+**41. asked `qwen3:8b`**
 
 <details><summary>full prompt</summary>
 
@@ -1003,7 +1305,7 @@ Python:
 
 </details>
 
-**34. `qwen3:8b` answered**
+**42. `qwen3:8b` answered**
 
 ````
 ```python
@@ -1036,7 +1338,7 @@ def test_the_query_filters_data():
 ```
 ````
 
-**35. tool call** `propose_closing_test(operator='sql.drop_where')`
+**43. tool call** `propose_closing_test(operator='sql.drop_where')`
 
 the test it is asking the gate to judge:
 
@@ -1070,7 +1372,7 @@ def test_the_query_filters_data():
 ```
 
 
-**36. propose_closing_test responded**
+**44. propose_closing_test responded**
 
 ```
 rejected: red on the clean feature (assertion failed)
@@ -1093,7 +1395,7 @@ FAILED tests/test_greenwash_closing.py::test_the_query_filters_data - assert ...
 1 failed in N.NNs
 ```
 
-**37. asked `qwen3:8b`**
+**45. asked `qwen3:8b`**
 
 <details><summary>full prompt</summary>
 
@@ -1260,7 +1562,7 @@ Python:
 
 </details>
 
-**38. `qwen3:8b` answered**
+**46. `qwen3:8b` answered**
 
 ````
 ```python
@@ -1293,7 +1595,7 @@ def test_the_query_filters_data():
 ```
 ````
 
-**39. tool call** `propose_closing_test(operator='sql.drop_where')`
+**47. tool call** `propose_closing_test(operator='sql.drop_where')`
 
 the test it is asking the gate to judge:
 
@@ -1327,7 +1629,7 @@ def test_the_query_filters_data():
 ```
 
 
-**40. propose_closing_test responded**
+**48. propose_closing_test responded**
 
 ```
 rejected: red on the clean feature (assertion failed)
@@ -1350,9 +1652,9 @@ FAILED tests/test_greenwash_closing.py::test_the_query_filters_data - assert ...
 1 failed in N.NNs
 ```
 
-**41. tool call** `observe(operator='model.downgrade')`
+**49. tool call** `observe(operator='model.downgrade')`
 
-**42. observe responded**
+**50. observe responded**
 
 ```
 call 1: lambda q=q: feature.generate(q)   with q='q1'
@@ -1361,7 +1663,7 @@ call 2: lambda q=q: feature.generate(q)   with q='q2'
   returned "SELECT COUNT(*) FROM orders WHERE status = 'cancelled'"
 ```
 
-**43. asked `qwen3:8b`**
+**51. asked `qwen3:8b`**
 
 <details><summary>full prompt</summary>
 
@@ -1532,7 +1834,7 @@ Python:
 
 </details>
 
-**44. `qwen3:8b` answered**
+**52. `qwen3:8b` answered**
 
 ````
 ```python
@@ -1547,7 +1849,7 @@ def test_q1_region_correct():
 ```
 ````
 
-**45. tool call** `propose_closing_test(operator='model.downgrade')`
+**53. tool call** `propose_closing_test(operator='model.downgrade')`
 
 the test it is asking the gate to judge:
 
@@ -1563,19 +1865,70 @@ def test_q1_region_correct():
 ```
 
 
-**46. propose_closing_test responded**
+**54. propose_closing_test responded**
 
 ```
-accepted: green on the clean feature, red under model.downgrade, no benign change is measurable on this feature
-should return correct region"
+rejected: false alarm: the feature still works under model.pin_previous and the test went red anyway
+ correct region"
 E       AssertionError: Clean feature should return correct region
-E       assert "SELECT SUM(a...gion = 'HEMA'" == "SELECT SUM(a...gion = 'EMEA'"
+E       assert "SELECT SUM(a...gion = 'EMEA'" == "SELECT SUM(a...gion = 'EMEA'"
 E         
-E         Skipping 37 identical leading characters in diff, use -v to show
-E         - region = 'EMEA'
-E         ?             -
-E         + region = 'HEMA'
-E         ?           +
+E         - SELECT SUM(amount) FROM orders WHERE region = 'EMEA'
+E         + SELECT SUM(amount) AS total_amount FROM orders WHERE region = 'EMEA'
+E         ?                    ++++++++++++++++
+
+tests/test_greenwash_closing.py:7: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_q1_region_correct - AssertionErr...
+1 failed in N.NNs
+```
+
+**55. asked `qwen3:8b`**
+
+<details><summary>full prompt</summary>
+
+````
+You are auditing whether a test suite is worth trusting.
+
+You do not guess. For every sabotage you consider, the harness applies it and
+runs the suite, and you are told what happened. A suite that stays green under
+sabotage has a blind spot, and the run is the proof.
+
+Your only real job is the last one: given a sabotage the suite missed, and the
+values the feature actually returned before and after, write the test that would
+have caught it. That test is then run on the clean feature, where it must pass;
+under the sabotage, where it must fail; and under any change that does not break
+the feature at all, where it must pass again. If it does not do all of that, you
+are shown the pytest output and asked again.
+
+Never report a blind spot that no run demonstrates.
+
+## What you have already tried for `model.downgrade`, and why each one failed
+
+### Attempt 1
+
+```python
+import sqlite3
+from feature import generate
+
+def test_q1_region_correct():
+    clean_q1 = "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+    broken_q1 = "SELECT SUM(amount) FROM orders WHERE region = 'HEMA'"
+    assert generate("q1") == clean_q1, "Clean feature should return correct region"
+    assert generate("q1") != broken_q1, "Broken feature should return incorrect region"
+```
+
+Result: false alarm: the feature still works under model.pin_previous and the test went red anyway
+
+```
+rders WHERE region = 'HEMA'"
+>       assert generate("q1") == clean_q1, "Clean feature should return correct region"
+E       AssertionError: Clean feature should return correct region
+E       assert "SELECT SUM(a...gion = 'EMEA'" == "SELECT SUM(a...gion = 'EMEA'"
+E         
+E         - SELECT SUM(amount) FROM orders WHERE region = 'EMEA'
+E         + SELECT SUM(amount) AS total_amount FROM orders WHERE region = 'EMEA'
+E         ?                    ++++++++++++++++
 
 tests/test_greenwash_closing.py:7: AssertionError
 =========================== short test summary info ============================
@@ -1584,9 +1937,253 @@ FAILED tests/test_greenwash_closing.py::test_q1_region_correct - AssertionErr...
 ```
 
 
+## What the feature actually returns
+
+Before `model.downgrade`:
+
+call 1: lambda q=q: feature.generate(q)   with q='q1'
+  returned "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+call 2: lambda q=q: feature.generate(q)   with q='q2'
+  returned "SELECT COUNT(*) FROM orders WHERE status = 'cancelled'"
+
+After `model.downgrade`:
+
+call 1: lambda q=q: feature.generate(q)   with q='q1'
+  returned "SELECT SUM(amount) FROM orders WHERE region = 'HEMA'"
+call 2: lambda q=q: feature.generate(q)   with q='q2'
+  returned "SELECT COUNT(*) FROM orders WHERE status = 'cancelled'"
+
+## Your task
+
+Attempt 2. Your last test went red under `model.pin_previous`, which does NOT break the feature — the values it returned were still correct, only worded differently, and your test called that a failure. It is pinned to the exact output this model happened to produce. Assert something that stays true when the wording changes: a fact from the source, a page number, a quote, a number, a structural property — never the model's prose.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`model.downgrade`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
+
+Python:
+````
+
+</details>
+
+**56. `qwen3:8b` answered**
+
+````
+```python
+import sqlite3
+from feature import generate
+
+def test_q1_region_sum():
+    clean_q1 = "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+    assert 'SUM(amount)' in generate("q1"), "Clean feature should include SUM(amount)"
+    assert 'SUM(amount)' not in generate("q1"), "Broken feature should remove SUM(amount)"
+```
+````
+
+**57. tool call** `propose_closing_test(operator='model.downgrade')`
+
+the test it is asking the gate to judge:
+
+```python
+import sqlite3
+from feature import generate
+
+def test_q1_region_sum():
+    clean_q1 = "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+    assert 'SUM(amount)' in generate("q1"), "Clean feature should include SUM(amount)"
+    assert 'SUM(amount)' not in generate("q1"), "Broken feature should remove SUM(amount)"
+```
+
+
+**58. propose_closing_test responded**
+
+```
+rejected: red on the clean feature (assertion failed)
+  assert 'SUM(amount)' not in generate("q1"), "Broken feature should remove SUM(amount)"
+E       AssertionError: Broken feature should remove SUM(amount)
+E       assert 'SUM(amount)' not in "SELECT SUM(...ion = 'EMEA'"
+E         
+E         'SUM(amount)' is contained here:
+E           SELECT SUM(amount) FROM orders WHERE region = 'EMEA'
+E         ?        +++++++++++
+
+tests/test_greenwash_closing.py:7: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_q1_region_sum - AssertionError: ...
+1 failed in N.NNs
+```
+
+**59. asked `qwen3:8b`**
+
+<details><summary>full prompt</summary>
+
+````
+You are auditing whether a test suite is worth trusting.
+
+You do not guess. For every sabotage you consider, the harness applies it and
+runs the suite, and you are told what happened. A suite that stays green under
+sabotage has a blind spot, and the run is the proof.
+
+Your only real job is the last one: given a sabotage the suite missed, and the
+values the feature actually returned before and after, write the test that would
+have caught it. That test is then run on the clean feature, where it must pass;
+under the sabotage, where it must fail; and under any change that does not break
+the feature at all, where it must pass again. If it does not do all of that, you
+are shown the pytest output and asked again.
+
+Never report a blind spot that no run demonstrates.
+
+## What you have already tried for `model.downgrade`, and why each one failed
+
+### Attempt 1
+
+```python
+import sqlite3
+from feature import generate
+
+def test_q1_region_correct():
+    clean_q1 = "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+    broken_q1 = "SELECT SUM(amount) FROM orders WHERE region = 'HEMA'"
+    assert generate("q1") == clean_q1, "Clean feature should return correct region"
+    assert generate("q1") != broken_q1, "Broken feature should return incorrect region"
+```
+
+Result: false alarm: the feature still works under model.pin_previous and the test went red anyway
+
+```
+rders WHERE region = 'HEMA'"
+>       assert generate("q1") == clean_q1, "Clean feature should return correct region"
+E       AssertionError: Clean feature should return correct region
+E       assert "SELECT SUM(a...gion = 'EMEA'" == "SELECT SUM(a...gion = 'EMEA'"
+E         
+E         - SELECT SUM(amount) FROM orders WHERE region = 'EMEA'
+E         + SELECT SUM(amount) AS total_amount FROM orders WHERE region = 'EMEA'
+E         ?                    ++++++++++++++++
+
+tests/test_greenwash_closing.py:7: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_q1_region_correct - AssertionErr...
+1 failed in N.NNs
+```
+
+### Attempt 2
+
+```python
+import sqlite3
+from feature import generate
+
+def test_q1_region_sum():
+    clean_q1 = "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+    assert 'SUM(amount)' in generate("q1"), "Clean feature should include SUM(amount)"
+    assert 'SUM(amount)' not in generate("q1"), "Broken feature should remove SUM(amount)"
+```
+
+Result: red on the clean feature (assertion failed)
+
+```
+'"
+        assert 'SUM(amount)' in generate("q1"), "Clean feature should include SUM(amount)"
+>       assert 'SUM(amount)' not in generate("q1"), "Broken feature should remove SUM(amount)"
+E       AssertionError: Broken feature should remove SUM(amount)
+E       assert 'SUM(amount)' not in "SELECT SUM(...ion = 'EMEA'"
+E         
+E         'SUM(amount)' is contained here:
+E           SELECT SUM(amount) FROM orders WHERE region = 'EMEA'
+E         ?        +++++++++++
+
+tests/test_greenwash_closing.py:7: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_q1_region_sum - AssertionError: ...
+1 failed in N.NNs
+```
+
+
+## What the feature actually returns
+
+Before `model.downgrade`:
+
+call 1: lambda q=q: feature.generate(q)   with q='q1'
+  returned "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+call 2: lambda q=q: feature.generate(q)   with q='q2'
+  returned "SELECT COUNT(*) FROM orders WHERE status = 'cancelled'"
+
+After `model.downgrade`:
+
+call 1: lambda q=q: feature.generate(q)   with q='q1'
+  returned "SELECT SUM(amount) FROM orders WHERE region = 'HEMA'"
+call 2: lambda q=q: feature.generate(q)   with q='q2'
+  returned "SELECT COUNT(*) FROM orders WHERE status = 'cancelled'"
+
+## Your task
+
+Attempt 3. Your last test failed on the CLEAN feature. Every assertion has to be true of the *before* values above — that is what the feature returns when nothing is wrong.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`model.downgrade`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
+
+Python:
+````
+
+</details>
+
+**60. `qwen3:8b` answered**
+
+````
+```python
+import sqlite3
+from feature import generate
+
+def test_q1_region_value():
+    clean_q1 = "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+    assert generate("q1") == clean_q1, "Clean feature should return correct region"
+    assert generate("q1") != "SELECT SUM(amount) FROM orders WHERE region = 'HEMA'", "Broken feature should return incorrect region"
+```
+````
+
+**61. tool call** `propose_closing_test(operator='model.downgrade')`
+
+the test it is asking the gate to judge:
+
+```python
+import sqlite3
+from feature import generate
+
+def test_q1_region_value():
+    clean_q1 = "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+    assert generate("q1") == clean_q1, "Clean feature should return correct region"
+    assert generate("q1") != "SELECT SUM(amount) FROM orders WHERE region = 'HEMA'", "Broken feature should return incorrect region"
+```
+
+
+**62. propose_closing_test responded**
+
+```
+rejected: false alarm: the feature still works under model.pin_previous and the test went red anyway
+ correct region"
+E       AssertionError: Clean feature should return correct region
+E       assert "SELECT SUM(a...gion = 'EMEA'" == "SELECT SUM(a...gion = 'EMEA'"
+E         
+E         - SELECT SUM(amount) FROM orders WHERE region = 'EMEA'
+E         + SELECT SUM(amount) AS total_amount FROM orders WHERE region = 'EMEA'
+E         ?                    ++++++++++++++++
+
+tests/test_greenwash_closing.py:6: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_q1_region_value - AssertionError...
+1 failed in N.NNs
+```
+
+
 ## Phase 4 — report
 
-**47. result**
+**63. result**
 
 ```json
 {
@@ -1595,10 +2192,7 @@ FAILED tests/test_greenwash_closing.py::test_q1_region_correct - AssertionErr...
     "sql.drop_where",
     "model.downgrade"
   ],
-  "closed": [
-    "sql.swap_aggregate",
-    "model.downgrade"
-  ],
+  "closed": [],
   "kill_rate_before": 0.25
 }
 ```

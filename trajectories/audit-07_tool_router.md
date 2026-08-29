@@ -610,14 +610,14 @@ def test_issue_refund_arguments_are_correct():
 **26. propose_closing_test responded**
 
 ```
-accepted: green on the clean feature, red under tool.swap_args, no benign change is measurable on this feature
-"] == "issue_refund"
+rejected: false alarm: the feature still works under model.swap and the test went red anyway
+ol"] == "issue_refund"
 >       assert call["arguments"] == {"amount": 84.0, "order_id": "A-4471"}
-E       AssertionError: assert {'order_id': ...nt': 'A-4471'} == {'amount': 84...id': 'A-4471'}
+E       AssertionError: assert {'order_id': ...unt': '84.00'} == {'amount': 84...id': 'A-4471'}
 E         
+E         Omitting 1 identical items, use -vv to show
 E         Differing items:
-E         {'order_id': 84.0} != {'order_id': 'A-4471'}
-E         {'amount': 'A-4471'} != {'amount': 84.0}
+E         {'amount': '84.00'} != {'amount': 84.0}
 E         Use -v to get more diff
 
 tests/test_greenwash_closing.py:6: AssertionError
@@ -626,9 +626,305 @@ FAILED tests/test_greenwash_closing.py::test_issue_refund_arguments_are_correct
 1 failed in N.NNs
 ```
 
-**27. tool call** `observe(operator='tool.blank_args')`
+**27. asked `qwen3:8b`**
 
-**28. observe responded**
+<details><summary>full prompt</summary>
+
+````
+You are auditing whether a test suite is worth trusting.
+
+You do not guess. For every sabotage you consider, the harness applies it and
+runs the suite, and you are told what happened. A suite that stays green under
+sabotage has a blind spot, and the run is the proof.
+
+Your only real job is the last one: given a sabotage the suite missed, and the
+values the feature actually returned before and after, write the test that would
+have caught it. That test is then run on the clean feature, where it must pass;
+under the sabotage, where it must fail; and under any change that does not break
+the feature at all, where it must pass again. If it does not do all of that, you
+are shown the pytest output and asked again.
+
+Never report a blind spot that no run demonstrates.
+
+## What you have already tried for `tool.swap_args`, and why each one failed
+
+### Attempt 1
+
+```python
+from feature import route
+
+def test_issue_refund_arguments_are_correct():
+    call = route("r1")
+    assert call["tool"] == "issue_refund"
+    assert call["arguments"] == {"amount": 84.0, "order_id": "A-4471"}
+```
+
+Result: false alarm: the feature still works under model.swap and the test went red anyway
+
+```
+def test_issue_refund_arguments_are_correct():
+        call = route("r1")
+        assert call["tool"] == "issue_refund"
+>       assert call["arguments"] == {"amount": 84.0, "order_id": "A-4471"}
+E       AssertionError: assert {'order_id': ...unt': '84.00'} == {'amount': 84...id': 'A-4471'}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'amount': '84.00'} != {'amount': 84.0}
+E         Use -v to get more diff
+
+tests/test_greenwash_closing.py:6: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_issue_refund_arguments_are_correct
+1 failed in N.NNs
+```
+
+
+## What the feature actually returns
+
+Before `tool.swap_args`:
+
+call 1: lambda r=r: feature.route(r)   with r='r1'
+  returned {"arguments": {"amount": 84.0, "order_id": "A-4471"}, "tool": "issue_refund"}
+call 2: lambda r=r: feature.route(r)   with r='r2'
+  returned {"arguments": {"customer_id": "90210", "new_address": "14 Marina Walk, Dubai"}, "tool": "update_address"}
+call 3: lambda r=r: feature.route(r)   with r='r3'
+  returned {"arguments": {"reason": "I want to speak to a manager about my last three deliveries."}, "tool": "escalate_to_human"}
+
+After `tool.swap_args`:
+
+call 1: lambda r=r: feature.route(r)   with r='r1'
+  returned {"arguments": {"amount": "A-4471", "order_id": 84.0}, "tool": "issue_refund"}
+call 2: lambda r=r: feature.route(r)   with r='r2'
+  returned {"arguments": {"customer_id": "14 Marina Walk, Dubai", "new_address": "90210"}, "tool": "update_address"}
+call 3: lambda r=r: feature.route(r)   with r='r3'
+  returned {"arguments": {"reason": "I want to speak to a manager about my last three deliveries."}, "tool": "escalate_to_human"}
+
+## Your task
+
+Attempt 2. Your last test went red under `model.swap`, which does NOT break the feature — the values it returned were still correct, only worded differently, and your test called that a failure. It is pinned to the exact output this model happened to produce. Assert something that stays true when the wording changes: a fact from the source, a page number, a quote, a number, a structural property — never the model's prose.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`tool.swap_args`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
+
+Python:
+````
+
+</details>
+
+**28. `qwen3:8b` answered**
+
+````
+```python
+def test_issue_refund_arguments_are_correct():
+    call = route("r1")
+    assert call["tool"] == "issue_refund"
+    assert call["arguments"]["amount"] == 84.0
+    assert "A-4471" in call["arguments"].values()
+```
+````
+
+**29. tool call** `propose_closing_test(operator='tool.swap_args')`
+
+the test it is asking the gate to judge:
+
+```python
+def test_issue_refund_arguments_are_correct():
+    call = route("r1")
+    assert call["tool"] == "issue_refund"
+    assert call["arguments"]["amount"] == 84.0
+    assert "A-4471" in call["arguments"].values()
+```
+
+
+**30. propose_closing_test responded**
+
+```
+rejected: red on the clean feature (assertion failed)
+                                                           [100%]
+=================================== FAILURES ===================================
+___________________ test_issue_refund_arguments_are_correct ____________________
+
+    def test_issue_refund_arguments_are_correct():
+>       call = route("r1")
+               ^^^^^
+E       NameError: name 'route' is not defined
+
+tests/test_greenwash_closing.py:2: NameError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_issue_refund_arguments_are_correct
+1 failed in N.NNs
+```
+
+**31. asked `qwen3:8b`**
+
+<details><summary>full prompt</summary>
+
+````
+You are auditing whether a test suite is worth trusting.
+
+You do not guess. For every sabotage you consider, the harness applies it and
+runs the suite, and you are told what happened. A suite that stays green under
+sabotage has a blind spot, and the run is the proof.
+
+Your only real job is the last one: given a sabotage the suite missed, and the
+values the feature actually returned before and after, write the test that would
+have caught it. That test is then run on the clean feature, where it must pass;
+under the sabotage, where it must fail; and under any change that does not break
+the feature at all, where it must pass again. If it does not do all of that, you
+are shown the pytest output and asked again.
+
+Never report a blind spot that no run demonstrates.
+
+## What you have already tried for `tool.swap_args`, and why each one failed
+
+### Attempt 1
+
+```python
+from feature import route
+
+def test_issue_refund_arguments_are_correct():
+    call = route("r1")
+    assert call["tool"] == "issue_refund"
+    assert call["arguments"] == {"amount": 84.0, "order_id": "A-4471"}
+```
+
+Result: false alarm: the feature still works under model.swap and the test went red anyway
+
+```
+def test_issue_refund_arguments_are_correct():
+        call = route("r1")
+        assert call["tool"] == "issue_refund"
+>       assert call["arguments"] == {"amount": 84.0, "order_id": "A-4471"}
+E       AssertionError: assert {'order_id': ...unt': '84.00'} == {'amount': 84...id': 'A-4471'}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'amount': '84.00'} != {'amount': 84.0}
+E         Use -v to get more diff
+
+tests/test_greenwash_closing.py:6: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_issue_refund_arguments_are_correct
+1 failed in N.NNs
+```
+
+### Attempt 2
+
+```python
+def test_issue_refund_arguments_are_correct():
+    call = route("r1")
+    assert call["tool"] == "issue_refund"
+    assert call["arguments"]["amount"] == 84.0
+    assert "A-4471" in call["arguments"].values()
+```
+
+Result: red on the clean feature (assertion failed)
+
+```
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___________________ test_issue_refund_arguments_are_correct ____________________
+
+    def test_issue_refund_arguments_are_correct():
+>       call = route("r1")
+               ^^^^^
+E       NameError: name 'route' is not defined
+
+tests/test_greenwash_closing.py:2: NameError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_issue_refund_arguments_are_correct
+1 failed in N.NNs
+```
+
+
+## What the feature actually returns
+
+Before `tool.swap_args`:
+
+call 1: lambda r=r: feature.route(r)   with r='r1'
+  returned {"arguments": {"amount": 84.0, "order_id": "A-4471"}, "tool": "issue_refund"}
+call 2: lambda r=r: feature.route(r)   with r='r2'
+  returned {"arguments": {"customer_id": "90210", "new_address": "14 Marina Walk, Dubai"}, "tool": "update_address"}
+call 3: lambda r=r: feature.route(r)   with r='r3'
+  returned {"arguments": {"reason": "I want to speak to a manager about my last three deliveries."}, "tool": "escalate_to_human"}
+
+After `tool.swap_args`:
+
+call 1: lambda r=r: feature.route(r)   with r='r1'
+  returned {"arguments": {"amount": "A-4471", "order_id": 84.0}, "tool": "issue_refund"}
+call 2: lambda r=r: feature.route(r)   with r='r2'
+  returned {"arguments": {"customer_id": "14 Marina Walk, Dubai", "new_address": "90210"}, "tool": "update_address"}
+call 3: lambda r=r: feature.route(r)   with r='r3'
+  returned {"arguments": {"reason": "I want to speak to a manager about my last three deliveries."}, "tool": "escalate_to_human"}
+
+## Your task
+
+Attempt 3. Your last test failed on the CLEAN feature. Every assertion has to be true of the *before* values above — that is what the feature returns when nothing is wrong.
+
+Every attempt above has already been run and failed for the reason given. Do not
+send one of them again — an answer you have already given is a wasted attempt.
+
+Write ONE pytest test that PASSES on the clean feature and FAILS after
+`tool.swap_args`. Reply with Python only, the whole test, no explanation, no
+markdown fences.
+
+Python:
+````
+
+</details>
+
+**32. `qwen3:8b` answered**
+
+````
+```python
+def test_issue_refund_arguments_are_correct():
+    call = route("r1")
+    assert call["tool"] == "issue_refund"
+    assert call["arguments"]["amount"] == 84.0
+    assert call["arguments"]["order_id"] == "A-4471"
+```
+````
+
+**33. tool call** `propose_closing_test(operator='tool.swap_args')`
+
+the test it is asking the gate to judge:
+
+```python
+def test_issue_refund_arguments_are_correct():
+    call = route("r1")
+    assert call["tool"] == "issue_refund"
+    assert call["arguments"]["amount"] == 84.0
+    assert call["arguments"]["order_id"] == "A-4471"
+```
+
+
+**34. propose_closing_test responded**
+
+```
+rejected: red on the clean feature (assertion failed)
+                                                           [100%]
+=================================== FAILURES ===================================
+___________________ test_issue_refund_arguments_are_correct ____________________
+
+    def test_issue_refund_arguments_are_correct():
+>       call = route("r1")
+               ^^^^^
+E       NameError: name 'route' is not defined
+
+tests/test_greenwash_closing.py:2: NameError
+=========================== short test summary info ============================
+FAILED tests/test_greenwash_closing.py::test_issue_refund_arguments_are_correct
+1 failed in N.NNs
+```
+
+**35. tool call** `observe(operator='tool.blank_args')`
+
+**36. observe responded**
 
 ```
 call 1: lambda r=r: feature.route(r)   with r='r1'
@@ -639,7 +935,7 @@ call 3: lambda r=r: feature.route(r)   with r='r3'
   returned {"arguments": {"reason": ""}, "tool": "escalate_to_human"}
 ```
 
-**29. asked `qwen3:8b`**
+**37. asked `qwen3:8b`**
 
 <details><summary>full prompt</summary>
 
@@ -811,7 +1107,7 @@ Python:
 
 </details>
 
-**30. `qwen3:8b` answered**
+**38. `qwen3:8b` answered**
 
 ````
 ```python
@@ -826,7 +1122,7 @@ def test_arguments_are_non_empty():
 ```
 ````
 
-**31. tool call** `propose_closing_test(operator='tool.blank_args')`
+**39. tool call** `propose_closing_test(operator='tool.blank_args')`
 
 the test it is asking the gate to judge:
 
@@ -842,10 +1138,10 @@ def test_arguments_are_non_empty():
 ```
 
 
-**32. propose_closing_test responded**
+**40. propose_closing_test responded**
 
 ```
-accepted: green on the clean feature, red under tool.blank_args, no benign change is measurable on this feature
+accepted: green on the clean feature, red under tool.blank_args, green under model.swap, model.pin_previous
                                                                [100%]
 =================================== FAILURES ===================================
 _________________________ test_arguments_are_non_empty _________________________
@@ -863,7 +1159,7 @@ FAILED tests/test_greenwash_closing.py::test_arguments_are_non_empty - Assert...
 
 ## Phase 4 — report
 
-**33. result**
+**41. result**
 
 ```json
 {
@@ -872,7 +1168,6 @@ FAILED tests/test_greenwash_closing.py::test_arguments_are_non_empty - Assert...
     "tool.blank_args"
   ],
   "closed": [
-    "tool.swap_args",
     "tool.blank_args"
   ],
   "kill_rate_before": 0.5

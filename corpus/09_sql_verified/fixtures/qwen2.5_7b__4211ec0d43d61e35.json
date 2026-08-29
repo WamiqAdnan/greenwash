@@ -1,0 +1,5 @@
+{
+  "model": "qwen2.5:7b",
+  "prompt": "Write one SQLite query answering the question, against this schema:\n\ntable orders(id integer, customer_id integer, region text,\n             status text, amount real, created_at text)\n\nReply with SQL only, no explanation and no markdown fences.\n\nQuestion: What is the total order amount for customers in the EMEA region?\n\nSQL:",
+  "response": "SELECT SUM(amount) AS total_amount FROM orders WHERE region = 'EMEA'"
+}
