@@ -4,9 +4,9 @@
   "verified": true,
   "predictions": {
     "01_invoice_extractor": [
+      "value.null_fields",
       "model.downgrade",
       "value.zero_amounts",
-      "value.null_fields",
       "value.transpose_digits"
     ],
     "02_ticket_classifier": [
@@ -15,11 +15,11 @@
     ],
     "03_rag_citations": [
       "model.downgrade",
-      "model.echo",
-      "citation.wrong_page",
-      "citation.fabricate",
       "retrieval.truncate",
-      "retrieval.shuffle"
+      "citation.wrong_page",
+      "retrieval.shuffle",
+      "citation.fabricate",
+      "model.echo"
     ],
     "04_purchase_orders": []
   },
@@ -31,9 +31,9 @@
   },
   "closed": {
     "01_invoice_extractor": [
+      "value.null_fields",
       "model.downgrade",
       "value.zero_amounts",
-      "value.null_fields",
       "value.transpose_digits"
     ],
     "02_ticket_classifier": [
@@ -41,24 +41,24 @@
       "classify.collapse"
     ],
     "03_rag_citations": [
-      "citation.fabricate",
-      "retrieval.truncate"
+      "citation.wrong_page",
+      "citation.fabricate"
     ],
     "04_purchase_orders": []
   },
   "prior": {
     "01_invoice_extractor": {
       "order": [
-        "model.downgrade",
-        "value.zero_amounts",
         "value.null_fields",
+        "model.downgrade",
         "schema.drop_field",
+        "value.zero_amounts",
         "value.transpose_digits"
       ],
       "expect_missed": [
-        "value.transpose_digits"
+        "schema.drop_field"
       ],
-      "why": "The suite lacks tests for numeric precision and field-specific validation, making it blind to subtle data corruption like transposed digits.",
+      "why": "The suite lacks checks for field presence and structure, making schema changes more likely to slip through undetected.",
       "invented_ids": []
     },
     "02_ticket_classifier": {
@@ -71,23 +71,21 @@
       "expect_missed": [
         "classify.confidence_pin"
       ],
-      "why": "The suite checks confidence but only enforces a floor, not a ceiling, so confidence pinning may go undetected.",
+      "why": "The suite checks for reasonable routing but doesn't validate confidence levels, so confidence pinning would go undetected.",
       "invented_ids": []
     },
     "03_rag_citations": {
       "order": [
         "model.downgrade",
-        "model.echo",
-        "citation.wrong_page",
-        "citation.fabricate",
         "retrieval.truncate",
-        "retrieval.shuffle"
-      ],
-      "expect_missed": [
         "citation.wrong_page",
+        "retrieval.shuffle",
         "citation.fabricate"
       ],
-      "why": "The suite only checks for the presence of citations, not their correctness or validity, so it will miss cases where citations are incorrect or fabricated.",
+      "expect_missed": [
+        "citation.fabricate"
+      ],
+      "why": "The suite only checks for existence of citations, not their correctness or truthfulness, so it would miss fabricated citations.",
       "invented_ids": []
     },
     "04_purchase_orders": {
@@ -95,16 +93,15 @@
         "value.null_fields",
         "value.zero_amounts",
         "schema.drop_field",
-        "model.echo"
+        "value.transpose_digits",
+        "model.downgrade"
       ],
       "expect_missed": [
         "schema.drop_field",
-        "model.echo"
+        "model.downgrade"
       ],
-      "why": "The suite checks for presence of fields and their types, but does not verify that all required fields are present, making schema.drop_field and model.echo potential blind spots.",
-      "invented_ids": [
-        "transpose_digits"
-      ]
+      "why": "The suite checks for presence of fields and their types, but does not verify that all required fields are present, making schema.drop_field and model.downgrade likely to slip through.",
+      "invented_ids": []
     }
   }
 }

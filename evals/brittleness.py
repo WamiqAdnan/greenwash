@@ -13,6 +13,14 @@ So this probe asks the opposite question to `run_eval.py`:
     brittleness   apply a Benign Change. The suite SHOULD stay green. Red is a
                   False Alarm.
 
+Read the result knowing what it now is. Until v1.2 this probe was the only thing
+in the project that could see over-fitting, and its number was independent
+evidence about the tests the Auditor shipped. The Verification Gate now applies
+the same Benign Changes before accepting a Closing Test, so a zero here is
+mostly the Gate's own rule reported back — a regression check on the Gate, which
+is worth having and is not the same claim. It becomes independent evidence again
+the moment a Benign Change exists that the Gate does not run.
+
 A Benign Change is a change a team really makes that does not break anything —
 today, rewording the prompt. The Corpus Case declares the reworded prompt itself
 and a human has read both, because "means the same thing" is not something to

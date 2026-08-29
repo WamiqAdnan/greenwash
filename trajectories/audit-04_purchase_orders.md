@@ -16,9 +16,10 @@ sabotage has a blind spot, and the run is the proof.
 
 Your only real job is the last one: given a sabotage the suite missed, and the
 values the feature actually returned before and after, write the test that would
-have caught it. That test is then run twice — on the clean feature, where it
-must pass, and under the sabotage, where it must fail. If it does not do both,
-you are shown the pytest output and asked again.
+have caught it. That test is then run on the clean feature, where it must pass;
+under the sabotage, where it must fail; and under any change that does not break
+the feature at all, where it must pass again. If it does not do all of that, you
+are shown the pytest output and asked again.
 
 Never report a blind spot that no run demonstrates.
 ```
@@ -205,9 +206,10 @@ sabotage has a blind spot, and the run is the proof.
 
 Your only real job is the last one: given a sabotage the suite missed, and the
 values the feature actually returned before and after, write the test that would
-have caught it. That test is then run twice — on the clean feature, where it
-must pass, and under the sabotage, where it must fail. If it does not do both,
-you are shown the pytest output and asked again.
+have caught it. That test is then run on the clean feature, where it must pass;
+under the sabotage, where it must fail; and under any change that does not break
+the feature at all, where it must pass again. If it does not do all of that, you
+are shown the pytest output and asked again.
 
 Never report a blind spot that no run demonstrates.
 
@@ -389,7 +391,7 @@ JSON:
 **9. `qwen3:8b` answered**
 
 ```
-{"order": ["value.null_fields", "value.zero_amounts", "schema.drop_field", "model.echo", "transpose_digits"], "expect_missed": ["schema.drop_field", "model.echo"], "why": "The suite checks for presence of fields and their types, but does not verify that all required fields are present, making schema.drop_field and model.echo potential blind spots."}
+{"order": ["value.null_fields", "value.zero_amounts", "schema.drop_field", "value.transpose_digits", "model.downgrade"], "expect_missed": ["schema.drop_field", "model.downgrade"], "why": "The suite checks for presence of fields and their types, but does not verify that all required fields are present, making schema.drop_field and model.downgrade likely to slip through."}
 ```
 
 **10. recorded prior** (evidence, never a finding)
@@ -400,16 +402,15 @@ JSON:
     "value.null_fields",
     "value.zero_amounts",
     "schema.drop_field",
-    "model.echo"
+    "value.transpose_digits",
+    "model.downgrade"
   ],
   "expect_missed": [
     "schema.drop_field",
-    "model.echo"
+    "model.downgrade"
   ],
-  "why": "The suite checks for presence of fields and their types, but does not verify that all required fields are present, making schema.drop_field and model.echo potential blind spots.",
-  "invented_ids": [
-    "transpose_digits"
-  ]
+  "why": "The suite checks for presence of fields and their types, but does not verify that all required fields are present, making schema.drop_field and model.downgrade likely to slip through.",
+  "invented_ids": []
 }
 ```
 
@@ -474,36 +475,9 @@ FAILED tests/test_feature.py::test_what_it_returned_is_actually_in_the_document
 2 failed, 5 passed in N.NNs
 ```
 
-**17. tool call** `run_operator(operator='model.echo')`
+**17. tool call** `run_operator(operator='value.transpose_digits')`
 
 **18. run_operator responded**
-
-```
-killed — FAILED tests/test_feature.py::test_every_field_is_present_and_the_right_type
-=======
-FAILED tests/test_feature.py::test_every_field_is_present_and_the_right_type
-FAILED tests/test_feature.py::test_the_date_is_a_date_and_the_currency_is_a_real_code
-FAILED tests/test_feature.py::test_each_line_total_is_the_quantity_times_the_unit_price
-FAILED tests/test_feature.py::test_the_line_items_add_up_to_the_subtotal - Va...
-FAILED tests/test_feature.py::test_the_totals_reconcile - ValueError: model d...
-FAILED tests/test_feature.py::test_the_document_facts_come_back_correctly - V...
-FAILED tests/test_feature.py::test_what_it_returned_is_actually_in_the_document
-7 failed in N.NNs
-```
-
-**19. tool call** `run_operator(operator='model.downgrade')`
-
-**20. run_operator responded**
-
-```
-INERT — the feature returned exactly the same thing
-.......                                                                  [100%]
-7 passed in N.NNs
-```
-
-**21. tool call** `run_operator(operator='value.transpose_digits')`
-
-**22. run_operator responded**
 
 ```
 killed — FAILED tests/test_feature.py::test_the_line_items_add_up_to_the_subtotal - As...
@@ -519,6 +493,33 @@ FAILED tests/test_feature.py::test_the_line_items_add_up_to_the_subtotal - As...
 FAILED tests/test_feature.py::test_the_totals_reconcile - assert 9.0 < 0.01
 FAILED tests/test_feature.py::test_the_document_facts_come_back_correctly - a...
 3 failed, 4 passed in N.NNs
+```
+
+**19. tool call** `run_operator(operator='model.downgrade')`
+
+**20. run_operator responded**
+
+```
+INERT — the feature returned exactly the same thing
+.......                                                                  [100%]
+7 passed in N.NNs
+```
+
+**21. tool call** `run_operator(operator='model.echo')`
+
+**22. run_operator responded**
+
+```
+killed — FAILED tests/test_feature.py::test_every_field_is_present_and_the_right_type
+=======
+FAILED tests/test_feature.py::test_every_field_is_present_and_the_right_type
+FAILED tests/test_feature.py::test_the_date_is_a_date_and_the_currency_is_a_real_code
+FAILED tests/test_feature.py::test_each_line_total_is_the_quantity_times_the_unit_price
+FAILED tests/test_feature.py::test_the_line_items_add_up_to_the_subtotal - Va...
+FAILED tests/test_feature.py::test_the_totals_reconcile - ValueError: model d...
+FAILED tests/test_feature.py::test_the_document_facts_come_back_correctly - V...
+FAILED tests/test_feature.py::test_what_it_returned_is_actually_in_the_document
+7 failed in N.NNs
 ```
 
 

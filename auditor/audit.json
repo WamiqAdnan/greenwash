@@ -4,31 +4,34 @@
     "kill_rate_before": 0.3333,
     "findings": [
       {
+        "operator": "value.null_fields",
+        "summary": "Every extracted field is present but null.",
+        "receipt": "suite stayed green",
+        "closing_test": "from feature import extract\n\ndef test_total_is_number_not_null():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert isinstance(result1[\"total\"], float)\n    assert isinstance(result2[\"total\"], float)\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_total_is_number_not_null - asser...",
+        "attempts": 1,
+        "gate": "green on the clean feature, red under value.null_fields, no benign change is measurable on this feature",
+        "rejections": []
+      },
+      {
         "operator": "model.downgrade",
         "summary": "The model behind the feature is swapped for a much weaker one.",
         "receipt": "suite stayed green",
         "closing_test": "from feature import extract\n\ndef test_date_format_consistency():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"date\"] == \"2026-03-14\"\n    assert result2[\"date\"] == \"2026-04-02\"\n",
         "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_date_format_consistency - Assert...",
         "attempts": 1,
-        "gate": "green on the clean feature, red under model.downgrade"
+        "gate": "green on the clean feature, red under model.downgrade, no benign change is measurable on this feature",
+        "rejections": []
       },
       {
         "operator": "value.zero_amounts",
         "summary": "Every monetary amount comes back as zero.",
         "receipt": "suite stayed green",
-        "closing_test": "from feature import extract\n\ndef test_total_amount_not_zero():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"total\"] != 0 and result2[\"total\"] != 0\n",
-        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_total_amount_not_zero - assert (...",
+        "closing_test": "from feature import extract\n\ndef test_total_is_non_zero():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"total\"] != 0\n    assert result2[\"total\"] != 0\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_total_is_non_zero - assert 0 != 0",
         "attempts": 1,
-        "gate": "green on the clean feature, red under value.zero_amounts"
-      },
-      {
-        "operator": "value.null_fields",
-        "summary": "Every extracted field is present but null.",
-        "receipt": "suite stayed green",
-        "closing_test": "from feature import extract\n\ndef test_total_is_not_null():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"total\"] is not None\n    assert result2[\"total\"] is not None\n",
-        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_total_is_not_null - assert None ...",
-        "attempts": 1,
-        "gate": "green on the clean feature, red under value.null_fields"
+        "gate": "green on the clean feature, red under value.zero_amounts, no benign change is measurable on this feature",
+        "rejections": []
       },
       {
         "operator": "value.transpose_digits",
@@ -37,7 +40,8 @@
         "closing_test": "from feature import extract\n\ndef test_total_amount_is_correct():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"total\"] == 1284.5 and result2[\"total\"] == 375.9\n",
         "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_total_amount_is_correct - assert...",
         "attempts": 1,
-        "gate": "green on the clean feature, red under value.transpose_digits"
+        "gate": "green on the clean feature, red under value.transpose_digits, no benign change is measurable on this feature",
+        "rejections": []
       }
     ],
     "killed": [
@@ -47,16 +51,16 @@
     "invalid": [],
     "prior": {
       "order": [
-        "model.downgrade",
-        "value.zero_amounts",
         "value.null_fields",
+        "model.downgrade",
         "schema.drop_field",
+        "value.zero_amounts",
         "value.transpose_digits"
       ],
       "expect_missed": [
-        "value.transpose_digits"
+        "schema.drop_field"
       ],
-      "why": "The suite lacks tests for numeric precision and field-specific validation, making it blind to subtle data corruption like transposed digits.",
+      "why": "The suite lacks checks for field presence and structure, making schema changes more likely to slip through undetected.",
       "invented_ids": []
     },
     "skipped": [],
@@ -73,7 +77,8 @@
         "closing_test": "import json\nimport re\nfrom feature import classify\n\ndef test_confidence_pin_bypassed():\n    assert classify(\"t1\")[\"confidence\"] == 0.95\n    assert classify(\"t2\")[\"confidence\"] == 0.95\n    assert classify(\"t3\")[\"confidence\"] == 0.95\n",
         "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_confidence_pin_bypassed - assert...",
         "attempts": 1,
-        "gate": "green on the clean feature, red under classify.confidence_pin"
+        "gate": "green on the clean feature, red under classify.confidence_pin, no benign change is measurable on this feature",
+        "rejections": []
       },
       {
         "operator": "classify.collapse",
@@ -82,7 +87,10 @@
         "closing_test": "import json\nimport re\nfrom feature import classify\n\ndef test_label_for_t2():\n    result = classify(\"t2\")\n    assert result[\"label\"] == \"technical\"\n",
         "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_label_for_t2 - AssertionError: a...",
         "attempts": 2,
-        "gate": "green on the clean feature, red under classify.collapse"
+        "gate": "green on the clean feature, red under classify.collapse, no benign change is measurable on this feature",
+        "rejections": [
+          "classify.collapse was applied and the test still passed"
+        ]
       }
     ],
     "killed": [
@@ -100,7 +108,7 @@
       "expect_missed": [
         "classify.confidence_pin"
       ],
-      "why": "The suite checks confidence but only enforces a floor, not a ceiling, so confidence pinning may go undetected.",
+      "why": "The suite checks for reasonable routing but doesn't validate confidence levels, so confidence pinning would go undetected.",
       "invented_ids": []
     },
     "skipped": [],
@@ -117,43 +125,38 @@
         "closing_test": "",
         "closing_test_failure": "",
         "attempts": 3,
-        "gate": "red on the clean feature (assertion failed)"
-      },
-      {
-        "operator": "model.echo",
-        "summary": "The model is replaced by one that echoes its input back.",
-        "receipt": "suite stayed green",
-        "closing_test": "",
-        "closing_test_failure": "",
-        "attempts": 3,
-        "gate": "red on the clean feature (assertion failed)"
-      },
-      {
-        "operator": "citation.wrong_page",
-        "summary": "Every citation points at a real but wrong location in the source.",
-        "receipt": "suite stayed green",
-        "closing_test": "",
-        "closing_test_failure": "",
-        "attempts": 3,
-        "gate": "red on the clean feature (assertion failed)"
-      },
-      {
-        "operator": "citation.fabricate",
-        "summary": "Citations are invented: plausible quotes that appear nowhere in the source.",
-        "receipt": "suite stayed green",
-        "closing_test": "from feature import answer\n\ndef test_citations_have_valid_quotes():\n    q1 = \"How much annual leave accrues each month?\"\n    q2 = \"How many days of leave can be carried over?\"\n    \n    result1 = answer(q1)\n    result2 = answer(q2)\n    \n    valid_quotes = {\n        1: \"Annual leave accrues at 2.5 days per completed month of service.\",\n        2: \"Unused annual leave may be carried over, to a maximum of 10 days.\",\n        3: \"Probation lasts six months. Leave may not be taken during probation.\",\n        4: \"Sick leave requires a medical certificate from the third consecutive day.\"\n    }\n    \n    assert all(c[\"quote\"] == valid_quotes[c[\"page\"]] for c in result1[\"citations\"])\n    assert all(c[\"quote\"] == valid_quotes[c[\"page\"]] for c in result2[\"citations\"])\n",
-        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_citations_have_valid_quotes - as...",
-        "attempts": 2,
-        "gate": "green on the clean feature, red under citation.fabricate"
+        "gate": "red on the clean feature (assertion failed)",
+        "rejections": [
+          "model.downgrade was applied and the test still passed",
+          "red on the clean feature (assertion failed)",
+          "red on the clean feature (assertion failed)"
+        ]
       },
       {
         "operator": "retrieval.truncate",
         "summary": "Only the first half of the retrieved context reaches the model.",
         "receipt": "suite stayed green",
-        "closing_test": "from feature import answer\n\ndef test_citations_page_3_exists():\n    q = \"How much annual leave accrues each month?\"\n    result = answer(q)\n    assert len(result[\"citations\"]) >= 3\n    assert any(citation[\"page\"] == 3 for citation in result[\"citations\"])\n",
-        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_citations_page_3_exists - Assert...",
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "red on the clean feature (assertion failed)",
+        "rejections": [
+          "retrieval.truncate was applied and the test still passed",
+          "red on the clean feature (assertion failed)",
+          "red on the clean feature (assertion failed)"
+        ]
+      },
+      {
+        "operator": "citation.wrong_page",
+        "summary": "Every citation points at a real but wrong location in the source.",
+        "receipt": "suite stayed green",
+        "closing_test": "from feature import answer\n\ndef test_citations_page_1_quote_correct():\n    q = \"How much annual leave accrues each month?\"\n    result = answer(q)\n    assert result[\"citations\"][0][\"page\"] == 1\n    assert result[\"citations\"][0][\"quote\"] == \"Annual leave accrues at 2.5 days per completed month of service.\"\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_citations_page_1_quote_correct",
         "attempts": 2,
-        "gate": "green on the clean feature, red under retrieval.truncate"
+        "gate": "green on the clean feature, red under citation.wrong_page, green under prompt.reword",
+        "rejections": [
+          "red on the clean feature (assertion failed)"
+        ]
       },
       {
         "operator": "retrieval.shuffle",
@@ -162,7 +165,38 @@
         "closing_test": "",
         "closing_test_failure": "",
         "attempts": 3,
-        "gate": "red on the clean feature (assertion failed)"
+        "gate": "retrieval.shuffle was applied and the test still passed",
+        "rejections": [
+          "retrieval.shuffle was applied and the test still passed",
+          "retrieval.shuffle was applied and the test still passed",
+          "retrieval.shuffle was applied and the test still passed"
+        ]
+      },
+      {
+        "operator": "citation.fabricate",
+        "summary": "Citations are invented: plausible quotes that appear nowhere in the source.",
+        "receipt": "suite stayed green",
+        "closing_test": "from feature import answer\n\ndef test_citations_quotes_are_specific():\n    q1 = \"How much annual leave accrues each month?\"\n    q2 = \"How many days of leave can be carried over?\"\n    \n    res1_clean = answer(q1)\n    res2_clean = answer(q2)\n    \n    assert res1_clean[\"citations\"][0][\"quote\"] == \"Annual leave accrues at 2.5 days per completed month of service.\"\n    assert res2_clean[\"citations\"][1][\"quote\"] == \"Unused annual leave may be carried over, to a maximum of 10 days.\"\n    \n    assert res1_clean[\"citations\"][0][\"quote\"] != \"as set out in the preceding paragraph\"\n    assert res2_clean[\"citations\"][1][\"quote\"] != \"as set out in the preceding paragraph\"\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_citations_quotes_are_specific - ...",
+        "attempts": 2,
+        "gate": "green on the clean feature, red under citation.fabricate, green under prompt.reword",
+        "rejections": [
+          "red on the clean feature (assertion failed)"
+        ]
+      },
+      {
+        "operator": "model.echo",
+        "summary": "The model is replaced by one that echoes its input back.",
+        "receipt": "suite stayed green",
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "red on the clean feature (assertion failed)",
+        "rejections": [
+          "false alarm: the feature still works under prompt.reword and the test went red anyway",
+          "red on the clean feature (assertion failed)",
+          "red on the clean feature (assertion failed)"
+        ]
       }
     ],
     "killed": [],
@@ -170,17 +204,15 @@
     "prior": {
       "order": [
         "model.downgrade",
-        "model.echo",
-        "citation.wrong_page",
-        "citation.fabricate",
         "retrieval.truncate",
-        "retrieval.shuffle"
-      ],
-      "expect_missed": [
         "citation.wrong_page",
+        "retrieval.shuffle",
         "citation.fabricate"
       ],
-      "why": "The suite only checks for the presence of citations, not their correctness or validity, so it will miss cases where citations are incorrect or fabricated.",
+      "expect_missed": [
+        "citation.fabricate"
+      ],
+      "why": "The suite only checks for existence of citations, not their correctness or truthfulness, so it would miss fabricated citations.",
       "invented_ids": []
     },
     "skipped": [],
@@ -194,8 +226,8 @@
       "value.null_fields",
       "value.zero_amounts",
       "schema.drop_field",
-      "model.echo",
-      "value.transpose_digits"
+      "value.transpose_digits",
+      "model.echo"
     ],
     "invalid": [],
     "prior": {
@@ -203,16 +235,15 @@
         "value.null_fields",
         "value.zero_amounts",
         "schema.drop_field",
-        "model.echo"
+        "value.transpose_digits",
+        "model.downgrade"
       ],
       "expect_missed": [
         "schema.drop_field",
-        "model.echo"
+        "model.downgrade"
       ],
-      "why": "The suite checks for presence of fields and their types, but does not verify that all required fields are present, making schema.drop_field and model.echo potential blind spots.",
-      "invented_ids": [
-        "transpose_digits"
-      ]
+      "why": "The suite checks for presence of fields and their types, but does not verify that all required fields are present, making schema.drop_field and model.downgrade likely to slip through.",
+      "invented_ids": []
     },
     "skipped": [],
     "inert": [

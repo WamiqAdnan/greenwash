@@ -31,12 +31,12 @@
       "closed": [
         "citation.fabricate",
         "citation.wrong_page",
-        "retrieval.truncate"
+        "retrieval.shuffle"
       ],
       "still_open": [
         "model.downgrade",
         "model.echo",
-        "retrieval.shuffle"
+        "retrieval.truncate"
       ],
       "reported": true
     },

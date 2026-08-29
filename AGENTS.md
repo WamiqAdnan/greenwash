@@ -66,8 +66,13 @@ diverge, the eval says MISMATCH and you investigate — you do not update the
 JSON to match.
 
 **A Closing Test is reported only if the Gate passed it.** Green on the clean
-Feature, red under the Mutant it claims to close. The Gate is in
-`auditor/agent.py`; it is the reason a small model's assertions are safe to ship.
+Feature, red under the Mutant it claims to close, and green again under every
+Benign Change that moves the Feature's output — that third run is what stops the
+agent shipping a test that has merely pinned the model's prose. A Benign Change
+that changes nothing is Inert and is skipped; a `HARNESS_FAULTS` signature under
+one makes that run inconclusive and is never held against the test. The Gate is
+in `auditor/agent.py`; it is the reason a small model's assertions are safe to
+ship.
 
 **Uplift is measured outside the agent.** `evals/uplift.py` runs it, from the
 Closing Tests committed on disk. An agent that scores itself is not evidence.
@@ -76,7 +81,15 @@ Closing Tests committed on disk. An agent that scores itself is not evidence.
 model's exact prose kills every Mutant and would go red the next time someone
 rewords a prompt. `evals/brittleness.py` is the other side of the measurement:
 apply a **Benign Change**, and every Closing Test that goes red is a False Alarm.
-Never quote Uplift without it.
+Never quote Uplift without it — and since the Gate started applying the same
+Benign Changes, never quote the False Alarm number as independent evidence
+either. It is a regression check on the Gate until a Benign Change is held out.
+
+**Re-recording never deletes.** `record_or_replay` writes fixtures by key and
+leaves the old ones, so any change to a prompt orphans everything downstream of
+it. Sweep `auditor/fixtures/` after a `--record` — the reachable keys are the
+`"kind": "prompt"` events in `trajectories/`. Counting the files instead of the
+prompts is how the Changelog once reported the wrong number of model calls.
 
 **Every claim in the submission needs a run behind it.** Ground rule 09.
 

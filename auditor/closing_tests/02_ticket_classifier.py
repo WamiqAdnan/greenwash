@@ -1,8 +1,10 @@
 """Closing Tests the Auditor wrote for 02_ticket_classifier.
 
 Each one passed the Verification Gate: green on the clean feature, red
-under the Operator named above it. Written by `auditor/audit.py`; the
-reasoning and the rejected attempts are in
+under the Operator named above it, and green again under every benign
+change that moves this feature's output — the `gate:` line on each test
+says which. Written by `auditor/audit.py`; the reasoning and the
+rejected attempts are in
 `trajectories/audit-02_ticket_classifier.jsonl`.
 
 Merged onto an Overlay by `evals/uplift.py`. Never written into a Suite.
@@ -10,7 +12,7 @@ Merged onto an Overlay by `evals/uplift.py`. Never written into a Suite.
 
 
 # closes: classify.confidence_pin — Confidence is pinned high regardless of how uncertain the model was.
-# gate: green on the clean feature, red under classify.confidence_pin
+# gate: green on the clean feature, red under classify.confidence_pin, no benign change is measurable on this feature
 # fails as: FAILED tests/test_greenwash_closing.py::test_confidence_pin_bypassed - assert...
 import json
 import re
@@ -23,7 +25,7 @@ def test_confidence_pin_bypassed():
 
 
 # closes: classify.collapse — Every input is classified into the single most common label.
-# gate: green on the clean feature, red under classify.collapse
+# gate: green on the clean feature, red under classify.collapse, no benign change is measurable on this feature
 # fails as: FAILED tests/test_greenwash_closing.py::test_label_for_t2 - AssertionError: a...
 import json
 import re

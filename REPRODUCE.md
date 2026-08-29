@@ -58,7 +58,11 @@ Scores the committed one-shot predictions. To regenerate them you need Ollama
 
 The first command replays the whole audit — triage, verification, closing tests,
 gate rejections and all — and rewrites `auditor/predictions.json`,
-`auditor/reports/*.md` and `trajectories/audit-*.jsonl`.
+`auditor/reports/*.md` and `trajectories/audit-*.jsonl`. Every closing test it
+accepts has been run three ways: green on the clean feature, red under the
+sabotage it claims to close, and green again under every benign change that moves
+that feature's output. The `# gate:` comment above each test in
+`auditor/closing_tests/` says which of the three it was actually held to.
 
 The third command is the control: the *same model on the same cases*, scored on
 what it expected **before** it ran anything. Prediction versus verification,
@@ -108,8 +112,8 @@ OVERALL   precision 41%   recall 58%   f1 0.48
 
 $ .venv/bin/python evals/score_predictions.py auditor/prior_predictions.json
 auditor-v1-prior  model=qwen3:8b  verified=False
-OVERALL   precision 67%   recall 33%   f1 0.44
-          found 4/12 confirmed blind spots
+OVERALL   precision 40%   recall 17%   f1 0.24
+          found 2/12 confirmed blind spots
 
 $ .venv/bin/python evals/score_predictions.py auditor/predictions.json
 auditor-v1  model=qwen3:8b  verified=True
@@ -125,8 +129,8 @@ $ .venv/bin/python evals/uplift.py
   closed: classify.collapse, classify.confidence_pin
 03_rag_citations
   kill rate 0% -> 50%   (3 of 6 blind spots closed)
-  closed: citation.fabricate, citation.wrong_page, retrieval.truncate
-  still blind: model.downgrade, model.echo, retrieval.shuffle
+  closed: citation.fabricate, citation.wrong_page, retrieval.shuffle
+  still blind: model.downgrade, model.echo, retrieval.truncate
 04_purchase_orders
   no closing tests — nothing to merge
 ====================================================
@@ -150,9 +154,13 @@ false alarm rate  0/2 (0%) of closing tests go red on output that is correct
 ```
 
 Three predictors, one scorer, one ground truth: the baseline predicting (0.48),
-the *same model* predicting inside the agent before it ran anything (0.42), and
+the *same model* predicting inside the agent before it ran anything (0.24), and
 the agent after verification (1.00). The gap between the first two and the third
-is the harness, not the model.
+is the harness, not the model. The prior's score is unstable across re-recordings
+— it has been 0.42 and 0.24 on identical cases, moved only by rewording the
+prompt that asks for it — which is itself part of the argument: prediction with
+this model lands somewhere between 0.24 and 0.61 depending on how you ask, and
+verification lands on 1.00 every time.
 
 `04_purchase_orders` is the control — a suite that catches everything. The agent
 reports nothing there. The baseline reports all six sabotages as missed, which is
@@ -166,6 +174,15 @@ citation's quote against the document, so it also catches `citation.wrong_page`.
 `evals/brittleness.py` is the number that keeps uplift honest, and it can only
 reach case 03 — rewording a prompt does not change what an extraction feature
 returns, so those cases are reported *not measured* rather than passing.
+
+Read its `0/2` for what it now is. Since v1.2 the Verification Gate applies the
+same benign change before accepting a closing test, so this probe is checking the
+gate's own rule rather than giving a second opinion. The gate rejected exactly one
+candidate on that rule during the recorded run — case 03, `model.echo`, attempt 1,
+which had hard-coded both of the model's answers verbatim — and you can read the
+rejection and the pytest output that caused it in
+`trajectories/audit-03_rag_citations.md`. That survivor ends with no closing test,
+which is why the report lists it as still open.
 
 ## Reproducing the recordings (needs Ollama)
 

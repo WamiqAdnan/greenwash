@@ -16,9 +16,10 @@ sabotage has a blind spot, and the run is the proof.
 
 Your only real job is the last one: given a sabotage the suite missed, and the
 values the feature actually returned before and after, write the test that would
-have caught it. That test is then run twice — on the clean feature, where it
-must pass, and under the sabotage, where it must fail. If it does not do both,
-you are shown the pytest output and asked again.
+have caught it. That test is then run on the clean feature, where it must pass;
+under the sabotage, where it must fail; and under any change that does not break
+the feature at all, where it must pass again. If it does not do all of that, you
+are shown the pytest output and asked again.
 
 Never report a blind spot that no run demonstrates.
 ```
@@ -149,9 +150,10 @@ sabotage has a blind spot, and the run is the proof.
 
 Your only real job is the last one: given a sabotage the suite missed, and the
 values the feature actually returned before and after, write the test that would
-have caught it. That test is then run twice — on the clean feature, where it
-must pass, and under the sabotage, where it must fail. If it does not do both,
-you are shown the pytest output and asked again.
+have caught it. That test is then run on the clean feature, where it must pass;
+under the sabotage, where it must fail; and under any change that does not break
+the feature at all, where it must pass again. If it does not do all of that, you
+are shown the pytest output and asked again.
 
 Never report a blind spot that no run demonstrates.
 
@@ -277,7 +279,7 @@ JSON:
 **9. `qwen3:8b` answered**
 
 ```
-{"order": ["model.downgrade", "model.echo", "classify.confidence_pin", "classify.collapse"], "expect_missed": ["classify.confidence_pin"], "why": "The suite checks confidence but only enforces a floor, not a ceiling, so confidence pinning may go undetected."}
+{"order": ["model.downgrade", "model.echo", "classify.confidence_pin", "classify.collapse"], "expect_missed": ["classify.confidence_pin"], "why": "The suite checks for reasonable routing but doesn't validate confidence levels, so confidence pinning would go undetected."}
 ```
 
 **10. recorded prior** (evidence, never a finding)
@@ -293,7 +295,7 @@ JSON:
   "expect_missed": [
     "classify.confidence_pin"
   ],
-  "why": "The suite checks confidence but only enforces a floor, not a ceiling, so confidence pinning may go undetected.",
+  "why": "The suite checks for reasonable routing but doesn't validate confidence levels, so confidence pinning would go undetected.",
   "invented_ids": []
 }
 ```
@@ -411,9 +413,10 @@ sabotage has a blind spot, and the run is the proof.
 
 Your only real job is the last one: given a sabotage the suite missed, and the
 values the feature actually returned before and after, write the test that would
-have caught it. That test is then run twice — on the clean feature, where it
-must pass, and under the sabotage, where it must fail. If it does not do both,
-you are shown the pytest output and asked again.
+have caught it. That test is then run on the clean feature, where it must pass;
+under the sabotage, where it must fail; and under any change that does not break
+the feature at all, where it must pass again. If it does not do all of that, you
+are shown the pytest output and asked again.
 
 Never report a blind spot that no run demonstrates.
 
@@ -604,7 +607,7 @@ def test_confidence_pin_bypassed():
 **26. propose_closing_test responded**
 
 ```
-accepted: green on the clean feature, red under classify.confidence_pin
+accepted: green on the clean feature, red under classify.confidence_pin, no benign change is measurable on this feature
 F                                                                        [100%]
 =================================== FAILURES ===================================
 _________________________ test_confidence_pin_bypassed _________________________
@@ -650,9 +653,10 @@ sabotage has a blind spot, and the run is the proof.
 
 Your only real job is the last one: given a sabotage the suite missed, and the
 values the feature actually returned before and after, write the test that would
-have caught it. That test is then run twice — on the clean feature, where it
-must pass, and under the sabotage, where it must fail. If it does not do both,
-you are shown the pytest output and asked again.
+have caught it. That test is then run on the clean feature, where it must pass;
+under the sabotage, where it must fail; and under any change that does not break
+the feature at all, where it must pass again. If it does not do all of that, you
+are shown the pytest output and asked again.
 
 Never report a blind spot that no run demonstrates.
 
@@ -859,9 +863,10 @@ sabotage has a blind spot, and the run is the proof.
 
 Your only real job is the last one: given a sabotage the suite missed, and the
 values the feature actually returned before and after, write the test that would
-have caught it. That test is then run twice — on the clean feature, where it
-must pass, and under the sabotage, where it must fail. If it does not do both,
-you are shown the pytest output and asked again.
+have caught it. That test is then run on the clean feature, where it must pass;
+under the sabotage, where it must fail; and under any change that does not break
+the feature at all, where it must pass again. If it does not do all of that, you
+are shown the pytest output and asked again.
 
 Never report a blind spot that no run demonstrates.
 
@@ -965,7 +970,7 @@ def test_label_for_t2():
 **36. propose_closing_test responded**
 
 ```
-accepted: green on the clean feature, red under classify.collapse
+accepted: green on the clean feature, red under classify.collapse, no benign change is measurable on this feature
 ========================= FAILURES ===================================
 ______________________________ test_label_for_t2 _______________________________
 

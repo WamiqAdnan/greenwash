@@ -10,12 +10,31 @@
 
 4 of them now have a test that would have caught it.
 
+## `value.null_fields`
+
+Every extracted field is present but null.
+
+- suite under this sabotage: **suite stayed green**
+- closing test: verified green on the clean feature, red under value.null_fields, no benign change is measurable on this feature
+- it fails as: `FAILED tests/test_greenwash_closing.py::test_total_is_number_not_null - asser...`
+- attempts needed: 1
+
+```python
+from feature import extract
+
+def test_total_is_number_not_null():
+    result1 = extract("invoice_1.txt")
+    result2 = extract("invoice_2.txt")
+    assert isinstance(result1["total"], float)
+    assert isinstance(result2["total"], float)
+```
+
 ## `model.downgrade`
 
 The model behind the feature is swapped for a much weaker one.
 
 - suite under this sabotage: **suite stayed green**
-- closing test: verified green on the clean feature, red under model.downgrade
+- closing test: verified green on the clean feature, red under model.downgrade, no benign change is measurable on this feature
 - it fails as: `FAILED tests/test_greenwash_closing.py::test_date_format_consistency - Assert...`
 - attempts needed: 1
 
@@ -34,36 +53,18 @@ def test_date_format_consistency():
 Every monetary amount comes back as zero.
 
 - suite under this sabotage: **suite stayed green**
-- closing test: verified green on the clean feature, red under value.zero_amounts
-- it fails as: `FAILED tests/test_greenwash_closing.py::test_total_amount_not_zero - assert (...`
+- closing test: verified green on the clean feature, red under value.zero_amounts, no benign change is measurable on this feature
+- it fails as: `FAILED tests/test_greenwash_closing.py::test_total_is_non_zero - assert 0 != 0`
 - attempts needed: 1
 
 ```python
 from feature import extract
 
-def test_total_amount_not_zero():
+def test_total_is_non_zero():
     result1 = extract("invoice_1.txt")
     result2 = extract("invoice_2.txt")
-    assert result1["total"] != 0 and result2["total"] != 0
-```
-
-## `value.null_fields`
-
-Every extracted field is present but null.
-
-- suite under this sabotage: **suite stayed green**
-- closing test: verified green on the clean feature, red under value.null_fields
-- it fails as: `FAILED tests/test_greenwash_closing.py::test_total_is_not_null - assert None ...`
-- attempts needed: 1
-
-```python
-from feature import extract
-
-def test_total_is_not_null():
-    result1 = extract("invoice_1.txt")
-    result2 = extract("invoice_2.txt")
-    assert result1["total"] is not None
-    assert result2["total"] is not None
+    assert result1["total"] != 0
+    assert result2["total"] != 0
 ```
 
 ## `value.transpose_digits`
@@ -71,7 +72,7 @@ def test_total_is_not_null():
 Digits inside extracted numbers are transposed — 1284.50 becomes 1248.50.
 
 - suite under this sabotage: **suite stayed green**
-- closing test: verified green on the clean feature, red under value.transpose_digits
+- closing test: verified green on the clean feature, red under value.transpose_digits, no benign change is measurable on this feature
 - it fails as: `FAILED tests/test_greenwash_closing.py::test_total_amount_is_correct - assert...`
 - attempts needed: 1
 
@@ -86,10 +87,10 @@ def test_total_amount_is_correct():
 
 ## What the auditor expected, before it ran anything
 
-Predicted misses: `value.transpose_digits`
+Predicted misses: `schema.drop_field`
 
-Actually missed: `model.downgrade`, `value.zero_amounts`, `value.null_fields`, `value.transpose_digits`
+Actually missed: `value.null_fields`, `model.downgrade`, `value.zero_amounts`, `value.transpose_digits`
 
-> The suite lacks tests for numeric precision and field-specific validation, making it blind to subtle data corruption like transposed digits.
+> The suite lacks checks for field presence and structure, making schema changes more likely to slip through undetected.
 
 The prediction is kept as evidence and never reported as a finding. Findings come from runs.

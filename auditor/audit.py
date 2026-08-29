@@ -50,8 +50,10 @@ def closing_test_module(case_name: str, findings: list[agent.Finding]) -> str:
     parts = [
         f'"""Closing Tests the Auditor wrote for {case_name}.\n\n'
         f"Each one passed the Verification Gate: green on the clean feature, red\n"
-        f"under the Operator named above it. Written by `auditor/audit.py`; the\n"
-        f"reasoning and the rejected attempts are in\n"
+        f"under the Operator named above it, and green again under every benign\n"
+        f"change that moves this feature's output — the `gate:` line on each test\n"
+        f"says which. Written by `auditor/audit.py`; the reasoning and the\n"
+        f"rejected attempts are in\n"
         f"`trajectories/audit-{case_name}.jsonl`.\n\n"
         f"Merged onto an Overlay by `evals/uplift.py`. Never written into a Suite.\n"
         f'"""\n'
@@ -128,6 +130,17 @@ def trust_report(case: harness.Case, result: agent.AuditResult) -> str:
                 "",
                 "This one is still open. The blind spot is real — the run above "
                 "proves it — but the auditor could not write a test that closed it.",
+                "",
+            ]
+        # What the Gate turned away, for either outcome. A rejection reading
+        # "false alarm" is the tool refusing to sell you a test that would have
+        # paged you at 3am, and that is worth seeing whether or not a later
+        # attempt succeeded.
+        if f.rejections:
+            lines += [
+                "Rejected by the gate along the way:",
+                "",
+                *[f"{i}. {why}" for i, why in enumerate(f.rejections, 1)],
                 "",
             ]
 

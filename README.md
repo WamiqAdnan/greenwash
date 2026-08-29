@@ -75,9 +75,10 @@ the tests that close them, and it is not trusted to do either.
 It **never predicts** which sabotages survive. It applies each one, runs your
 suite, and reads the result. Then, for each survivor, it is shown what the
 feature actually returned before and after the sabotage and asked for the
-assertion that would have caught it. Every test it writes is then run twice —
-green on the clean feature, red under the sabotage — or it goes back with the
-pytest output attached. **A test that does not do both is never reported.**
+assertion that would have caught it. Every test it writes is then run three ways
+— green on the clean feature, red under the sabotage, and green again under a
+change that breaks nothing — or it goes back with the pytest output attached.
+**A test that does not do all three is never reported.**
 
 The whole agent runs on `qwen3:8b` on a laptop, because the hard part is the
 harness's job, not the model's.
@@ -85,12 +86,18 @@ harness's job, not the model's.
 | | precision | recall | F1 | blind spots found |
 |---|---|---|---|---|
 | the same model, predicting (baseline) | 41% | 58% | 0.48 | 7 / 12 |
-| the same model, predicting (inside the agent, before it ran anything) | 57% | 33% | 0.42 | 4 / 12 |
+| the same model, predicting (inside the agent, before it ran anything) | 40% | 17% | 0.24 | 2 / 12 |
 | **the agent, after running them** | **100%** | **100%** | **1.00** | **12 / 12** |
 
 One scorer, one ground truth, three predictors. Reaching 12/12 is not cleverness
 and is not claimed as any — it is what happens when you stop guessing and run
 the thing. The number that took work is the next one.
+
+The middle row is worth a second look: it is the *same model on the same cases*,
+and the only thing taken away from it is the ability to run anything. It has also
+scored 0.42 on this corpus — rewording the prompt that asks the question moved it
+that far. Prediction with this model lands somewhere between 0.24 and 0.61
+depending on how you ask it. Verification lands on 1.00 every time.
 
 **Kill rate across the corpus: 46% → 88%**, measured by `evals/uplift.py` from
 the tests the agent wrote, outside the agent, on a scratch copy — your suite is
@@ -121,10 +128,11 @@ Three times. The gate rejected all three and that hole is still reported open.
 An agent that writes tests from observed output will happily codify the bug it
 was shown; the gate is what makes a small model's assertions safe to ship.
 
-And some tests it *did* get through the gate pinned the model's exact prose.
-That kills every mutant and passes the gate honestly — and would go red the next
-time somebody reworded a prompt. By kill rate it is a perfect test; to you it is
-a pager at 3am for nothing.
+The second failure is subtler and it is the one mutation testing *rewards*. Some
+tests the agent wrote pinned the model's exact prose. A test like that kills
+every mutant and passes the gate honestly — and goes red the next time somebody
+rewords a prompt. By kill rate it is a perfect test; to you it is a pager at 3am
+for nothing.
 
 Kill rate structurally cannot see that, so there is a second measurement that
 can. `evals/brittleness.py` applies a **benign change** — something a team really
@@ -136,12 +144,22 @@ run_eval      apply a sabotage.       The suite SHOULD go red.    Green = blind 
 brittleness   apply a benign change.  The suite SHOULD stay green. Red = false alarm.
 ```
 
-It caught the first version of the agent doing it: 1 of 1 measurable test fired
-on output that was correct. The current version's score is 0 of 2 — but nothing
-in the agent forbids a snapshot, it simply wrote better tests this time, and only
-two of them can be probed at all, because rewording a prompt does not change what
-an extraction feature returns. **Measured, not fixed.** `CHANGELOG.md` says what
-would fix it.
+It caught the first version of the agent doing exactly this: 1 of 1 measurable
+test fired on output that was correct.
+
+So the benign changes moved **inside the gate**. A test is now run three ways —
+green on your feature, red under the sabotage it claims to catch, and green again
+under a change that breaks nothing — and it is dropped if it fails any of them.
+On its first run the gate caught a test that had hard-coded both of the model's
+answers verbatim. It would have shipped under the old two runs. It did not ship.
+
+Two things to know about that, because the tidy version would be misleading.
+Rewording a prompt does not change what an extraction feature returns, so the new
+check only bites on **one case in four** — the other three are judged by the old
+two runs and can still be snapshots. And `brittleness.py` now applies the same
+benign change the gate does, so its `0 of 2` has stopped being an independent
+measurement and is a regression check on the gate. Both are fixed the same way,
+by more benign changes, one of them held out. `CHANGELOG.md` has the receipts.
 
 ## Run it
 

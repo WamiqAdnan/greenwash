@@ -41,6 +41,13 @@ neither run tripping a `HARNESS_FAULTS` signature — or it goes back to the mod
 with the pytest output attached. A small model's bad assertion dies in the Gate
 instead of reaching the user.
 
+> **Amended, v1.2.** The Gate gained a third run: green again under every
+> **Benign Change** that moves the Feature's output. The decision below is
+> unchanged and the amendment follows from it — a Closing Test that only pins
+> the model's prose passes the first two runs and is worthless, and the way this
+> project settles that is by running the thing that exposes it rather than by
+> asking the model to be more careful. See the v1.2 row in `CHANGELOG.md`.
+
 We also keep the model's **Prior**: before anything runs, it is asked which
 sabotages it expects to survive. The Prior is recorded in the Trajectory as
 evidence and never reported as a finding. It costs one model call and it turns
