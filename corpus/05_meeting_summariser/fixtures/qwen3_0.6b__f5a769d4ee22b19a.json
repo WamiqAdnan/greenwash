@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:0.6b",
+  "prompt": "Summarise the meeting transcript below in a short paragraph.\nInclude what was decided, who owns each action, and any dates.\n\nTranscript:\nWeekly platform sync, 12 March.\nPriya: the ingest queue backed up twice last week, both times after the 02:00 batch.\nRaj: I traced it to the retry policy \u2014 failed jobs requeue instantly and starve new ones.\nPriya: can we put a backoff on it?\nRaj: yes, exponential with a cap at five minutes. Half a day of work.\nPriya: do it this sprint. Raj owns it, due Friday the 20th.\nDana: separately, we agreed to postpone the Kafka upgrade until after the audit.\nPriya: agreed. Revisit in April.\nDana: I will tell the infra team so they stop holding a window for it.\n\n\nSummary:",
+  "response": "The meeting agreed to implement a retry policy with exponential backoff and a five-minute cap, owned by Raj, due on Friday the 20th. Priya also decided to schedule the ingest queue to be backed up twice, with Raj responsible. Dana postponed the Kafka upgrade until after the audit, agreed to do so in April, and will inform the infra team to stop holding the window."
+}

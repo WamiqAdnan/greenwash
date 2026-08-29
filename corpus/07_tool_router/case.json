@@ -1,0 +1,8 @@
+{
+  "description": "Chooses the tool that handles a support request and fills in its arguments.",
+  "tags": [
+    "llm",
+    "tool_use"
+  ],
+  "suite_looks_like": "Checks the right tool fired and that arguments is a dict. Never checks a single argument value, which is the half that moves money."
+}

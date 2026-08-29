@@ -181,9 +181,23 @@ _Avoid_: cassette, mock, stub
 
 **Record Plan**:
 A Corpus Case's list of every model call its Suite will make, so recording covers
-replay completely. Operators that change the prompt (anything under `retrieval.`)
-get their own recording pass.
+replay completely. Operators that change the prompt — anything under `retrieval.`
+and every **Benign Change** — get their own recording pass.
+
+It is `CALLS` in `record_plan.py`, and it is exactly the Suite's calls, because
+the **Inert** check compares it with and without an Operator to decide what the
+Suite could have noticed. Anything else a case needs recorded goes in
+`EXTRA_CALLS`: recorded, replayable, and never observed, so "the Suite could not
+have noticed" stays a true statement rather than a convenient one.
 _Avoid_: manifest, script
+
+**Held-Out Example**:
+A labelled example that is in neither the prompt nor the Suite. `evals/leakage.py`
+runs the Feature over them to answer the one question mutation testing cannot:
+is this Suite measuring the Feature, or is it measuring whether the model can
+repeat its own few-shot examples? Lives in `EXAMPLES` and `HELDOUT` in a case's
+`feature.py`, with the held-out calls in `EXTRA_CALLS`.
+_Avoid_: test set, validation set, holdout
 
 **Selftest**:
 One of Greenwash's own tests, under `selftests/`. Deliberately not called a

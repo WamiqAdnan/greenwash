@@ -1,0 +1,8 @@
+{
+  "survivors": [
+    "tool.blank_args",
+    "tool.swap_args"
+  ],
+  "why": "The suite checks which tool fired, because choosing the wrong tool is what went wrong in early testing. Nothing checks an argument value. Checked by hand: issue_refund is called with order_id and amount both empty, and with them swapped \u2014 a refund of 'A-4471' against order 84.0. The right tool fires every time and the suite stays green.",
+  "verified_by_hand": "2026-08-29"
+}

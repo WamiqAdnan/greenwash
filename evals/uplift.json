@@ -47,6 +47,68 @@
       "closed": [],
       "reported": true,
       "note": "no closing tests"
+    },
+    {
+      "case": "05_meeting_summariser",
+      "before": 0.0,
+      "after": 1.0,
+      "closed": [
+        "model.downgrade",
+        "model.echo",
+        "summary.drop_decisions",
+        "summary.extractive"
+      ],
+      "still_open": [],
+      "reported": true
+    },
+    {
+      "case": "06_sql_generator",
+      "before": 0.25,
+      "after": 1.0,
+      "closed": [
+        "model.downgrade",
+        "sql.drop_where",
+        "sql.swap_aggregate"
+      ],
+      "still_open": [],
+      "reported": true
+    },
+    {
+      "case": "07_tool_router",
+      "before": 0.5,
+      "after": 1.0,
+      "closed": [
+        "tool.blank_args",
+        "tool.swap_args"
+      ],
+      "still_open": [],
+      "reported": true
+    },
+    {
+      "case": "08_content_moderation",
+      "before": 0.5,
+      "after": 1.0,
+      "closed": [
+        "moderation.category_collapse"
+      ],
+      "still_open": [],
+      "reported": true
+    },
+    {
+      "case": "09_sql_verified",
+      "before": 1.0,
+      "after": 1.0,
+      "closed": [],
+      "reported": true,
+      "note": "no closing tests"
+    },
+    {
+      "case": "10_few_shot_leak",
+      "before": 1.0,
+      "after": 1.0,
+      "closed": [],
+      "reported": true,
+      "note": "no closing tests"
     }
   ]
 }

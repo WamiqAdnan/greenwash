@@ -1,0 +1,8 @@
+{
+  "description": "Summarises a meeting transcript into a paragraph covering decisions, owners and dates.",
+  "tags": [
+    "llm",
+    "summarization"
+  ],
+  "suite_looks_like": "Checks a summary came back, that it is shorter than the transcript, and that it is not a stub. Never checks that anything the meeting decided is in it."
+}

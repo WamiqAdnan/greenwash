@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:8b",
+  "prompt": "Pick the single tool that handles the request below and\nsupply its arguments.\n\nTools:\n- issue_refund(order_id, amount)\n- update_address(customer_id, new_address)\n- escalate_to_human(reason)\n\nRespond with JSON only: {\"tool\": \"...\", \"arguments\": {...}}\n\nRequest: I want to speak to a manager about my last three deliveries.\n\nJSON:",
+  "response": "{\"tool\": \"escalate_to_human\", \"arguments\": {\"reason\": \"I want to speak to a manager about my last three deliveries.\"}}"
+}

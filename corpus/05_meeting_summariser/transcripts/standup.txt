@@ -1,0 +1,9 @@
+Weekly platform sync, 12 March.
+Priya: the ingest queue backed up twice last week, both times after the 02:00 batch.
+Raj: I traced it to the retry policy — failed jobs requeue instantly and starve new ones.
+Priya: can we put a backoff on it?
+Raj: yes, exponential with a cap at five minutes. Half a day of work.
+Priya: do it this sprint. Raj owns it, due Friday the 20th.
+Dana: separately, we agreed to postpone the Kafka upgrade until after the audit.
+Priya: agreed. Revisit in April.
+Dana: I will tell the infra team so they stop holding a window for it.

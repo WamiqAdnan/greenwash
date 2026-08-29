@@ -34,9 +34,15 @@ def _run_plan(case_dir: Path, label: str, mutation: str | None) -> None:
             from greenwash import operators as ops
             ops.get(mutation).patch(feature)
         plan = importlib.import_module("record_plan")
-        for thunk in plan.CALLS:
+        # `CALLS` is the Record Plan proper — exactly what the Suite calls, and
+        # what the Inert check compares. `EXTRA_CALLS` is anything else that has
+        # to be on disk for an offline replay: today, the held-out tickets
+        # `evals/leakage.py` needs. They are recorded and never observed, which
+        # is what keeps "the Suite could not have noticed" a true statement.
+        calls = list(plan.CALLS) + list(getattr(plan, "EXTRA_CALLS", []))
+        for thunk in calls:
             thunk()
-        print(f"  {label}: {len(plan.CALLS)} call(s) recorded")
+        print(f"  {label}: {len(calls)} call(s) recorded")
     finally:
         sys.path.remove(str(case_dir))
 

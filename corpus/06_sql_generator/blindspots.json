@@ -1,0 +1,9 @@
+{
+  "survivors": [
+    "model.downgrade",
+    "sql.drop_where",
+    "sql.swap_aggregate"
+  ],
+  "why": "The suite prepares the query against the real schema and checks it is a SELECT naming the orders table. It never runs it against rows, so it cannot tell one answer from another. Checked by hand: dropping the WHERE clause turns one region's total into every region's; SUM becomes COUNT and the query answers a different question; and the weak model emits WHERE region = 'HEMA', a hallucinated literal that parses perfectly and quietly returns nothing.",
+  "verified_by_hand": "2026-08-29"
+}

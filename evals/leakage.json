@@ -1,0 +1,123 @@
+{
+  "cases": [
+    {
+      "case": "10_few_shot_leak",
+      "runs": {
+        "as shipped": {
+          "in_prompt": [
+            5,
+            5
+          ],
+          "held_out": [
+            5,
+            5
+          ],
+          "gap": 0.0,
+          "detail": {
+            "in_prompt": {
+              "e1": {
+                "expected": "billing",
+                "got": "billing"
+              },
+              "e2": {
+                "expected": "account",
+                "got": "account"
+              },
+              "e3": {
+                "expected": "technical",
+                "got": "technical"
+              },
+              "e4": {
+                "expected": "account",
+                "got": "account"
+              },
+              "e5": {
+                "expected": "billing",
+                "got": "billing"
+              }
+            },
+            "held_out": {
+              "h1": {
+                "expected": "account",
+                "got": "account"
+              },
+              "h2": {
+                "expected": "technical",
+                "got": "technical"
+              },
+              "h3": {
+                "expected": "billing",
+                "got": "billing"
+              },
+              "h4": {
+                "expected": "account",
+                "got": "account"
+              },
+              "h5": {
+                "expected": "account",
+                "got": "account"
+              }
+            }
+          }
+        },
+        "under model.downgrade": {
+          "in_prompt": [
+            5,
+            5
+          ],
+          "held_out": [
+            4,
+            5
+          ],
+          "gap": 0.2,
+          "detail": {
+            "in_prompt": {
+              "e1": {
+                "expected": "billing",
+                "got": "billing"
+              },
+              "e2": {
+                "expected": "account",
+                "got": "account"
+              },
+              "e3": {
+                "expected": "technical",
+                "got": "technical"
+              },
+              "e4": {
+                "expected": "account",
+                "got": "account"
+              },
+              "e5": {
+                "expected": "billing",
+                "got": "billing"
+              }
+            },
+            "held_out": {
+              "h1": {
+                "expected": "account",
+                "got": "account"
+              },
+              "h2": {
+                "expected": "technical",
+                "got": "technical"
+              },
+              "h3": {
+                "expected": "billing",
+                "got": "billing"
+              },
+              "h4": {
+                "expected": "account",
+                "got": "billing"
+              },
+              "h5": {
+                "expected": "account",
+                "got": "account"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

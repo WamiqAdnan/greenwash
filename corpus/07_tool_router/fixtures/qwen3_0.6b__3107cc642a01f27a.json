@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:0.6b",
+  "prompt": "Pick the single tool that handles the request below and\nsupply its arguments.\n\nTools:\n- issue_refund(order_id, amount)\n- update_address(customer_id, new_address)\n- escalate_to_human(reason)\n\nRespond with JSON only: {\"tool\": \"...\", \"arguments\": {...}}\n\nRequest: Order A-4471 was charged 84.00 twice. Refund the duplicate.\n\nJSON:",
+  "response": "```json\n{\"tool\": \"issue_refund\", \"arguments\": {\"order_id\": \"A-4471\", \"amount\": \"84.00\"}}\n```"
+}

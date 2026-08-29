@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:8b",
+  "prompt": "Route the support ticket to one queue: billing, account, technical.\nFollow the conventions shown in the examples.\n\nTicket: My invoice shows VAT at the wrong rate.\nQueue: billing\nTicket: I need a refund for the duplicate charge.\nQueue: account\nTicket: The mobile app crashes when I open reports.\nQueue: technical\nTicket: I cannot log in since yesterday.\nQueue: account\nTicket: Can I get a copy of last month's receipt?\nQueue: billing\n\nReply with JSON only: {\"label\": \"...\"}\n\nTicket: I was billed twice and I want the money back.\n\nJSON:",
+  "response": "{\"label\": \"account\"}"
+}

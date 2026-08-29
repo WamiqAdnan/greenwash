@@ -17,6 +17,7 @@ notices. Hackathon submission, deadline **Mon 31 Aug 2026, 18:00 UTC**
 .venv/bin/python evals/score_predictions.py auditor/predictions.json
 .venv/bin/python evals/uplift.py                 # kill rate before -> after
 .venv/bin/python evals/brittleness.py            # do the new tests cry wolf?
+.venv/bin/python evals/leakage.py                # is a suite testing its own prompt?
 .venv/bin/python -m pytest selftests -q          # greenwash's own tests
 ```
 
@@ -111,7 +112,10 @@ prompts is how the Changelog once reported the wrong number of model calls.
    before pytest imports the tests
 4. `tests/test_feature.py` — a suite a real team would plausibly have written.
    No strawmen. Every assertion must be one people actually write.
-5. `record_plan.py` — every model call the suite makes
+5. `record_plan.py` — `CALLS` is every model call the suite makes, and nothing
+   else: the Inert check compares it with and without an Operator, so a call the
+   suite never makes does not belong in it. Anything else that must be on disk
+   for offline replay goes in `EXTRA_CALLS`
 6. The alternative prompts in `feature.py`, one per Benign Change whose tags the
    case declares. `PROMPT_VARIANT` is the same instruction worded differently
    (`prompt.reword`); `PROMPT_EXTRA_FIELD` asks for one more field the source
@@ -126,9 +130,16 @@ prompts is how the Changelog once reported the wrong number of model calls.
    observations yourself before recording ground truth:
    `python -m greenwash.observe corpus/NN_name --operator <id>`
 
-`04_purchase_orders` is the **precision control**: a suite that catches
-everything, whose `blindspots.json` is deliberately empty. If Greenwash ever
-reports a finding there, precision is broken and no other case will tell you.
+`04_purchase_orders` and `09_sql_verified` are the **precision controls**: suites
+that catch everything, whose `blindspots.json` are deliberately empty. If
+Greenwash ever reports a finding in either, precision is broken. There are two,
+on different capabilities, because a control only proves precision for the kind
+of feature it covers.
+
+`10_few_shot_leak` is the **honest limitation**, and its empty `blindspots.json`
+means something else entirely: nothing survives and the suite is still worthless,
+because its test cases are the model's own few-shot examples. Never "fix" that
+case. It is the one that shows what this technique cannot do.
 
 ## Layout
 
@@ -145,6 +156,8 @@ baseline/          the one-shot predictor the Auditor is measured against
 evals/run_eval.py  the measurement the Changelog reports against
 evals/uplift.py    kill rate before and after Closing Tests — the user's number
 evals/brittleness.py  how many Closing Tests fire on output that is correct
+evals/leakage.py   in-prompt accuracy against held-out — the one thing mutation
+                   testing structurally cannot see (see `10_few_shot_leak`)
 evals/score_predictions.py   one scorer, both predictors
 selftests/         Greenwash's own tests. Never called a Suite
 scripts/           record_fixtures.py, render_trajectory.py

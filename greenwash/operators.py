@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import os
 import random
+import re
 from dataclasses import dataclass, field
 from typing import Callable
 
@@ -332,6 +333,190 @@ def _drop_field(module) -> None:
         return result
 
     module.extract = mutated
+
+
+# ---------------------------------------------------------------------------
+# Summarisation
+# ---------------------------------------------------------------------------
+
+@operator(
+    "summary.extractive",
+    "The summary is the transcript's own opening lines rather than a summary.",
+    ("summarization",),
+)
+def _extractive(module) -> None:
+    """The failure a length check cannot see.
+
+    Copying the first few lines of the source produces something the right
+    shape, the right length, and made entirely of real sentences. Every
+    assertion about length, non-emptiness and "contains no invented words"
+    passes. It is simply not a summary.
+    """
+    inner = module.summarise
+
+    def mutated(name, *a, **kw):
+        text = module.read_transcript(name)
+        lines = [l.strip() for l in text.splitlines() if l.strip()]
+        return " ".join(lines[1:4])
+
+    module.summarise = mutated
+
+
+@operator(
+    "summary.drop_decisions",
+    "Everything the meeting decided is dropped; the discussion is kept.",
+    ("summarization",),
+)
+def _drop_decisions(module) -> None:
+    """The summary reads well and is missing the only part anybody needs."""
+    inner = module.summarise
+
+    def mutated(*a, **kw):
+        summary = inner(*a, **kw)
+        keep = [
+            s for s in re.split(r"(?<=[.!?])\s+", summary)
+            if not re.search(r"\b(decid|agreed|will|action|owner|deadline|approv)",
+                             s, re.I)
+        ]
+        # If the whole summary was decisions, what is left is what is left —
+        # keeping the opening sentence rather than a character slice, so the
+        # mutant is a plausible bad summary and not an obvious stub.
+        return " ".join(keep) or re.split(r"(?<=[.!?])\s+", summary)[0]
+
+    module.summarise = mutated
+
+
+# ---------------------------------------------------------------------------
+# Generated SQL
+# ---------------------------------------------------------------------------
+
+@operator(
+    "sql.drop_where",
+    "The WHERE clause is dropped, so the query returns every row.",
+    ("sql",),
+)
+def _drop_where(module) -> None:
+    """Still valid SQL, still the right table, and now unbounded.
+
+    A suite that checks the query parses and names the right table cannot see
+    this. In production it is the difference between one customer's rows and
+    the whole table.
+    """
+    inner = module.generate
+
+    def mutated(*a, **kw):
+        return re.sub(r"\s+WHERE\s+.*?(?=(\s+GROUP\s+BY|\s+ORDER\s+BY|\s*;|$))",
+                      "", inner(*a, **kw), flags=re.I | re.S)
+
+    module.generate = mutated
+
+
+@operator(
+    "sql.swap_aggregate",
+    "SUM becomes COUNT, so the query answers a different question.",
+    ("sql",),
+)
+def _swap_aggregate(module) -> None:
+    inner = module.generate
+
+    def mutated(*a, **kw):
+        return re.sub(r"\bSUM\b", "COUNT", inner(*a, **kw), flags=re.I)
+
+    module.generate = mutated
+
+
+# ---------------------------------------------------------------------------
+# Tool calling
+# ---------------------------------------------------------------------------
+
+@operator(
+    "tool.blank_args",
+    "The right tool is called with empty arguments.",
+    ("tool_use",),
+)
+def _blank_args(module) -> None:
+    """A suite that asserts which tool fired is blind to what it was given."""
+    inner = module.route
+
+    def mutated(*a, **kw):
+        call = inner(*a, **kw)
+        call["arguments"] = {k: "" for k in call.get("arguments", {})}
+        return call
+
+    module.route = mutated
+
+
+@operator(
+    "tool.swap_args",
+    "Two argument values are swapped — the refund goes to the wrong account.",
+    ("tool_use",),
+)
+def _swap_args(module) -> None:
+    inner = module.route
+
+    def mutated(*a, **kw):
+        call = inner(*a, **kw)
+        args = call.get("arguments", {})
+        keys = sorted(args)
+        if len(keys) >= 2:
+            a0, a1 = keys[0], keys[1]
+            args[a0], args[a1] = args[a1], args[a0]
+        return call
+
+    module.route = mutated
+
+
+# ---------------------------------------------------------------------------
+# Moderation
+# ---------------------------------------------------------------------------
+
+@operator(
+    "moderation.miss_implicit",
+    "Anything not using an explicit slur is allowed through.",
+    ("moderation",),
+)
+def _miss_implicit(module) -> None:
+    """Exactly the shape of a real moderation regression.
+
+    Keyword-obvious violations are still caught, so a suite whose cases are all
+    obvious stays green. What gets through is the implicit, coded and
+    paraphrased content — which is the content that actually matters.
+    """
+    inner = module.moderate
+    explicit = getattr(module, "EXPLICIT_TERMS", ())
+
+    def mutated(post_id, *a, **kw):
+        result = inner(post_id, *a, **kw)
+        # The Feature takes an id; a keyword filter sees the post itself.
+        text = getattr(module, "POSTS", {}).get(post_id, post_id)
+        if not any(t in text.lower() for t in explicit):
+            result["flagged"] = False
+            result["category"] = "none"
+        return result
+
+    module.moderate = mutated
+
+
+@operator(
+    "moderation.category_collapse",
+    "Everything flagged comes back under the same category.",
+    ("moderation",),
+)
+def _category_collapse(module) -> None:
+    """A suite that checks *whether* something was flagged, not as what.
+
+    The routing downstream is by category, so this sends every harassment
+    report to the spam queue while the flag itself stays correct.
+    """
+    inner = module.moderate
+
+    def mutated(*a, **kw):
+        result = inner(*a, **kw)
+        if result.get("flagged"):
+            result["category"] = getattr(module, "MAJORITY_CATEGORY", "spam")
+        return result
+
+    module.moderate = mutated
 
 
 # ---------------------------------------------------------------------------

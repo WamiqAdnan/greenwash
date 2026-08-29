@@ -3,7 +3,7 @@
 
     .venv/bin/python auditor/audit.py                  # replay, offline, no Ollama
     .venv/bin/python auditor/audit.py --record         # talks to Ollama, rewrites fixtures
-    .venv/bin/python auditor/audit.py --case 03_rag_citations -v
+    .venv/bin/python auditor/audit.py --case 03_rag_citations   # one case, no artifacts rewritten
 
 Outputs, all committed so a judge can read them without running anything:
 
@@ -246,6 +246,15 @@ def main() -> None:
         closed = sum(f.closed for f in result.findings)
         print(f"  kill rate before: {result.kill_rate_before:.0%}   "
               f"blind spots: {len(result.findings)}   closed: {closed}")
+
+    if args.case:
+        # A single-case run is for looking at one case, not for producing the
+        # deliverable. Writing the corpus-wide files here would silently replace
+        # ten cases of committed predictions with one — which is exactly what a
+        # judge following the single-case line in the docstring would do.
+        print(f"\n--case given: {args.out.name}, prior_predictions.json and "
+              f"audit.json left alone. Run without --case to rewrite them.")
+        return
 
     args.out.write_text(json.dumps(
         {

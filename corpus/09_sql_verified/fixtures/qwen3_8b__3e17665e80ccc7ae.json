@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:8b",
+  "prompt": "Write one SQLite query answering the question, against this schema:\n\ntable orders(id integer, customer_id integer, region text,\n             status text, amount real, created_at text)\n\nReply with SQL only, no explanation and no markdown fences.\n\nQuestion: How many orders were cancelled?\n\nSQL:",
+  "response": "SELECT COUNT(*) FROM orders WHERE status = 'cancelled';"
+}

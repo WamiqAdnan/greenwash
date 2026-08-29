@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:8b",
+  "prompt": "Summarise the meeting transcript below in a short paragraph.\nInclude what was decided, who owns each action, and any dates.\n\nTranscript:\nPricing review, 19 March.\nDana: churn on the starter tier is 4.1%, up from 3.3% two quarters ago.\nMarcus: the people leaving are the ones who never connected a second data source.\nDana: so onboarding, not price.\nMarcus: I think so. Raising the price would make the number worse, not better.\nDana: decision \u2014 we hold the starter price at 29 and fund an onboarding revamp instead.\nMarcus: I will draft the scope by the 27th and Dana approves it.\nDana: and we drop the discount experiment. It moved nothing in six weeks.\n\n\nSummary:",
+  "response": "In the meeting on 19 March, it was decided to keep the starter tier price at $29 and instead fund an onboarding revamp, as churn is driven by poor onboarding rather than price. Marcus will draft the scope by the 27th for Dana's approval, and the discount experiment will be discontinued as it showed no impact over six weeks."
+}

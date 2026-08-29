@@ -1,0 +1,10 @@
+{
+  "survivors": [
+    "model.downgrade",
+    "model.echo",
+    "summary.extractive",
+    "summary.drop_decisions"
+  ],
+  "why": "The suite asserts that a summary came back, that it is shorter than the transcript, and that it is over 120 characters. Every one of those is true of the transcript's own opening lines, of the tail of the prompt echoed back, and of a summary with every decision removed. Checked by hand: model.echo returns raw dialogue with 'Summary:' still attached; summary.extractive returns discussion and no decisions, owners or dates; the weak model invents one, reporting that the team 'decided to schedule the ingest queue to be backed up twice', which is a misreading of the transcript and is exactly the failure a length check cannot see.",
+  "verified_by_hand": "2026-08-29"
+}

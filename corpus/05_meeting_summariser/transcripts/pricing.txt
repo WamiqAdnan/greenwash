@@ -1,0 +1,8 @@
+Pricing review, 19 March.
+Dana: churn on the starter tier is 4.1%, up from 3.3% two quarters ago.
+Marcus: the people leaving are the ones who never connected a second data source.
+Dana: so onboarding, not price.
+Marcus: I think so. Raising the price would make the number worse, not better.
+Dana: decision — we hold the starter price at 29 and fund an onboarding revamp instead.
+Marcus: I will draft the scope by the 27th and Dana approves it.
+Dana: and we drop the discount experiment. It moved nothing in six weeks.

@@ -15,13 +15,39 @@
     ],
     "04_purchase_orders": [
       "schema.drop_field"
+    ],
+    "05_meeting_summariser": [
+      "summary.drop_decisions",
+      "summary.extractive"
+    ],
+    "06_sql_generator": [
+      "sql.swap_aggregate",
+      "sql.drop_where"
+    ],
+    "07_tool_router": [
+      "tool.swap_args"
+    ],
+    "08_content_moderation": [
+      "moderation.miss_implicit"
+    ],
+    "09_sql_verified": [
+      "sql.swap_aggregate"
+    ],
+    "10_few_shot_leak": [
+      "classify.collapse"
     ]
   },
   "hallucinated_ids": {
     "01_invoice_extractor": [],
     "02_ticket_classifier": [],
     "03_rag_citations": [],
-    "04_purchase_orders": []
+    "04_purchase_orders": [],
+    "05_meeting_summariser": [],
+    "06_sql_generator": [],
+    "07_tool_router": [],
+    "08_content_moderation": [],
+    "09_sql_verified": [],
+    "10_few_shot_leak": []
   },
   "note": "what the auditor expected before it ran anything. Evidence, never a finding \u2014 see docs/adr/0001."
 }

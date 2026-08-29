@@ -253,5 +253,278 @@
     "inert": [
       "model.downgrade"
     ]
+  },
+  {
+    "case": "05_meeting_summariser",
+    "kill_rate_before": 0.0,
+    "findings": [
+      {
+        "operator": "model.echo",
+        "summary": "The model is replaced by one that echoes its input back.",
+        "receipt": "suite stayed green",
+        "closing_test": "from feature import read_transcript, summarise\n\ndef test_summary_contains_key_decisions():\n    standup = summarise(\"standup.txt\")\n    pricing = summarise(\"pricing.txt\")\n    assert \"exponential backoff\" in standup and \"Kafka upgrade\" in standup\n    assert \"starter tier price\" in pricing and \"discount experiment\" in pricing\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_summary_contains_key_decisions",
+        "attempts": 1,
+        "gate": "green on the clean feature, red under model.echo, green under prompt.reword",
+        "rejections": []
+      },
+      {
+        "operator": "summary.drop_decisions",
+        "summary": "Everything the meeting decided is dropped; the discussion is kept.",
+        "receipt": "suite stayed green",
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "summary.drop_decisions was applied and the test still passed",
+        "rejections": [
+          "summary.drop_decisions was applied and the test still passed",
+          "summary.drop_decisions was applied and the test still passed",
+          "summary.drop_decisions was applied and the test still passed"
+        ]
+      },
+      {
+        "operator": "model.downgrade",
+        "summary": "The model behind the feature is swapped for a much weaker one.",
+        "receipt": "suite stayed green",
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "red on the clean feature (assertion failed)",
+        "rejections": [
+          "false alarm: the feature still works under prompt.reword and the test went red anyway",
+          "red on the clean feature (assertion failed)",
+          "red on the clean feature (assertion failed)"
+        ]
+      },
+      {
+        "operator": "summary.extractive",
+        "summary": "The summary is the transcript's own opening lines rather than a summary.",
+        "receipt": "suite stayed green",
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "red on the clean feature (assertion failed)",
+        "rejections": [
+          "false alarm: the feature still works under prompt.reword and the test went red anyway",
+          "red on the clean feature (assertion failed)",
+          "red on the clean feature (assertion failed)"
+        ]
+      }
+    ],
+    "killed": [],
+    "invalid": [],
+    "prior": {
+      "order": [
+        "model.echo",
+        "summary.drop_decisions",
+        "model.downgrade",
+        "summary.extractive"
+      ],
+      "expect_missed": [
+        "summary.drop_decisions",
+        "summary.extractive"
+      ],
+      "why": "The suite only checks for non-empty output, length, and existence, which are not affected by echo or model downgrade, but are bypassed by summary changes that still meet the criteria.",
+      "invented_ids": []
+    },
+    "skipped": [],
+    "inert": []
+  },
+  {
+    "case": "06_sql_generator",
+    "kill_rate_before": 0.25,
+    "findings": [
+      {
+        "operator": "sql.swap_aggregate",
+        "summary": "SUM becomes COUNT, so the query answers a different question.",
+        "receipt": "suite stayed green",
+        "closing_test": "import sqlite3\nfrom feature import generate\n\ndef test_q1_sum_amount():\n    sql_before = \"SELECT SUM(amount) FROM orders WHERE region = 'EMEA'\"\n    sql_after = \"SELECT COUNT(amount) FROM orders WHERE region = 'EMEA'\"\n    assert generate(\"q1\") == sql_before, \"Test failed on clean feature\"\n    assert generate(\"q1\") != sql_after, \"Test failed on clean feature\"\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_q1_sum_amount - AssertionError: ...",
+        "attempts": 1,
+        "gate": "green on the clean feature, red under sql.swap_aggregate, no benign change is measurable on this feature",
+        "rejections": []
+      },
+      {
+        "operator": "sql.drop_where",
+        "summary": "The WHERE clause is dropped, so the query returns every row.",
+        "receipt": "suite stayed green",
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "red on the clean feature (assertion failed)",
+        "rejections": [
+          "red on the clean feature (assertion failed)",
+          "red on the clean feature (assertion failed)",
+          "red on the clean feature (assertion failed)"
+        ]
+      },
+      {
+        "operator": "model.downgrade",
+        "summary": "The model behind the feature is swapped for a much weaker one.",
+        "receipt": "suite stayed green",
+        "closing_test": "import sqlite3\nfrom feature import generate\n\ndef test_q1_region_correct():\n    clean_q1 = \"SELECT SUM(amount) FROM orders WHERE region = 'EMEA'\"\n    broken_q1 = \"SELECT SUM(amount) FROM orders WHERE region = 'HEMA'\"\n    assert generate(\"q1\") == clean_q1, \"Clean feature should return correct region\"\n    assert generate(\"q1\") != broken_q1, \"Broken feature should return incorrect region\"\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_q1_region_correct - AssertionErr...",
+        "attempts": 1,
+        "gate": "green on the clean feature, red under model.downgrade, no benign change is measurable on this feature",
+        "rejections": []
+      }
+    ],
+    "killed": [
+      "model.echo"
+    ],
+    "invalid": [],
+    "prior": {
+      "order": [
+        "sql.swap_aggregate",
+        "sql.drop_where",
+        "model.echo",
+        "model.downgrade"
+      ],
+      "expect_missed": [
+        "sql.swap_aggregate",
+        "sql.drop_where"
+      ],
+      "why": "The suite checks for valid SQL and uses the orders table, but does not verify the correctness of the query logic, making it vulnerable to aggregate function swaps and missing WHERE clauses.",
+      "invented_ids": []
+    },
+    "skipped": [],
+    "inert": []
+  },
+  {
+    "case": "07_tool_router",
+    "kill_rate_before": 0.5,
+    "findings": [
+      {
+        "operator": "tool.swap_args",
+        "summary": "Two argument values are swapped \u2014 the refund goes to the wrong account.",
+        "receipt": "suite stayed green",
+        "closing_test": "from feature import route\n\ndef test_issue_refund_arguments_are_correct():\n    call = route(\"r1\")\n    assert call[\"tool\"] == \"issue_refund\"\n    assert call[\"arguments\"] == {\"amount\": 84.0, \"order_id\": \"A-4471\"}\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_issue_refund_arguments_are_correct",
+        "attempts": 1,
+        "gate": "green on the clean feature, red under tool.swap_args, no benign change is measurable on this feature",
+        "rejections": []
+      },
+      {
+        "operator": "tool.blank_args",
+        "summary": "The right tool is called with empty arguments.",
+        "receipt": "suite stayed green",
+        "closing_test": "from feature import route\n\ndef test_arguments_are_non_empty():\n    assert route(\"r1\")[\"arguments\"][\"amount\"] != \"\"\n    assert route(\"r1\")[\"arguments\"][\"order_id\"] != \"\"\n    assert route(\"r2\")[\"arguments\"][\"customer_id\"] != \"\"\n    assert route(\"r2\")[\"arguments\"][\"new_address\"] != \"\"\n    assert route(\"r3\")[\"arguments\"][\"reason\"] != \"\"\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_arguments_are_non_empty - Assert...",
+        "attempts": 1,
+        "gate": "green on the clean feature, red under tool.blank_args, no benign change is measurable on this feature",
+        "rejections": []
+      }
+    ],
+    "killed": [
+      "model.downgrade",
+      "model.echo"
+    ],
+    "invalid": [],
+    "prior": {
+      "order": [
+        "tool.swap_args",
+        "model.downgrade",
+        "tool.blank_args",
+        "model.echo"
+      ],
+      "expect_missed": [
+        "tool.swap_args"
+      ],
+      "why": "The suite only checks for the correct tool being chosen, not the correctness of the arguments, so it will miss argument swaps.",
+      "invented_ids": []
+    },
+    "skipped": [],
+    "inert": []
+  },
+  {
+    "case": "08_content_moderation",
+    "kill_rate_before": 0.5,
+    "findings": [
+      {
+        "operator": "moderation.category_collapse",
+        "summary": "Everything flagged comes back under the same category.",
+        "receipt": "suite stayed green",
+        "closing_test": "from feature import moderate\n\ndef test_category_for_p1_is_harassment_before_sabotage():\n    result = moderate(\"p1\")\n    assert result[\"category\"] == \"harassment\"\n    assert result[\"flagged\"] is True\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_category_for_p1_is_harassment_before_sabotage",
+        "attempts": 1,
+        "gate": "green on the clean feature, red under moderation.category_collapse, no benign change is measurable on this feature",
+        "rejections": []
+      }
+    ],
+    "killed": [
+      "model.echo"
+    ],
+    "invalid": [],
+    "prior": {
+      "order": [
+        "moderation.miss_implicit",
+        "model.downgrade",
+        "moderation.category_collapse",
+        "model.echo"
+      ],
+      "expect_missed": [
+        "moderation.miss_implicit"
+      ],
+      "why": "The suite lacks tests for implicit content, which the sabotage would allow through undetected.",
+      "invented_ids": []
+    },
+    "skipped": [],
+    "inert": [
+      "moderation.miss_implicit",
+      "model.downgrade"
+    ]
+  },
+  {
+    "case": "09_sql_verified",
+    "kill_rate_before": 1.0,
+    "findings": [],
+    "killed": [
+      "sql.drop_where",
+      "sql.swap_aggregate",
+      "model.downgrade",
+      "model.echo"
+    ],
+    "invalid": [],
+    "prior": {
+      "order": [
+        "sql.drop_where",
+        "sql.swap_aggregate",
+        "model.downgrade",
+        "model.echo"
+      ],
+      "expect_missed": [
+        "sql.swap_aggregate"
+      ],
+      "why": "The suite checks for correct aggregate functions and row counts, so a SUM to COUNT swap would likely be caught, while dropping WHERE clauses would fail the row count test.",
+      "invented_ids": []
+    },
+    "skipped": [],
+    "inert": []
+  },
+  {
+    "case": "10_few_shot_leak",
+    "kill_rate_before": 1.0,
+    "findings": [],
+    "killed": [
+      "model.echo",
+      "classify.collapse"
+    ],
+    "invalid": [],
+    "prior": {
+      "order": [
+        "model.echo",
+        "model.downgrade",
+        "classify.collapse"
+      ],
+      "expect_missed": [
+        "classify.collapse"
+      ],
+      "why": "The suite explicitly tests all labels and expected outcomes, making it most likely to catch echo and downgrade, but collapse is a structural change that the suite does not test.",
+      "invented_ids": []
+    },
+    "skipped": [],
+    "inert": [
+      "model.downgrade"
+    ]
   }
 ]

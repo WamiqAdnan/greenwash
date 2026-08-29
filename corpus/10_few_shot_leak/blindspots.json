@@ -1,0 +1,5 @@
+{
+  "survivors": [],
+  "why": "Genuinely nothing survives, and the suite is still worthless. Its five test cases are the five few-shot examples in the prompt, so it measures whether the model can repeat what it was just shown. Every sabotage breaks the in-prompt examples too, the suite goes red, and Greenwash reports a clean bill of health. model.downgrade is Inert here: swapping in a model 13x smaller changes not one of the five answers, because they are in the prompt. evals/leakage.py is what sees through it \u2014 on tickets the suite has never seen, that same small model gets 4 of 5. This empty list is a correct result and a warning: mutation testing scores the assertions you wrote against the cases you chose, and cannot audit the cases.",
+  "verified_by_hand": "2026-08-29"
+}

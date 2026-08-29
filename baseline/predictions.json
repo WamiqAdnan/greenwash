@@ -6,6 +6,9 @@
     "01_invoice_extractor": [
       "model.downgrade",
       "model.echo",
+      "value.zero_amounts",
+      "value.null_fields",
+      "value.transpose_digits",
       "schema.drop_field"
     ],
     "02_ticket_classifier": [
@@ -23,22 +26,55 @@
     "04_purchase_orders": [
       "model.downgrade",
       "model.echo",
-      "value.zero_amounts",
-      "value.null_fields",
-      "value.transpose_digits",
       "schema.drop_field"
+    ],
+    "05_meeting_summariser": [
+      "model.echo",
+      "summary.drop_decisions"
+    ],
+    "06_sql_generator": [
+      "sql.swap_aggregate"
+    ],
+    "07_tool_router": [
+      "tool.blank_args",
+      "tool.swap_args"
+    ],
+    "08_content_moderation": [
+      "moderation.miss_implicit",
+      "moderation.category_collapse"
+    ],
+    "09_sql_verified": [
+      "sql.drop_where",
+      "sql.swap_aggregate"
+    ],
+    "10_few_shot_leak": [
+      "model.downgrade",
+      "model.echo",
+      "classify.collapse"
     ]
   },
   "hallucinated_ids": {
     "01_invoice_extractor": [],
     "02_ticket_classifier": [],
     "03_rag_citations": [],
-    "04_purchase_orders": []
+    "04_purchase_orders": [],
+    "05_meeting_summariser": [],
+    "06_sql_generator": [],
+    "07_tool_router": [],
+    "08_content_moderation": [],
+    "09_sql_verified": [],
+    "10_few_shot_leak": []
   },
   "raw": {
-    "01_invoice_extractor": "{\"missed\": [\"model.downgrade\", \"model.echo\", \"schema.drop_field\"]}",
+    "01_invoice_extractor": "{\"missed\": [\"model.downgrade\", \"model.echo\", \"value.zero_amounts\", \"value.null_fields\", \"value.transpose_digits\", \"schema.drop_field\"]}",
     "02_ticket_classifier": "{\"missed\": [\"model.downgrade\", \"model.echo\", \"classify.collapse\", \"classify.confidence_pin\"]}",
     "03_rag_citations": "{\"missed\": [\"citation.wrong_page\", \"citation.fabricate\", \"retrieval.truncate\", \"retrieval.shuffle\"]}",
-    "04_purchase_orders": "{\"missed\": [\"model.downgrade\", \"model.echo\", \"value.zero_amounts\", \"value.null_fields\", \"value.transpose_digits\", \"schema.drop_field\"]}"
+    "04_purchase_orders": "{\"missed\": [\"model.downgrade\", \"model.echo\", \"schema.drop_field\"]}",
+    "05_meeting_summariser": "{\"missed\": [\"model.echo\", \"summary.drop_decisions\"]}",
+    "06_sql_generator": "{\"missed\": [\"sql.swap_aggregate\"]}",
+    "07_tool_router": "{\"missed\": [\"tool.blank_args\", \"tool.swap_args\"]}",
+    "08_content_moderation": "{\"missed\": [\"moderation.miss_implicit\", \"moderation.category_collapse\"]}",
+    "09_sql_verified": "{\"missed\": [\"sql.drop_where\", \"sql.swap_aggregate\"]}",
+    "10_few_shot_leak": "{\"missed\": [\"model.downgrade\", \"model.echo\", \"classify.collapse\"]}"
   }
 }

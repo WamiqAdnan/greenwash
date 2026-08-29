@@ -7,7 +7,8 @@ time — and reports every break your tests slept through, with the failing run
 attached.
 
 > Built for the micro1 Agentic Workflows Hackathon, 28–31 August 2026.
-> Status: the auditor agent works end to end. See `STATE.md`.
+> Ten corpus cases, 22 hand-confirmed blind spots, everything replayable
+> offline in about 70 seconds. See `STATE.md`.
 
 ## The user
 
@@ -45,6 +46,18 @@ nulled, and when digits inside the totals are transposed. Measured Kill Rate:
 `corpus/03_rag_citations` scores **0%**. Its suite checks that citations exist
 and never that they are true, so it survives fabricated quotes, wrong pages,
 truncated retrieval, and a model replaced by one that echoes its input back.
+
+The sharpest one is `corpus/07_tool_router`. Its suite asserts that the right
+tool fires — because firing the *wrong* tool is what went wrong in early testing,
+so that is what everyone wrote tests for. Greenwash swaps two argument values:
+
+```
+issue_refund(order_id="A-4471", amount=84.0)     ->  what it should call
+issue_refund(order_id=84.0, amount="A-4471")     ->  what it calls now
+```
+
+The right tool fires. The suite is green. **The assertion everybody writes is
+the one that catches the failure nobody has.**
 
 ## How it works
 
@@ -85,35 +98,61 @@ harness's job, not the model's.
 
 | | precision | recall | F1 | blind spots found |
 |---|---|---|---|---|
-| the same model, predicting (baseline) | 41% | 58% | 0.48 | 7 / 12 |
-| the same model, predicting (inside the agent, before it ran anything) | 60% | 25% | 0.35 | 3 / 12 |
-| **the agent, after running them** | **100%** | **100%** | **1.00** | **12 / 12** |
+| the same model, predicting (baseline) | 55% | 73% | 0.63 | 16 / 22 |
+| the same model, predicting (inside the agent, before it ran anything) | 62% | 36% | 0.46 | 8 / 22 |
+| **the agent, after running them** | **100%** | **100%** | **1.00** | **22 / 22** |
 
-One scorer, one ground truth, three predictors. Reaching 12/12 is not cleverness
+One scorer, one ground truth, three predictors. Reaching 22/22 is not cleverness
 and is not claimed as any — it is what happens when you stop guessing and run
 the thing. The number that took work is the next one.
 
 The middle row is worth a second look: it is the *same model on the same cases*,
-and the only thing taken away from it is the ability to run anything. It has now
-scored 0.24, 0.35, 0.42 and 0.47 on this corpus, moved by nothing but rewordings
-of the prompt that asks it the question. Prediction with this model lands
-somewhere between 0.24 and 0.61 depending on how you ask. Verification lands on
-1.00 every time.
+and the only thing taken away from it is the ability to run anything. Across
+re-records it has scored 0.24, 0.35, 0.42, 0.46 and 0.47, moved by nothing but
+rewordings of the prompt that asks it the question. Prediction with this model
+lands somewhere in that band. Verification lands on 1.00 every time.
 
-**Kill rate across the corpus: 46% → 88%**, measured by `evals/uplift.py` from
+**Kill rate across the corpus: 51% → 95%**, measured by `evals/uplift.py` from
 the tests the agent wrote, outside the agent, on a scratch copy — your suite is
-evidence and is never edited. Over the three cases that had blind spots to close
-at all: 28% → 83%.
+evidence and is never edited. Over the seven cases that had blind spots to close
+at all: 30% → 93%.
 
-### The control
+### The comparison, in one table
 
-One case in the corpus has a **good** suite — it checks the arithmetic, the
-formats, the document's own facts, and that what came back is really in the
-source. It is there to catch the tool crying wolf, and it is the reason the
-baseline's precision is 41% rather than 64%: asked about the strong suite, the
-baseline called **all six** sabotages missed, when the suite catches every one.
-A predictor with no way to check cannot tell a good suite from a bad one. The
-agent reports nothing there, because it ran them and watched them die.
+| metric | simple baseline | agent solution | change |
+|---|---|---|---|
+| blind spots found (F1 against hand-confirmed truth) | 0.63 | **1.00** | +0.37 |
+| — of 22 real ones | 16, plus 13 false alarms | **22, and no false alarms** | |
+| kill rate after the run | 51% — it writes no tests | **95%** | +44 pts |
+| false alarms in the tests it ships | n/a — ships none | 2 of 5 held-out | measured, not zero |
+| human time per case | — | 7 s replayed, one pass to record | see below |
+| API cost per case | $0 | $0 | runs on a laptop |
+
+Both rows are `qwen3:8b`, on the same ten cases, scored by the same scorer. The
+only variable is whether the model is allowed to run anything.
+
+*Human time* is the row without a measured baseline, so it is marked as an
+estimate and not claimed as a result: auditing one suite by hand — reading every
+assertion, imagining every silent failure, writing the adversarial cases — is
+half a day of senior time in our experience, against 7 seconds of replay. What
+*is* measured is that the whole pipeline runs offline in about 70 seconds, and
+that recording every fixture from scratch against Ollama takes under an hour on
+an M1 Pro, once.
+
+### The controls
+
+Two cases in the corpus have **good** suites, and they are there to catch the
+tool crying wolf. `04_purchase_orders` checks the arithmetic, the formats, the
+document's own facts and that what came back is really in the source.
+`09_sql_verified` runs each generated query against a fixture database and checks
+the answer against numbers worked out by hand. They are deliberately on different
+capabilities, because a control only proves precision for the kind of feature it
+covers.
+
+Greenwash reports **nothing** on either, because it ran the sabotages and watched
+them die. The baseline calls sabotages missed on both. A predictor with no way to
+check cannot tell a good suite from a bad one — which is most of why its
+precision is 55%.
 
 That case also turned up something the tool had been getting wrong. Swapping in
 the 13× smaller model left this feature's output **byte-identical**, so the suite
@@ -156,43 +195,67 @@ answers verbatim. It would have shipped under the old two runs. It did not ship.
 
 A gate that enforces a rule and a probe that checks the same rule are one thing
 wearing two hats, so one benign change is **held out** of the gate: `model.swap`
-moves the feature onto a different vendor's model, and only `brittleness.py` is
-allowed to apply it. Its `0 of 2` is therefore evidence about the tests rather
-than a report that the gate ran. The probe prints the two populations apart, and
-you should read the held-out line.
+moves the feature onto a different vendor's model, and only `brittleness.py` may
+apply it. That split is what makes the probe's number mean anything, and here is
+what it says:
 
-A benign change only helps where it actually moves the feature's output, and an
-invoice says what it says however you word the prompt. So there is a third one
-for exactly that: `schema.add_field` asks the extraction for one more field the
-document already carries. Everything it returned before is unchanged and still
-right; the dict has one more key. That put the extraction cases inside the gate,
-and their tests now say `green under schema.add_field` where they used to say
-nothing had been checked.
+```
+0 of 5   under the benign changes the gate checks      <- the gate's own rule
+2 of 5   under the benign change it never sees         <- 40%, and the real one
+```
 
-One case is still outside, and it is the one that matters. Run case 02's closing
-tests under `model.swap` by hand and one goes red on `assert 0.9 == 0.95` — a
-shipped test pinning the model's exact confidence values, which the gate never
-checked. Nothing it is allowed to apply moves that feature's output: the schema
-change is for extraction, the rewording does nothing there, and the model swap
-takes the suite's own LLM judge down with it, so the probe declines to score it.
-You can read that gap in the deliverable itself — those two tests carry
-`no benign change is measurable on this feature`, which is the truth printed on
-the tests that have the problem. `CHANGELOG.md` has the receipts.
+**Forty percent of the tests the gate could not check are brittle**, against zero
+percent of the ones it could. The contrast is the evidence that the gate works.
+The 40% is the evidence that its coverage, not its logic, is the open problem.
+
+Both are shipped tests, and both fail the way a snapshot fails. One asserts the
+literal string `"starter tier price"`; the other model writes "the price of the
+starter tier at $29" — same fact, still correct, test red. Quoting the 0 without
+the 40 would be exactly the greenwashing this project is named after.
+
+## What it cannot do
+
+`10_few_shot_leak` is a suite whose five test cases are the model's own five
+few-shot examples. Exact-label assertions, every label covered, the house
+convention asserted explicitly — nothing about it looks weak.
+
+Greenwash gives it a **100% kill rate and zero blind spots.** That answer is
+correct. Every sabotage breaks the in-prompt examples too, so the suite goes red,
+so the suite looks healthy. The suite is still worthless: it measures whether the
+model can repeat what it was just shown. It cannot even tell the shipped model
+from one 13× smaller, because the answers are in the prompt — Greenwash reports
+that swap as *inert*, which is literally true.
+
+What sees it is holding examples back. `evals/leakage.py` runs the same feature
+over tickets the suite has never seen:
+
+```
+as shipped              5/5 in the prompt    5/5 held out
+under model.downgrade   5/5 in the prompt    4/5 held out   <- the suite scores these identically
+```
+
+**Mutation testing scores the assertions you wrote against the cases you chose.
+It cannot audit the cases.** Case 08 shows the same hole from the other side: a
+moderation suite whose examples are all obvious is blind to implicit abuse in a
+way no operator can demonstrate, and Greenwash correctly reports *inert* and
+correctly reports nothing. If you build one of these, build the held-out check
+too. `CHANGELOG.md` has the receipts and the full hot take.
 
 ## Run it
 
 ```bash
 python -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python evals/run_eval.py -v      # how blind are the suites?
-.venv/bin/python auditor/audit.py          # the agent, replayed
-.venv/bin/python evals/uplift.py           # kill rate before -> after
-.venv/bin/python evals/brittleness.py     # do the new tests cry wolf?
+.venv/bin/python evals/run_eval.py -v      # how blind are the suites?   11 s
+.venv/bin/python auditor/audit.py          # the agent, replayed         25 s
+.venv/bin/python evals/uplift.py           # kill rate before -> after   17 s
+.venv/bin/python evals/brittleness.py      # do the new tests cry wolf?   4 s
+.venv/bin/python evals/leakage.py          # is a suite testing its own prompt?
 ```
 
 No network, no GPU, no API key — every model answer replays from `fixtures/`,
-the agent's own answers included. The whole pipeline is under 20 seconds and was
-verified with Ollama stopped. Step-by-step from a clean machine, with the output
-you should see: `REPRODUCE.md`.
+the agent's own answers included. The whole pipeline is about **70 seconds** and
+was verified with Ollama stopped. Step-by-step from a clean machine, with the
+output you should see: `REPRODUCE.md`.
 
 ## Reading order
 

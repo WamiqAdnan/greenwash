@@ -1,0 +1,5 @@
+{
+  "model": "llama3.1:8b",
+  "prompt": "Choose exactly one tool for the request and fill in its arguments.\n\nTools:\n- issue_refund(order_id, amount)\n- update_address(customer_id, new_address)\n- escalate_to_human(reason)\n\nReply with JSON only: {\"tool\": \"...\", \"arguments\": {...}}\n\nRequest: Customer 90210 has moved to 14 Marina Walk, Dubai. Update their address.\n\nJSON:",
+  "response": "{\"tool\": \"update_address\", \"arguments\": {\"customer_id\": \"90210\", \"new_address\": \"14 Marina Walk, Dubai\"}}"
+}

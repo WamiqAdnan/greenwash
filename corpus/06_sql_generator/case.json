@@ -1,0 +1,8 @@
+{
+  "description": "Turns a question into a SQLite query over an orders table.",
+  "tags": [
+    "llm",
+    "sql"
+  ],
+  "suite_looks_like": "Parses the query, checks it is a SELECT and that it names the orders table. Never runs it against data, so it cannot tell one answer from another."
+}

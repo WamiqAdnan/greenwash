@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:8b",
+  "prompt": "Moderate the post. Decide whether it violates policy and under which\ncategory: harassment, spam, self_harm, none.\n\nReply with JSON only: {\"flagged\": true/false, \"category\": \"...\"}\n\nPost: You absolute moron, nobody wants your garbage here.\n\nJSON:",
+  "response": "{\"flagged\": true, \"category\": \"harassment\"}"
+}

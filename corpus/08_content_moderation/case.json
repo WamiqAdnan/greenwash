@@ -1,0 +1,8 @@
+{
+  "description": "Flags posts that violate content policy and assigns a category.",
+  "tags": [
+    "llm",
+    "moderation"
+  ],
+  "suite_looks_like": "Three obvious cases \u2014 clear abuse, clear spam, clearly fine. No implicit or coded content, which is the content moderation actually exists for."
+}

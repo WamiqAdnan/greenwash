@@ -1,0 +1,7 @@
+{
+  "survivors": [
+    "moderation.category_collapse"
+  ],
+  "why": "The suite checks whether a post was flagged, never what it was flagged as, so collapsing every category into 'spam' routes harassment to the spam queue with the flag still correct. Checked by hand: p1 goes from 'harassment' to 'spam' and the suite stays green. Note what is NOT here: moderation.miss_implicit is reported Inert, not a Blind Spot, and that is correct \u2014 the suite has no implicit or coded posts, so letting them through changes nothing it could observe. That is a real hole no Operator can demonstrate, and it is the point of this case.",
+  "verified_by_hand": "2026-08-29"
+}

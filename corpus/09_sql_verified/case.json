@@ -1,0 +1,8 @@
+{
+  "description": "Turns a question into a SQLite query \u2014 the same feature as case 06, guarded by a suite that runs it.",
+  "tags": [
+    "llm",
+    "sql"
+  ],
+  "suite_looks_like": "Executes each query against a fixture database and checks the answer against numbers worked out by hand. The second precision control."
+}

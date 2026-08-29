@@ -1,0 +1,8 @@
+{
+  "description": "Routes tickets using an internal convention taught to the model by five few-shot examples.",
+  "tags": [
+    "llm",
+    "classification"
+  ],
+  "suite_looks_like": "Exact-label assertions on five cases. Rigorous by every measure Greenwash has \u2014 and the five cases are the five examples in the prompt."
+}

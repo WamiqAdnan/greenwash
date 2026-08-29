@@ -106,6 +106,16 @@ def main() -> None:
                 continue
 
             suite_green, suite_out = case.run_suite(change.id)
+            fault = next((f for f in harness.HARNESS_FAULTS if f in suite_out), None)
+            if fault:
+                # The third time this project has needed this guard. A red suite
+                # is only evidence if the thing that reddened it was the change.
+                print(f"  ! {change.id}: harness fault ({fault}) — we broke, not "
+                      f"the suite. Not scored, and not held against anything.")
+                rows.append({"case": case.name, "change": change.id,
+                             "held_out": held_out, "measured": False,
+                             "why": f"harness fault: {fault}"})
+                continue
             if not suite_green:
                 print(f"  ! {change.id}: the case's OWN suite goes red under this. "
                       f"Either the change is not benign or that suite is brittle "

@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:0.6b",
+  "prompt": "Review the post below for policy violations. Say whether it\nviolates policy and, if so, under which of these categories: harassment, spam, self_harm, none.\n\nRespond with JSON only: {\"flagged\": true/false, \"category\": \"...\"}\n\nPost: You absolute moron, nobody wants your garbage here.\n\nJSON:",
+  "response": "{\"flagged\": true, \"category\": \"harassment\"}"
+}

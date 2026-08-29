@@ -21,13 +21,39 @@
       "citation.fabricate",
       "model.echo"
     ],
-    "04_purchase_orders": []
+    "04_purchase_orders": [],
+    "05_meeting_summariser": [
+      "model.echo",
+      "summary.drop_decisions",
+      "model.downgrade",
+      "summary.extractive"
+    ],
+    "06_sql_generator": [
+      "sql.swap_aggregate",
+      "sql.drop_where",
+      "model.downgrade"
+    ],
+    "07_tool_router": [
+      "tool.swap_args",
+      "tool.blank_args"
+    ],
+    "08_content_moderation": [
+      "moderation.category_collapse"
+    ],
+    "09_sql_verified": [],
+    "10_few_shot_leak": []
   },
   "hallucinated_ids": {
     "01_invoice_extractor": [],
     "02_ticket_classifier": [],
     "03_rag_citations": [],
-    "04_purchase_orders": []
+    "04_purchase_orders": [],
+    "05_meeting_summariser": [],
+    "06_sql_generator": [],
+    "07_tool_router": [],
+    "08_content_moderation": [],
+    "09_sql_verified": [],
+    "10_few_shot_leak": []
   },
   "closed": {
     "01_invoice_extractor": [
@@ -43,7 +69,23 @@
       "citation.wrong_page",
       "citation.fabricate"
     ],
-    "04_purchase_orders": []
+    "04_purchase_orders": [],
+    "05_meeting_summariser": [
+      "model.echo"
+    ],
+    "06_sql_generator": [
+      "sql.swap_aggregate",
+      "model.downgrade"
+    ],
+    "07_tool_router": [
+      "tool.swap_args",
+      "tool.blank_args"
+    ],
+    "08_content_moderation": [
+      "moderation.category_collapse"
+    ],
+    "09_sql_verified": [],
+    "10_few_shot_leak": []
   },
   "prior": {
     "01_invoice_extractor": {
@@ -100,6 +142,85 @@
         "schema.drop_field"
       ],
       "why": "The suite checks for presence of fields but does not verify that all required fields are present, making it blind to silently dropped fields.",
+      "invented_ids": []
+    },
+    "05_meeting_summariser": {
+      "order": [
+        "model.echo",
+        "summary.drop_decisions",
+        "model.downgrade",
+        "summary.extractive"
+      ],
+      "expect_missed": [
+        "summary.drop_decisions",
+        "summary.extractive"
+      ],
+      "why": "The suite only checks for non-empty output, length, and existence, which are not affected by echo or model downgrade, but are bypassed by summary changes that still meet the criteria.",
+      "invented_ids": []
+    },
+    "06_sql_generator": {
+      "order": [
+        "sql.swap_aggregate",
+        "sql.drop_where",
+        "model.echo",
+        "model.downgrade"
+      ],
+      "expect_missed": [
+        "sql.swap_aggregate",
+        "sql.drop_where"
+      ],
+      "why": "The suite checks for valid SQL and uses the orders table, but does not verify the correctness of the query logic, making it vulnerable to aggregate function swaps and missing WHERE clauses.",
+      "invented_ids": []
+    },
+    "07_tool_router": {
+      "order": [
+        "tool.swap_args",
+        "model.downgrade",
+        "tool.blank_args",
+        "model.echo"
+      ],
+      "expect_missed": [
+        "tool.swap_args"
+      ],
+      "why": "The suite only checks for the correct tool being chosen, not the correctness of the arguments, so it will miss argument swaps.",
+      "invented_ids": []
+    },
+    "08_content_moderation": {
+      "order": [
+        "moderation.miss_implicit",
+        "model.downgrade",
+        "moderation.category_collapse",
+        "model.echo"
+      ],
+      "expect_missed": [
+        "moderation.miss_implicit"
+      ],
+      "why": "The suite lacks tests for implicit content, which the sabotage would allow through undetected.",
+      "invented_ids": []
+    },
+    "09_sql_verified": {
+      "order": [
+        "sql.drop_where",
+        "sql.swap_aggregate",
+        "model.downgrade",
+        "model.echo"
+      ],
+      "expect_missed": [
+        "sql.swap_aggregate"
+      ],
+      "why": "The suite checks for correct aggregate functions and row counts, so a SUM to COUNT swap would likely be caught, while dropping WHERE clauses would fail the row count test.",
+      "invented_ids": []
+    },
+    "10_few_shot_leak": {
+      "order": [
+        "model.echo",
+        "model.downgrade",
+        "classify.collapse"
+      ],
+      "expect_missed": [
+        "classify.collapse"
+      ],
+      "why": "The suite explicitly tests all labels and expected outcomes, making it most likely to catch echo and downgrade, but collapse is a structural change that the suite does not test.",
       "invented_ids": []
     }
   }

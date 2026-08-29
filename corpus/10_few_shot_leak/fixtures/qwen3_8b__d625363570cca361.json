@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:8b",
+  "prompt": "Assign the support ticket to exactly one queue from:\nbilling, account, technical. Match the conventions the examples below demonstrate.\n\nTicket: My invoice shows VAT at the wrong rate.\nQueue: billing\nTicket: I need a refund for the duplicate charge.\nQueue: account\nTicket: The mobile app crashes when I open reports.\nQueue: technical\nTicket: I cannot log in since yesterday.\nQueue: account\nTicket: Can I get a copy of last month's receipt?\nQueue: billing\n\nRespond with JSON only: {\"label\": \"...\"}\n\nTicket: I need a refund for the duplicate charge.\n\nJSON:",
+  "response": "{\"label\": \"account\"}"
+}
