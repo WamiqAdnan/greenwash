@@ -143,6 +143,14 @@ class Case:
             "GREENWASH_MODE": "replay",
             "GREENWASH_FIXTURES": str(fixtures or self.path / "fixtures"),
             "PYTHONPATH": str(REPO_ROOT),
+            # pytest reports a failed dict comparison by listing the differing
+            # items in set-iteration order, which moves with the hash seed. That
+            # output is captured, quoted into the Auditor's next prompt, and
+            # keyed into a Fixture — so an unpinned seed means two identical runs
+            # write different Trajectories and a judge replaying gets a miss.
+            # Same family as the wall-clock leak that `_stable` fixes; this one
+            # cannot be normalised after the fact, so it is pinned at the source.
+            "PYTHONHASHSEED": "0",
         }
         env.pop("GREENWASH_MODEL", None)
         if operator_id:
