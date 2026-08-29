@@ -58,11 +58,43 @@ update this row.
 
 ## Not yet run
 
-- **The auditor agent itself.** Everything above is the measurement rig. The
-  agent that *finds* Blind Spots and *writes* the closing tests does not exist yet.
-- **Local-auditor experiment.** Drive the auditor with qwen3:8b and measure
-  against a frontier model. Prediction, recorded before the run: the local model
-  proposes sabotages that crash rather than sabotages that are silently wrong,
-  so its Mutants get trivially Killed and suites look healthier than they are.
-  Evidence for the prediction is in this session's benchmark — asked to name
-  ways code could break *silently*, qwen3:8b described crashes.
+- **Auditor v1.2 — the Benign Changes, inside the Gate.** Written before the
+  re-record, so the numbers below can contradict it. The change: a Closing Test
+  is now also run under every Benign Change that moves the Feature's output, and
+  one that goes red there is rejected as a False Alarm instead of shipped.
+  Predictions:
+  1. **Uplift goes down, or does not move.** Tests that passed only by
+     snapshotting are now rejected, and a Survivor whose three attempts are all
+     snapshots ends with no Closing Test at all. `46% -> 88%` is the number to
+     beat and I expect not to beat it. A *rise* would be the surprise, and would
+     mean the rejection pushed the model onto a better test rather than off the
+     end of its attempts.
+  2. **The False Alarm count stays 0 — and stops being evidence.** It was 0 of 2
+     by luck; it is now 0 by construction, because `brittleness.py` and the Gate
+     apply the same Benign Change. The probe is a regression check on the Gate
+     from here, not an independent measurement, and it stays that way until some
+     Benign Change is held out. Quoting it as though nothing changed would be the
+     dishonest reading.
+  3. **Only case 03 can move.** `prompt.reword` is Inert on the other three, so
+     the Gate skips it there and their Closing Tests are judged exactly as
+     before. Any drift on 01, 02 or 04 is the re-record, not this change.
+  4. **The Gate fires at least once.** If no candidate is ever rejected as a
+     False Alarm, this change altered nothing that happened and I will say so
+     rather than claim a fix that never triggered.
+
+  Confound, stated up front: one sentence of `INSTRUCTIONS` also changed, because
+  it told the model its test would be "run twice" and that is now false. It
+  describes the mechanism; it does not tell the model how to write a test, and
+  no rule was added to the first-attempt prompt. But it changes every Fixture
+  key, so triage and the Prior are re-rolled too and are not a clean control.
+
+- ~~**The auditor agent itself.**~~ Built — see the *Auditor v1* row.
+- ~~**Local-auditor experiment.**~~ Run. The prediction was that a local model
+  would propose sabotages that crash rather than sabotages that are silently
+  wrong. It was not tested in that form: the Auditor never proposes sabotages, it
+  runs the fixed catalogue (see `docs/adr/0001`). The underlying claim was
+  measured instead, and held — the *Prior* row, where the same model asked to
+  predict scores F1 0.24–0.47 across re-records against a flat 1.00 for the same
+  model allowed to run things,
+  and the *Baseline* row, where it flagged the loud crashing sabotages and missed
+  every silent one.

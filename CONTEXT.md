@@ -54,7 +54,11 @@ the Feature returned exactly what it returned before. Not a Blind Spot: there wa
 nothing to catch. Decided by running the **Record Plan** with and without the
 Operator, which is every call the Suite makes, so identical results mean no
 assertion could have told the difference. Excluded from the Kill Rate for the
-same reason **Invalid** is: it would make a Suite look blinder than it is.
+same reason **Invalid** is: it would make a Suite look blinder than it is. A
+**Benign Change** can be Inert too, and the **Verification Gate** skips those
+rather than running them: rewording a prompt does not move what an extraction
+Feature returns, so judging a Closing Test under it is the clean run a second
+time, at the price of a subprocess and the appearance of evidence.
 _Avoid_: no-op, harmless, weak mutant
 
 **Invalid**:
@@ -79,7 +83,11 @@ _Avoid_: non-mutation, control mutation, no-op
 A test that goes red under a **Benign Change**. The Feature is fine and the test
 says it is broken. Kill Rate cannot see this — a test that pins the model's exact
 prose kills every Mutant and is, by that measure, perfect. False Alarms are how a
-tool like this loses its user, so `evals/brittleness.py` counts them separately.
+tool like this loses its user, so the **Verification Gate** rejects a Closing
+Test that raises one, and `evals/brittleness.py` counts any that reach the disk
+anyway. Note what that costs: the probe now measures the Gate's own rule, so a
+zero there is a regression check and not independent evidence until some Benign
+Change is held out of the Gate.
 _Avoid_: flake, false positive
 
 ### The agent
@@ -111,11 +119,15 @@ merged onto an **Overlay** to be measured.
 _Avoid_: fix, patch, new test
 
 **Verification Gate**:
-The two runs every Closing Test must survive before the Auditor is allowed to
-report it: green on the clean Feature, red under the Mutant it claims to close,
-and neither run tripping a `HARNESS_FAULTS` signature. A Closing Test that fails
-the Gate goes back to the Auditor with the pytest output attached. **This is
-where a local model's bad assertions die** rather than reaching the user.
+The runs every Closing Test must survive before the Auditor is allowed to report
+it: green on the clean Feature, red under the Mutant it claims to close, and
+green again under every **Benign Change** that moves the Feature's output — a
+test that only pins the model's prose does the first two perfectly, which is
+exactly why the third run exists. No run may trip a `HARNESS_FAULTS` signature;
+a fault under a Benign Change makes that run **inconclusive** rather than a
+False Alarm, because what broke was us. A Closing Test that fails the Gate goes
+back to the Auditor with the pytest output attached. **This is where a local
+model's bad assertions die** rather than reaching the user.
 _Avoid_: validation, check
 
 **Overlay**:

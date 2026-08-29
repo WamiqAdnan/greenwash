@@ -9,9 +9,10 @@ Verification does the work that intelligence would otherwise have to do.
 So the model is left with the one job that genuinely needs a model: given a
 Survivor and the values the Feature actually returned, write the assertion that
 would have caught it. And even there it is not trusted — every Closing Test it
-writes must pass the **Verification Gate** (green clean, red under the Mutant)
-or it goes back with the pytest output attached. A bad assertion from a small
-model dies in the Gate instead of reaching the user.
+writes must pass the **Verification Gate** (green clean, red under the Mutant,
+green again under a change that breaks nothing) or it goes back with the pytest
+output attached. A bad assertion from a small model dies in the Gate instead of
+reaching the user, and so does a test that only pins the model's prose.
 
 Four phases per Corpus Case:
 
@@ -32,7 +33,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from greenwash import harness, observe
+from greenwash import harness, observe, operators as ops
 from greenwash.modelclient import record_or_replay
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -53,9 +54,10 @@ sabotage has a blind spot, and the run is the proof.
 
 Your only real job is the last one: given a sabotage the suite missed, and the
 values the feature actually returned before and after, write the test that would
-have caught it. That test is then run twice — on the clean feature, where it
-must pass, and under the sabotage, where it must fail. If it does not do both,
-you are shown the pytest output and asked again.
+have caught it. That test is then run on the clean feature, where it must pass;
+under the sabotage, where it must fail; and under any change that does not break
+the feature at all, where it must pass again. If it does not do all of that, you
+are shown the pytest output and asked again.
 
 Never report a blind spot that no run demonstrates."""
 
@@ -169,9 +171,9 @@ markdown fences.
 Python:"""
 
 
-# The two ways a Closing Test fails the Gate need opposite corrections, and the
-# pytest output alone does not say which. Naming it is the difference between a
-# retry and a re-roll.
+# The three ways a Closing Test fails the Gate need different corrections, and
+# the pytest output alone does not say which. Naming it is the difference
+# between a retry and a re-roll.
 HINTS = {
     "clean": "Your last test failed on the CLEAN feature. Every assertion has to "
              "be true of the *before* values above — that is what the feature "
@@ -182,6 +184,17 @@ HINTS = {
               "one.",
     "unrunnable": "Your last answer did not run at all. Reply with nothing but "
                   "Python.",
+    # The correction a snapshot needs is the opposite of the "mutant" one: it is
+    # already asserting on something that differs, and the thing it picked was
+    # the wording.
+    "false_alarm": "Your last test went red under `{change}`, which does NOT "
+                   "break the feature — the values it returned were still "
+                   "correct, only worded differently, and your test called that "
+                   "a failure. It is pinned to the exact output this model "
+                   "happened to produce. Assert something that stays true when "
+                   "the wording changes: a fact from the source, a page number, "
+                   "a quote, a number, a structural property — never the "
+                   "model's prose.",
 }
 
 
@@ -197,6 +210,13 @@ class Verdict:
     reason: str
     failure_line: str = ""
     output: str = ""
+    # Which Benign Changes this candidate was actually held to. `checked` is the
+    # strength of the claim; `inconclusive` is the ones we could not run, kept
+    # apart from them because a Gate that quietly counts an unrun check as a
+    # passed one is claiming evidence it does not have.
+    false_alarm_under: str = ""
+    benign_checked: tuple[str, ...] = ()
+    benign_inconclusive: tuple[str, ...] = ()
 
     def as_line(self) -> str:
         return ("accepted" if self.accepted else "rejected") + f": {self.reason}"
@@ -206,22 +226,65 @@ class Verdict:
         """Which correction this rejection calls for."""
         if not self.clean_green:
             return HINTS["unrunnable" if "not runnable" in self.reason else "clean"]
+        if self.false_alarm_under:
+            return HINTS["false_alarm"].format(change=self.false_alarm_under)
         return HINTS["mutant"]
 
 
 class VerificationGate:
-    """Two runs, and a Closing Test only counts if it survives both.
+    """Three runs, and a Closing Test only counts if it survives all of them.
 
-    Green on the clean Feature, red under the Mutant it claims to close, and
-    neither run tripping a `HARNESS_FAULTS` signature — a Closing Test that
-    fails because a fixture is missing has demonstrated nothing.
+    Green on the clean Feature. Red under the Mutant it claims to close. And
+    green again under every Benign Change that moves this Feature's output —
+    because a test that pins the model's exact prose does the first two
+    perfectly, and fires the next time somebody rewords a prompt. Kill Rate
+    calls that a perfect test; this is the only place the difference is visible
+    while there is still something to be done about it.
 
-    Both runs happen on an Overlay. The Suite is evidence and is never edited.
+    A `HARNESS_FAULTS` signature in any of the three runs means we broke, not
+    the test. Under the Mutant that costs the candidate its proof, so it is
+    rejected. Under a Benign Change there is nothing to disprove — the run is
+    reported inconclusive and never held against the test. Rejecting there
+    would be the crash-counted-as-a-Kill mistake wearing the other hat.
+
+    Every run happens on an Overlay. The Suite is evidence and is never edited.
     """
 
     def __init__(self, case: harness.Case, scratch: Path = DEFAULT_SCRATCH):
         self.case = case
         self.dest = Path(scratch) / case.name / "candidate"
+        self._benign: list[ops.Operator] | None = None
+
+    def observable_benign(self) -> list[ops.Operator]:
+        """The Benign Changes worth running a candidate under, decided once.
+
+        A Benign Change that leaves the Feature's output identical is Inert, and
+        running a candidate under it is the clean run a second time — a
+        subprocess that costs seconds and looks like evidence. `prompt.reword`
+        is Inert on three of the four Corpus Cases, because an extraction
+        feature returns the same JSON however you ask it, so this is the common
+        path and not the edge case. It depends only on the Corpus Case, so it is
+        decided once per Gate rather than once per candidate.
+        """
+        if self._benign is None:
+            self._benign = self._observable_benign()
+        return self._benign
+
+    def _observable_benign(self) -> list[ops.Operator]:
+        changes = ops.applicable_benign(self.case.tags)
+        if not changes:
+            return []
+        clean = observe.observe(self.case.path)
+        if observe.failed(clean):
+            return []
+        live = []
+        for change in changes:
+            changed = observe.observe(self.case.path, change.id)
+            # A change we could not even apply is not a change we can hold a
+            # test to, so it drops out here rather than becoming a rejection.
+            if not observe.failed(changed) and changed != clean:
+                live.append(change)
+        return live
 
     def judge(self, operator_id: str, code: str) -> Verdict:
         problem = _unrunnable(code)
@@ -254,12 +317,54 @@ class VerificationGate:
                 reason=f"{operator_id} was applied and the test still passed",
                 output=mutant_out,
             )
+
+        checked: list[str] = []
+        inconclusive: list[str] = []
+        for change in self.observable_benign():
+            benign_green, benign_out = candidate.run_suite(change.id, select=select)
+            fault = _fault(benign_out)
+            if fault:
+                inconclusive.append(change.id)
+                continue
+            if not benign_green:
+                return Verdict(
+                    False, True, True,
+                    reason=f"false alarm: the feature still works under "
+                           f"{change.id} and the test went red anyway",
+                    failure_line=harness._first_failure(benign_out),
+                    output=benign_out,
+                    false_alarm_under=change.id,
+                    benign_checked=tuple(checked),
+                    benign_inconclusive=tuple(inconclusive),
+                )
+            checked.append(change.id)
+
         return Verdict(
             True, True, True,
-            reason=f"green on the clean feature, red under {operator_id}",
+            reason=_accepted(operator_id, checked, inconclusive),
             failure_line=harness._first_failure(mutant_out),
             output=mutant_out,
+            benign_checked=tuple(checked),
+            benign_inconclusive=tuple(inconclusive),
         )
+
+
+def _accepted(operator_id: str, checked: list[str], inconclusive: list[str]) -> str:
+    """What the Gate is claiming, in the words the Trust Report will print.
+
+    The no-Benign-Change case has to read differently from the checked one. A
+    Closing Test on an extraction feature has never been held to a rewording,
+    and saying so is the difference between a claim and an overclaim.
+    """
+    parts = [f"green on the clean feature, red under {operator_id}"]
+    if checked:
+        parts.append(f"green under {', '.join(checked)}")
+    if inconclusive:
+        parts.append(f"{', '.join(inconclusive)} could not be checked and was "
+                     f"not held against it")
+    if not checked and not inconclusive:
+        parts.append("no benign change is measurable on this feature")
+    return ", ".join(parts)
 
 
 def _fault(output: str) -> str | None:
@@ -422,6 +527,11 @@ class Finding:
     closing_test_failure: str = ""
     attempts: int = 0
     gate: str = "no closing test accepted"
+    # Every verdict the Gate returned, in order. The last one alone is not the
+    # story: a Survivor left open after a False Alarm rejection and one left
+    # open after three unrunnable answers are different problems, and the person
+    # reading the Trust Report is the one who has to tell them apart.
+    rejections: list[str] = field(default_factory=list)
 
     @property
     def closed(self) -> bool:
@@ -530,6 +640,7 @@ def audit_case(
                 log(f"    closes {finding.operator} (attempt {attempt})")
                 break
             log(f"    attempt {attempt} rejected: {verdict.reason}")
+            finding.rejections.append(verdict.reason)
             history.append((code, verdict))
             # Every rejected attempt stays in the prompt. Two identical prompts
             # get the same answer at temperature 0, so a retry that does not

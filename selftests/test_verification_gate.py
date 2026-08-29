@@ -1,7 +1,8 @@
 """The Gate is the product's one constraint, so it gets the first test.
 
-A Closing Test may only be reported if it is green on the clean Feature and red
-under the Mutant it claims to close. Everything else the Auditor does is
+A Closing Test may only be reported if it is green on the clean Feature, red
+under the Mutant it claims to close, and green again under every Benign Change
+that moves the Feature's output. Everything else the Auditor does is
 convenience; this is what makes its output worth reading.
 """
 
@@ -12,7 +13,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from auditor.agent import VerificationGate  # noqa: E402
-from greenwash import harness  # noqa: E402
+from greenwash import harness, operators as ops  # noqa: E402
 
 CASE = harness.Case(ROOT / "corpus" / "01_invoice_extractor")
 OPERATOR = "value.zero_amounts"
@@ -102,3 +103,109 @@ def test_inert_mutants_leave_the_kill_rate_alone():
     assert result.inert == ["model.downgrade"]
     assert "model.downgrade" not in result.survivors
     assert result.kill_rate == 1.0, "every sabotage that did anything was caught"
+
+
+# --- the Benign Changes, inside the Gate ------------------------------------
+
+RAG = harness.Case(ROOT / "corpus" / "03_rag_citations")
+
+# v1's accepted Closing Test for `model.echo`, recovered from
+# `trajectories/audit-03_rag_citations.md`. It is green on the clean feature and
+# red under the Mutant, so the two-run Gate accepted it — and it is pinned to the
+# exact sentence the model happened to produce, so it goes red the next time
+# anybody rewords a prompt. That is the failure this third run exists to catch.
+SNAPSHOT = '''
+from feature import answer
+
+
+def test_answer_matches():
+    result = answer("How much annual leave accrues each month?")
+    assert result["answer"] == (
+        "The annual leave accrues at 2.5 days per completed month of service. "
+        "This information is found on [page 1]."
+    )
+'''
+
+# What v1.1a wrote instead: every citation checked against the document it came
+# from. It says nothing about how the answer is worded, so the rewording cannot
+# touch it. This one must still be accepted.
+GROUNDED = '''
+from feature import answer
+
+PAGES = {
+    1: "Annual leave accrues at 2.5 days per completed month of service.",
+    2: "Unused annual leave may be carried over, to a maximum of 10 days.",
+    3: "Probation lasts six months. Leave may not be taken during probation.",
+    4: "Sick leave requires a medical certificate from the third consecutive day.",
+}
+
+
+def test_citations_have_valid_quotes():
+    result = answer("How much annual leave accrues each month?")
+    assert all(c["quote"] == PAGES[c["page"]] for c in result["citations"])
+'''
+
+
+def test_a_test_that_pins_the_models_prose_is_rejected(tmp_path):
+    """Over-fitting, caught where it happens instead of counted afterwards."""
+    verdict = VerificationGate(RAG, scratch=tmp_path).judge("model.echo", SNAPSHOT)
+    assert not verdict.accepted
+    assert verdict.clean_green and verdict.kills_mutant, (
+        "it does everything the two-run gate asked of it"
+    )
+    assert verdict.false_alarm_under == "prompt.reword"
+
+
+def test_a_test_that_asserts_the_documents_facts_is_still_accepted(tmp_path):
+    verdict = VerificationGate(RAG, scratch=tmp_path).judge(
+        "citation.fabricate", GROUNDED
+    )
+    assert verdict.accepted, verdict.reason
+    assert verdict.benign_checked == ("prompt.reword",)
+
+
+def test_a_harness_fault_under_a_benign_change_is_not_a_false_alarm(tmp_path):
+    """The crash-counted-as-a-kill mistake, wearing the other hat.
+
+    If the candidate goes red under a Benign Change because a fixture for the
+    reworded prompt is missing, the Gate has learned nothing about the test. It
+    says so, and does not reject a test over our own breakage.
+    """
+    gate_ = VerificationGate(RAG, scratch=tmp_path)
+    gate_._benign = ops.applicable_benign(RAG.tags)
+
+    real_run = harness.Case.run_suite
+
+    def flaky(self, operator_id=None, **kw):
+        if operator_id == "prompt.reword":
+            return False, "E   FixtureMiss: no recorded answer for that prompt"
+        return real_run(self, operator_id, **kw)
+
+    harness.Case.run_suite = flaky
+    try:
+        verdict = gate_.judge("citation.fabricate", GROUNDED)
+    finally:
+        harness.Case.run_suite = real_run
+
+    assert verdict.accepted, verdict.reason
+    assert not verdict.false_alarm_under
+    assert verdict.benign_inconclusive == ("prompt.reword",)
+    assert "could not be checked" in verdict.reason
+
+
+def test_an_inert_benign_change_is_not_run_at_all():
+    """Rewording the prompt does not move what an extraction feature returns.
+
+    Running a candidate under a Benign Change that changes nothing is the clean
+    run a second time — a wasted subprocess that looks like evidence. Three of
+    the four Corpus Cases are this case, so it is the common path.
+    """
+    assert [c.id for c in VerificationGate(RAG).observable_benign()] == ["prompt.reword"]
+    assert VerificationGate(CASE).observable_benign() == []
+
+
+def test_a_case_with_no_benign_check_says_so_rather_than_claiming_one(tmp_path):
+    verdict = gate(tmp_path).judge(OPERATOR, REAL)
+    assert verdict.accepted, verdict.reason
+    assert verdict.benign_checked == ()
+    assert "no benign change is measurable" in verdict.reason
