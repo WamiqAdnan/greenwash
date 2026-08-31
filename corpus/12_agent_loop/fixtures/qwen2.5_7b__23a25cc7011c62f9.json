@@ -1,0 +1,5 @@
+{
+  "model": "qwen2.5:7b",
+  "prompt": "You are answering a customer question. You may call a tool, or give\nthe final answer if you already have what you need.\n\nTools:\n- lookup_order(order_id)\n- check_stock(sku)\n\nQuestion: Has order A-4471 shipped yet?\n\nWhat has happened so far:\n(nothing yet)\n\nReply with JSON only. To call a tool: {\"tool\": \"...\", \"arguments\": {...}}\nTo finish: {\"answer\": \"...\"}\n\nJSON:",
+  "response": "{\"tool\": \"lookup_order\", \"arguments\": {\"order_id\": \"A-4471\"}}"
+}

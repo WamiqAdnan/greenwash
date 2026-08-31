@@ -1,0 +1,9 @@
+{
+  "survivors": [
+    "rerank.identity",
+    "rerank.reverse",
+    "rerank.demote_best"
+  ],
+  "why": "Relevance needs labelled data the team never had, so the suite states the only thing it can state exactly: the ranking is a permutation of the corpus. All three sabotages return a permutation, so all three are invisible. Checked by hand on every query. Under rerank.identity all three queries return the same list, d1 to d5, so 'Where do visitors park?' leads with the refunds article. Under rerank.reverse the refund-timing query leads with d4, the public-holidays notice. Under rerank.demote_best the correct document is last every time — q2 leads with d1 instead of d2, q3 with d1 instead of d3. The suite is green in all three cases.",
+  "verified_by_hand": "2026-08-29"
+}

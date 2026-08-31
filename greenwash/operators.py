@@ -526,6 +526,151 @@ def _category_collapse(module) -> None:
     module.moderate = mutated
 
 
+@operator(
+    "rerank.identity",
+    "The ranker hands back the corpus in its original order, whatever was asked.",
+    ("reranking",),
+)
+def _rerank_identity(module) -> None:
+    """The regression a re-ranker actually has: it quietly stops ranking.
+
+    Somebody swaps the scoring call, or the sort key goes missing, and the
+    function returns its input. Every contract a ranking suite can state is still
+    satisfied — the documents are all there, once each, none invented — and the
+    only thing that has changed is the one thing the suite never checks. The
+    model is still called, because a Blind Spot has to be a Blind Spot about the
+    Feature and not about a call the Suite stopped making.
+    """
+    inner = module.rank
+
+    def mutated(query_id, *a, **kw):
+        inner(query_id, *a, **kw)
+        return list(module.DOCUMENTS)
+
+    module.rank = mutated
+
+
+@operator(
+    "rerank.reverse",
+    "The ranking is returned worst-first.",
+    ("reranking",),
+)
+def _rerank_reverse(module) -> None:
+    """One character in a sort call, and the best answer is now the last one.
+
+    `reverse=True` where it should be `False` is among the most ordinary bugs
+    there is, and on a ranker it is total: the agent reading the top result gets
+    the document least like the question. A permutation check cannot see it,
+    because a reversed permutation is still a permutation.
+    """
+    inner = module.rank
+
+    def mutated(*a, **kw):
+        return list(reversed(inner(*a, **kw)))
+
+    module.rank = mutated
+
+
+@operator(
+    "rerank.demote_best",
+    "The document ranked first is moved to last; the rest keep their order.",
+    ("reranking",),
+)
+def _rerank_demote_best(module) -> None:
+    """The subtle one, and the reason reversing is not enough on its own.
+
+    An off-by-one in a slice takes the top hit off the front and leaves
+    everything else where it was. Reversal at least looks wrong if a human ever
+    eyeballs the list; this looks entirely reasonable and is wrong in exactly the
+    position that matters, because nothing downstream reads past the first entry.
+    """
+    inner = module.rank
+
+    def mutated(*a, **kw):
+        ranked = list(inner(*a, **kw))
+        if len(ranked) > 1:
+            ranked.append(ranked.pop(0))
+        return ranked
+
+    module.rank = mutated
+
+
+@operator(
+    "agent.answer_ignores_tools",
+    "The agent replies with a confident summary that does not use what the "
+    "tools returned.",
+    ("agent",),
+)
+def _agent_answer_ignores_tools(module) -> None:
+    """The failure an agent suite is least equipped to see, and the worst one.
+
+    Every tool is called, every observation comes back, the loop terminates
+    inside its budget — and the sentence the customer receives was not derived
+    from any of it. On this case's own tasks that means telling somebody a SKU
+    with zero units on hand is ready to ship. A suite that asserts a non-empty
+    string got returned scores that as a pass, because a confident lie is a
+    string of exactly the same type as the truth.
+    """
+    inner = module.solve
+
+    def mutated(*a, **kw):
+        result = inner(*a, **kw)
+        result["answer"] = "Yes — I've checked and that's all confirmed on our side."
+        return result
+
+    module.solve = mutated
+
+
+@operator(
+    "agent.gives_up_quietly",
+    "The agent stops after its first step and returns a holding reply.",
+    ("agent",),
+)
+def _agent_gives_up_quietly(module) -> None:
+    """Termination reported as success, which is the assertion everybody wrote.
+
+    A budget tweak or a broken continuation check lands the loop on the exit
+    after one step, and rather than failing it returns the reply every support
+    queue is full of. `terminated` is True — more reliably true than before, in
+    fact — the step count is inside its bound, and a string came back. The suite
+    was built to catch a loop that never finished; this one finishes early and
+    finishes wrong, and every liveness assertion is happier than it was.
+    """
+    inner = module.solve
+
+    def mutated(*a, **kw):
+        result = inner(*a, **kw)
+        result["steps"] = result["steps"][:1]
+        result["answer"] = "Thanks for getting in touch — I'll look into this and come back to you."
+        return result
+
+    module.solve = mutated
+
+
+@operator(
+    "agent.empty_trace",
+    "The agent reports an empty list of steps.",
+    ("agent",),
+)
+def _agent_empty_trace(module) -> None:
+    """The one this suite does catch, and it is here to prove the suite is real.
+
+    A trace that comes back empty is how the audit log stops being worth having,
+    and it is the kind of thing a liveness suite *can* state: `assert
+    result["steps"]` is an ordinary line to write. A Corpus Case whose every
+    sabotage survives is a strawman; this one exists so the case's Kill Rate is
+    earned rather than assumed.
+    """
+    inner = module.solve
+
+    def mutated(*a, **kw):
+        result = inner(*a, **kw)
+        result["steps"] = []
+        return result
+
+    module.solve = mutated
+
+
 # ---------------------------------------------------------------------------
 # Benign Changes — the things that are *not* breakages
 # ---------------------------------------------------------------------------
@@ -534,7 +679,6 @@ def _category_collapse(module) -> None:
     "schema.add_field",
     "The feature is asked for one more field than it used to return.",
     ("extraction",),
-    held_out=True,
 )
 def _add_field(module) -> None:
     """Ask the same extraction for one extra field the document already carries.
@@ -550,8 +694,51 @@ def _add_field(module) -> None:
     still there and still right; the dict simply has one more key. A Closing Test
     that asserts a value is untouched. One that pins the whole dict, or the set
     of keys, goes red — and should.
+
+    Applied by the Verification Gate. It held the held-out seat until there was a
+    second change that moves an extraction Feature; with `schema.add_confidence`
+    registered, the seat went to that one and this became the change that guards
+    case 01 rather than the one that probes it. Coverage is the reason: a seat
+    holds one change, and a Gate that can check a case is worth more than a probe
+    that can only report on it afterwards.
     """
     _swap_prompt(module, "PROMPT_EXTRA_FIELD")
+
+
+@benign(
+    "schema.add_confidence",
+    "The feature is asked to report how sure it is, alongside the fields it "
+    "already returned.",
+    ("extraction",),
+    held_out=True,
+)
+def _add_confidence(module) -> None:
+    """Widen the schema with a number the model invents about its own work.
+
+    The second change that moves an extraction Feature, and deliberately not a
+    second helping of the first. `schema.add_field` asks for one more value the
+    document prints — checkable against the source, and identical whichever model
+    reads it. This asks for a value no document carries: the model's own estimate
+    of whether it got the rest right, which is what a team adds the day somebody
+    asks to route the doubtful extractions to a human.
+
+    That difference is why this one is held out rather than gated. A field copied
+    off the page reads the same whichever model reads it; a self-reported
+    confidence does not. Measured on both extraction cases: `qwen3:8b` answers
+    0.95 on every document and `qwen3:0.6b` answers 1.0 on every one of them —
+    constant within a model, and different between them. **The 13x smaller model
+    is the more confident one**, which is worth knowing before anybody routes on
+    that number, and is the reason the seat should hold this change rather than
+    the other: between two changes that reach the same case, hold out whichever
+    varies with something a Closing Test might have pinned.
+
+    Benign on the same terms as the other widening, and checked the same way: the
+    fields that were there before are byte-identical and still right, and the
+    case's own Suite stays green. Asked for flat and once — a per-field
+    confidence would wrap the existing values in objects, which changes what was
+    already there and would not be benign at all.
+    """
+    _swap_prompt(module, "PROMPT_CONFIDENCE")
 
 
 @benign(

@@ -84,6 +84,22 @@ Purchase order:
 JSON:"""
 
 
+# The same instruction asking the model to say how sure it is — see
+# `schema.add_confidence`. Widening with a number the model invents rather than
+# one the purchase order prints. Flat, for the same reason as case 01.
+PROMPT_CONFIDENCE = """Extract these fields from the purchase order below and reply with JSON only:
+vendor (string, exactly as written), po_number (string), date (YYYY-MM-DD string),
+currency (3-letter code string), subtotal (number), tax (number), total (number),
+line_items (list of objects with description, quantity, unit_price, line_total),
+confidence (a single top-level number between 0 and 1 — how sure you are of the
+fields above; do not attach a confidence to each field).
+
+Purchase order:
+{text}
+
+JSON:"""
+
+
 def read_po(name: str) -> str:
     return (Path(__file__).parent / "samples" / name).read_text()
 
@@ -283,6 +299,22 @@ Purchase order:
 JSON:"""
 
 
+# The same instruction asking the model to say how sure it is — see
+# `schema.add_confidence`. Widening with a number the model invents rather than
+# one the purchase order prints. Flat, for the same reason as case 01.
+PROMPT_CONFIDENCE = """Extract these fields from the purchase order below and reply with JSON only:
+vendor (string, exactly as written), po_number (string), date (YYYY-MM-DD string),
+currency (3-letter code string), subtotal (number), tax (number), total (number),
+line_items (list of objects with description, quantity, unit_price, line_total),
+confidence (a single top-level number between 0 and 1 — how sure you are of the
+fields above; do not attach a confidence to each field).
+
+Purchase order:
+{text}
+
+JSON:"""
+
+
 def read_po(name: str) -> str:
     return (Path(__file__).parent / "samples" / name).read_text()
 
@@ -421,7 +453,7 @@ JSON:
 **9. `qwen3:8b` answered**
 
 ```
-{"order": ["value.null_fields", "value.zero_amounts", "schema.drop_field", "value.transpose_digits", "model.downgrade"], "expect_missed": ["schema.drop_field"], "why": "The suite checks for presence of fields but does not verify that all required fields are present, making it blind to silently dropped fields."}
+{"order": ["value.null_fields", "value.zero_amounts", "schema.drop_field", "value.transpose_digits", "model.downgrade"], "expect_missed": ["schema.drop_field", "model.downgrade"], "why": "The suite checks for presence of fields and their types, but does not verify that all required fields are present. It also does not check for the presence of fields that might be silently dropped or that the model might be downgraded to a weaker version."}
 ```
 
 **10. recorded prior** (evidence, never a finding)
@@ -436,9 +468,10 @@ JSON:
     "model.downgrade"
   ],
   "expect_missed": [
-    "schema.drop_field"
+    "schema.drop_field",
+    "model.downgrade"
   ],
-  "why": "The suite checks for presence of fields but does not verify that all required fields are present, making it blind to silently dropped fields.",
+  "why": "The suite checks for presence of fields and their types, but does not verify that all required fields are present. It also does not check for the presence of fields that might be silently dropped or that the model might be downgraded to a weaker version.",
   "invented_ids": []
 }
 ```

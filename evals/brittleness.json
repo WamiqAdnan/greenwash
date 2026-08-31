@@ -3,6 +3,14 @@
     {
       "case": "01_invoice_extractor",
       "change": "schema.add_field",
+      "held_out": false,
+      "measured": true,
+      "closing_tests": 3,
+      "false_alarms": []
+    },
+    {
+      "case": "01_invoice_extractor",
+      "change": "schema.add_confidence",
       "held_out": true,
       "measured": true,
       "closing_tests": 3,
@@ -119,6 +127,27 @@
       "held_out": false,
       "measured": false,
       "why": "the change was inert"
+    },
+    {
+      "case": "11_document_reranker",
+      "change": "model.swap",
+      "held_out": false,
+      "measured": false,
+      "why": "the original suite went red"
+    },
+    {
+      "case": "11_document_reranker",
+      "change": "model.pin_previous",
+      "held_out": false,
+      "measured": false,
+      "why": "the original suite went red"
+    },
+    {
+      "case": "11_document_reranker",
+      "change": "prompt.reword",
+      "held_out": false,
+      "measured": false,
+      "why": "the original suite went red"
     }
   ]
 }

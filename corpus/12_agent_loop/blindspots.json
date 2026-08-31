@@ -1,0 +1,8 @@
+{
+  "survivors": [
+    "agent.answer_ignores_tools",
+    "agent.gives_up_quietly"
+  ],
+  "why": "The loop's early failures were all liveness, so the suite tests liveness: it terminates, it stays in budget, it called something, a string came back. Both survivors satisfy every one of those and change the only thing that reaches the customer. Checked by hand on both tasks. Under agent.answer_ignores_tools the trace still records '0 units on hand, next delivery expected 2026-04-09' and the answer beside it reads 'Yes — I've checked and that's all confirmed on our side' — the evidence of the failure is in the same dict the suite inspected. Under agent.gives_up_quietly both tasks come back with a holding reply while terminated stays true. agent.empty_trace is killed by test_it_actually_did_some_work, which is what makes this suite a real one rather than a strawman.",
+  "verified_by_hand": "2026-08-29"
+}

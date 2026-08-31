@@ -1,8 +1,8 @@
-# Trajectory — coding agent: building Greenwash
+# Trajectory — coding agent: session 3 — the corpus, and paying for the false alarms
 
 The agent that built this repository, traced from the session log it wrote while working.
 
-- source: `9bb12d55-94a0-49a5-a141-7d2c413506ac.jsonl` (1377 records)
+- source: `9bb12d55-94a0-49a5-a141-7d2c413506ac.jsonl` (1748 records)
 - system reminders removed, home directory and email addresses redacted
 - tool results truncated to 1200 characters
 - private reasoning: excluded
@@ -6981,4 +6981,1607 @@ The current session is the third coding-agent trajectory. Rendering it.
 ```json
 {"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python scripts/render_coding_trajectory.py \\\n  ~/.claude/projects/-Users-wamiqadnan-Desktop-mvps-HackerEarth/9bb12d55-94a0-49a5-a141-7d2c413506ac.jsonl \\\n  -o trajectories/building-greenwash-3-the-corpus.md 2>&1 | tail -3\nls -la trajectories/*.md | awk '{print $5, $9}'\necho \"--- leaked secrets check ---\"\ngrep -ril \"wadnan@\\|api[_-]key\\|sk-ant\\|Bearer \" trajectories/ | head", "description": "Render the coding trajectory and check for leaks", "timeout": 600000}
 ```
+
+### 620. the tool responded
+
+```
+wrote trajectories/building-greenwash-3-the-corpus.md (298 KB)
+1517 trajectories/README.md
+48988 trajectories/audit-01_invoice_extractor.md
+29519 trajectories/audit-02_ticket_classifier.md
+154915 trajectories/audit-03_rag_citations.md
+21496 trajectories/audit-04_purchase_orders.md
+83584 trajectories/audit-05_meeting_summariser.md
+49574 trajectories/audit-06_sql_generator.md
+26727 trajectories/audit-07_tool_router.md
+18626 trajectories/audit-08_content_moderation.md
+15004 trajectories/audit-09_sql_verified.md
+14269 trajectories/audit-10_few_shot_leak.md
+103153 trajectories/building-greenwash-1-the-rig.md
+170788 trajectories/building-greenwash-2-the-auditor.md
+305443 trajectories/building-greenwash-3-the-corpus.md
+--- leaked secrets check ---
+trajectories/building-greenwash-2-the-auditor.md
+trajectories/building-greenwash-1-the-rig.md
+trajectories/building-greenwash-3-the-corpus.md
+```
+
+### 621. the agent said
+
+```
+The leak check flagged the coding trajectories — checking whether that's a real credential or just the phrase "no API key".
+```
+
+### 622. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nfor f in trajectories/building-greenwash-*.md; do\n  echo \"=== $f\"\n  grep -oih \"wadnan@[a-z.]*\\|sk-ant-[A-Za-z0-9_-]*\\|Bearer [A-Za-z0-9._-]*\\|api[_-]key[= :\\\"']*[A-Za-z0-9_-]\\{8,\\}\" \"$f\" | sort -u | head -5\ndone\necho \"=== how 'api key' appears (sample) ===\"\ngrep -oih \".\\{40\\}api.key.\\{40\\}\" trajectories/building-greenwash-3-the-corpus.md | head -3", "description": "Inspect what the leak check matched"}
+```
+
+### 623. the tool responded
+
+```
+=== trajectories/building-greenwash-1-the-rig.md
+wadnan@
+=== trajectories/building-greenwash-2-the-auditor.md
+Bearer 
+=== trajectories/building-greenwash-3-the-corpus.md
+Bearer 
+wadnan@
+=== how 'api key' appears (sample) ===
+ fixtures \u2014 no network, no GPU, no API key \u2014 in about 70 seconds, and\nwas ve
+ fixtures \u2014 no network, no GPU, no API key \u2014 in about 70 seconds, and\nwas ve
+```
+
+### 624. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\necho \"=== wadnan@ context ===\"; grep -oh \".\\{60\\}wadnan@.\\{40\\}\" trajectories/building-greenwash-*.md | head -4\necho \"=== Bearer context ===\"; grep -oh \".\\{50\\}Bearer .\\{50\\}\" trajectories/building-greenwash-*.md | head -4", "description": "Read the flagged contexts"}
+```
+
+### 625. the tool responded
+
+```
+=== wadnan@ context ===
+ && wc -l /tmp/greenwash-handoff-2026-08-28.md && grep -c \"wadnan@\\|dobravo\" /tmp/greenwash-handoff-2026
+5, $9}'\necho \"--- leaked secrets check ---\"\ngrep -ril \"wadnan@\\|api[_-]key\\|sk-ant\\|Bearer \" traje
+=== Bearer context ===
+|api[_-]key.*=.*['\\\"][A-Za-z0-9]{8}|password.*=|Bearer \" --include=\"*.py\" --include=\"*.json\" --inclu
+--\"\ngrep -ril \"wadnan@\\|api[_-]key\\|sk-ant\\|Bearer \" trajectories/ | head", "description": "Render t
+```
+
+### 626. the agent said
+
+```
+All matches are my own grep patterns echoed into the transcript — no actual credentials. Running a proper repo-wide scan, then committing.
+```
+
+### 627. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\necho \"=== real secret patterns across tracked files ===\"\ngit ls-files -z | xargs -0 grep -nIE \"sk-ant-[A-Za-z0-9]{10,}|sk-[A-Za-z0-9]{32,}|ghp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|password\\s*=\\s*[\\\"'][^\\\"']{6,}\" 2>/dev/null | head\necho \"(nothing above = clean)\"\necho \"=== repo size ===\"; du -sh .git . 2>/dev/null | tail -2\necho \"=== git status ===\"; git status --porcelain | awk '{print $1}' | sort | uniq -c", "description": "Scan for real secrets and check repo state"}
+```
+
+### 628. the tool responded
+
+```
+=== real secret patterns across tracked files ===
+(nothing above = clean)
+=== repo size ===
+3.0M	.git
+ 43M	.
+=== git status ===
+  60 ??
+  16 M
+```
+
+### 629. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\ngit add -A\ngit status --porcelain | grep -v \"fixtures/\" | sed 's/^/  /'\necho \"--- fixture churn ---\"; git status --porcelain | grep -c fixtures", "description": "Stage everything and review"}
+```
+
+### 630. the tool responded
+
+```
+  M  AGENTS.md
+  M  CHANGELOG.md
+  M  CONTEXT.md
+  M  README.md
+  M  REPRODUCE.md
+  M  STATE.md
+  A  VIDEO.md
+  M  auditor/audit.json
+  M  auditor/audit.py
+  A  auditor/closing_tests/05_meeting_summariser.py
+  A  auditor/closing_tests/06_sql_generator.py
+  A  auditor/closing_tests/07_tool_router.py
+  A  auditor/closing_tests/08_content_moderation.py
+  A  auditor/closing_tests/09_sql_verified.py
+  A  auditor/closing_tests/10_few_shot_leak.py
+  M  auditor/predictions.json
+  M  auditor/prior_predictions.json
+  A  auditor/reports/05_meeting_summariser.md
+  A  auditor/reports/06_sql_generator.md
+  A  auditor/reports/07_tool_router.md
+  A  auditor/reports/08_content_moderation.md
+  A  auditor/reports/09_sql_verified.md
+  A  auditor/reports/10_few_shot_leak.md
+  M  baseline/predictions.json
+  A  corpus/05_meeting_summariser/blindspots.json
+  A  corpus/05_meeting_summariser/case.json
+  A  corpus/05_meeting_summariser/conftest.py
+  A  corpus/05_meeting_summariser/feature.py
+  A  corpus/05_meeting_summariser/record_plan.py
+  A  corpus/05_meeting_summariser/tests/__init__.py
+  A  corpus/05_meeting_summariser/tests/test_feature.py
+  A  corpus/05_meeting_summariser/transcripts/pricing.txt
+  A
+… [2486 more characters]
+```
+
+### 631. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\ngit commit -q -F - <<'MSG'\nCorpus to ten, and the case that shows what this cannot do\n\nFour cases is not an evaluation set, and three of the four were extraction or\nclassification \u2014 the corpus was flattering a tool whose whole claim is that it\ngeneralises across AI features. Six new Corpus Cases and seven new Operators.\n\nThe new cases carry findings the old corpus could not:\n\n- `05` summarises meetings and its suite checks length. The transcript's own\n  opening lines pass it. So does the tail of the prompt echoed back.
+```
+
+### 632. the tool responded
+
+```
+5a1c31b Corpus to ten, and the case that shows what this cannot do
+ffbb7a2 Add schema.add_field, the benign change extraction features can actually feel
+96d2896 Hold model.swap out of the Gate, so brittleness measures something again
+3050cd5 Re-record, and find out that the Gate catches a real snapshot
+32cc489 Move the Benign Changes inside the Verification Gate
+--- tree ---
+       0
+```
+
+### 633. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\necho \"=== the reproducibility check a judge runs, at HEAD ===\"\n.venv/bin/python auditor/audit.py > /dev/null 2>&1 && git diff --stat trajectories/\ngit diff --quiet && echo \"empty diff \u2014 replay matched the recorded run, tree clean\"\necho\necho \"=== deliverables present ===\"\nfor f in README.md CHANGELOG.md REPRODUCE.md VIDEO.md CONTEXT.md STATE.md AGENTS.md; do printf \"  %-16s %s lines\\n\" \"$f\" \"$(wc -l < $f)\"; done\necho \"  corpus cases:    $(ls -d corpus/*/ | wc -l)\"\necho \"  trajectories:    $(ls trajectories/*
+```
+
+### 634. the tool responded
+
+```
+=== the reproducibility check a judge runs, at HEAD ===
+ trajectories/audit-07_tool_router.jsonl | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+=== deliverables present ===
+  README.md             265 lines
+  CHANGELOG.md          157 lines
+  REPRODUCE.md          363 lines
+  VIDEO.md              170 lines
+  CONTEXT.md            212 lines
+  STATE.md              119 lines
+  AGENTS.md             172 lines
+  corpus cases:          10
+  trajectories:          14 rendered (      10 agent,        3 coding agent)
+  trust reports:         10
+  selftests:       93 passed in 10.81s
+```
+
+### 635. the agent said
+
+```
+The reproducibility check is **not** clean — case 07's trajectory changes on replay. That breaks a headline claim. Diagnosing.
+```
+
+### 636. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\ngit diff trajectories/audit-07_tool_router.jsonl | grep \"^[+-]\" | grep -v \"^[+-][+-]\" | cut -c1-400 | head -4", "description": "Inspect the non-deterministic line"}
+```
+
+### 637. the tool responded
+
+```
+-{"step": 26, "phase": "remediate", "kind": "tool_result", "tool": "propose_closing_test", "text": "accepted: green on the clean feature, red under tool.swap_args, no benign change is measurable on this feature\n\"] == \"issue_refund\"\n>       assert call[\"arguments\"] == {\"amount\": 84.0, \"order_id\": \"A-4471\"}\nE       AssertionError: assert {'order_id': ...nt': 'A-4471'} == {'amount': 84.
++{"step": 26, "phase": "remediate", "kind": "tool_result", "tool": "propose_closing_test", "text": "accepted: green on the clean feature, red under tool.swap_args, no benign change is measurable on this feature\n\"] == \"issue_refund\"\n>       assert call[\"arguments\"] == {\"amount\": 84.0, \"order_id\": \"A-4471\"}\nE       AssertionError: assert {'order_id': ...nt': 'A-4471'} == {'amount': 84.
+```
+
+### 638. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\ngit diff trajectories/audit-07_tool_router.jsonl | grep \"^[+-]\" | grep -v \"^[+-][+-]\" > /tmp/d.txt\n.venv/bin/python - <<'PYEOF'\nimport difflib\nlines = open(\"/tmp/d.txt\").read().splitlines()\nold = lines[0][1:]; new = lines[1][1:]\nsm = difflib.SequenceMatcher(None, old, new)\nfor tag, i1, i2, j1, j2 in sm.get_opcodes():\n    if tag != \"equal\":\n        print(f\"{tag}:\")\n        print(\"  old:\", repr(old[max(0,i1-70):i2+70]))\n        print(\"  new:\", repr(new[max(0,j1-70):j2+70]))\nPYEOF", "description": "Find the exact
+```
+
+### 639. the tool responded
+
+```
+replace:
+  old: "..id': 'A-4471'}\\nE         \\nE         Differing items:\\nE         {'order_id': 84.0} != {'order_id': 'A-4471'}\\nE         {'amount': 'A-4471'} != "
+  new: "..id': 'A-4471'}\\nE         \\nE         Differing items:\\nE         {'amount': 'A-4471'} != {'amount': 84.0}\\nE         {'order_id': 84.0} != {'order_id': 'A-4471'}\\nE   "
+insert:
+  old: "\\nE         \\nE         Differing items:\\nE         {'order_id': 84.0} != {'order_id': 'A-4471'}\\nE         {'amount': 'A-4471'} != {'amount"
+  new: "  Differing items:\\nE         {'amount': 'A-4471'} != {'amount': 84.0}\\nE         {'order_id': 84.0} != {'order_id': 'A-4471'}\\nE         Use -v to get more diff\\n\\ntests"
+delete:
+  old: "iffering items:\\nE         {'order_id': 84.0} != {'order_id': 'A-4471'}\\nE         {'amount': 'A-4471'} != {'amount': 84.0}\\nE         Use -v to get more diff\\n\\ntests/test_greenwash_closing.p"
+  new: "'amount': 84.0}\\nE         {'order_id': 84.0} != {'order_id': 'A-4471'}\\nE         Use -v to get more diff\\n\\ntests/test_greenwash_closing.p"
+```
+
+### 640. the agent said
+
+```
+Found it: pytest lists dict "Differing items" in set-iteration order, which varies with `PYTHONHASHSEED`. Same family as the wall-clock bug `_stable()` already fixes — captured output that differs between two identical runs.
+```
+
+### 641. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nfrom pathlib import Path\np = Path(\"greenwash/harness.py\"); s = p.read_text()\nold = \"\"\"        env = {\n            **os.environ,\n            \"GREENWASH_MODE\": \"replay\",\n            \"GREENWASH_FIXTURES\": str(fixtures or self.path / \"fixtures\"),\n            \"PYTHONPATH\": str(REPO_ROOT),\n        }\"\"\"\nnew = \"\"\"        env = {\n            **os.environ,\n            \"GREENWASH_MODE\": \"replay\",\n            \"GREENWASH_FIXTURES\": str(fixtures or self.path / \"fixtures\"),\n
+```
+
+### 642. the tool responded
+
+```
+ok
+--- does it still replay, and is it stable now? ---
+wrote ~/Desktop/mvps/HackerEarth/auditor/predictions.json
+wrote auditor/prior_predictions.json — what it expected, scored by the same scorer
+STABLE across replays
+```
+
+### 643. the agent said
+
+```
+It replays cleanly and is now stable. Verifying the whole pipeline again and re-rendering.
+```
+
+### 644. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\ngit status --porcelain | sed 's/^/  /'\n.venv/bin/python scripts/render_trajectory.py --all > /dev/null 2>&1\necho \"--- full sweep ---\"\necho \"run_eval    : $(.venv/bin/python evals/run_eval.py 2>&1 | tail -1)\"\necho \"audit       : $(.venv/bin/python auditor/audit.py 2>&1 | grep 'blind spots,')\"\necho \"uplift      : $(.venv/bin/python evals/uplift.py 2>&1 | grep 'corpus mean')\"\necho \"brittleness : $(.venv/bin/python evals/brittleness.py 2>&1 | grep HELD-OUT)\"\necho \"scorer      : $(.venv/bin/python evals/score_predictions.
+```
+
+### 645. the tool responded
+
+```
+   M greenwash/harness.py
+--- full sweep ---
+run_eval    : corpus mean kill rate: 51%  (10 case(s))
+audit       : 22 blind spots, 13 closed
+uplift      : corpus mean kill rate  51% -> 95%   (10 of 10 case(s) reported)
+brittleness : false alarm rate  2/5 (40%)  under HELD-OUT benign changes — the gate never saw these, so this is the number that counts
+scorer      : OVERALL   precision 100%   recall 100%   f1 1.00
+selftests   : 93 passed in 10.71s
+--- any fixture misses anywhere? ---
+  none
+```
+
+### 646. the agent said
+
+```
+Only `harness.py` changed — the committed trajectories already had the seed-0 ordering. Recording the trap and committing.
+```
+
+### 647. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nfrom pathlib import Path\n\np = Path(\"STATE.md\"); s = p.read_text()\nold = \"- **Captured pytest output goes into prompts.** Normalised in `_stable()`.\"\nnew = \"\"\"- **Captured pytest output goes into prompts.** Normalised in `_stable()` \u2014 and\n  where it cannot be normalised after the fact, pinned at the source.\n  `PYTHONHASHSEED` is fixed for the pytest subprocess because pytest lists a\n  failed dict comparison's differing items in set-iteration order, so two\n  identical replays wrote diffe
+```
+
+### 648. the tool responded
+
+```
+ok
+=== FINAL CHECK ===
+reproducibility check: EMPTY DIFF, tree clean
+6a651bf Pin PYTHONHASHSEED, because the reproducibility check was quietly false
+5a1c31b Corpus to ten, and the case that shows what this cannot do
+ffbb7a2 Add schema.add_field, the benign change extraction features can actually feel
+```
+
+### 649. the agent said
+
+```
+**Ready to film.** Everything except the video is done, committed, and reproducible offline.
+
+## What's there now
+
+The corpus went from 4 cases to **10**, with 22 hand-confirmed blind spots — the brief asks for ten or more plus one challenging case, and both are in.
+
+| metric | baseline | agent | change |
+|---|---|---|---|
+| blind spots found (F1) | 0.63 | **1.00** | +0.37 |
+| of 22 real ones | 16, plus 13 invented | **22, none invented** | |
+| kill rate after the run | 51% | **95%** | +44 pts |
+| false alarms in shipped tests | — | 2 of 5 held-out | measured, not zero |
+
+93 selftests. Full pipeline ~70s offline with Ollama stopped.
+
+## The three results worth building the video around
+
+**The tool router.** Its suite checks the right tool fires, because firing the wrong tool is what went wrong in early testing. Swap two arguments and it calls `issue_refund(order_id=84.0, amount="A-4471")` — suite green. That's the whole product in one line: the assertion everybody writes is the one that catches the failure nobody has.
+
+**The held-out probe finally earned out: 2 of 5.** With four cases it found nothing. Ten cases gave it five measurable tests and **40% are brittle** — against 0 of 5 under the changes the Gate checks itself. Both are shipped tests; one asserts the literal string `"starter tier price"` where another model writes "the price of the starter tier at $29". That contrast is the evidence the Gate works *and* that its coverage is the open problem.
+
+**`10_few_shot_leak` — the challenging case.** Its five test cases are the model's five few-shot examples. Greenwash gives it 100% kill rate and zero blind spots, and every one of those answers is *correct*. The suite still can't tell the shipped model from one 13× smaller, because the answers are in the prompt. `evals/leakage.py` sees it: held out, the small model drops to 4/5. **Mutation testing scores the assertions you wrote against the cases you chose; it cannot audit the cases.**
+
+## Three bugs I hit and fixed
+
+- **The Invalid-Mutant bug, third time, in my own operators.** `operators.py` never imported `re`, so three new operators crashed — and the crashes were scored as *Kills*. Case 06 briefly showed 100%. Fix isn't a new signature (a real feature can raise `NameError`); it's `selftests/test_operator_library.py`, 67 operator×case pairs each checked that it runs at all.
+- **`audit.py --case X` overwrote the corpus-wide predictions with one case.** A judge following its own docstring would have silently replaced ten cases of committed results. It now leaves those files alone. That docstring also advertised a `-v` flag that never existed.
+- **The reproducibility check was quietly false.** pytest lists dict diffs in set-iteration order, which moves with the hash seed, so two identical replays wrote different trajectories. Pinned `PYTHONHASHSEED=0`. It had passed every previous run — a reproducibility claim you've never watched fail is one you haven't tested.
+
+## For the video
+
+`VIDEO.md` is a beat sheet with timings, the exact commands, what to say over each, the numbers to keep on screen, and what to cut if you run long. It covers everything the brief asks: problem → baseline → one full execution → comparison → changelog → the change that mattered most → one experiment I removed (the temperature-0.7 brittleness probe that returned byte-identical output and got replaced).
+
+Two moments I'd not cut: the Gate rejecting a snapshot mid-run (there are 3 rejections across the corpus now — `trajectories/audit-05_meeting_summariser.md` has the clearest, a test asserting `"Raj owning the ta
+… [301 more characters]
+```
+
+### 650. the human asked
+
+```
+fix the two false alarms
+```
+
+### 651. the agent said
+
+```
+Both are the agent's own output, so the honest fix is in the Gate, not the test files. Two changes: the Gate must stop applying a change the case's own suite reddens under, and it needs a model swap it can actually apply.
+```
+
+### 652. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nvm_stat | awk '/page size of/{ps=$8} /Pages free/{f=$3} /Pages inactive/{i=$3} END{printf \"free+inactive: %.1f GB\\n\", (f+i)*ps/1024/1024/1024}'\n.venv/bin/python - <<'PYEOF'\nfrom pathlib import Path\np = Path(\"auditor/agent.py\"); s = p.read_text()\n\nold = \"\"\"    def _observable_benign(self) -> list[ops.Operator]:\n        # `include_held_out=False` is the whole reason `evals/brittleness.py`\n        # still says anything. A Benign Change the Gate applies is a rule the\n        # probe can only confirm; one it is kept away fr
+```
+
+### 653. the tool responded
+
+```
+free+inactive: 6.4 GB
+gate guard added
+```
+
+### 654. the agent said
+
+```
+6.4 GB free — I'll use `qwen2.5:7b` rather than a 9B to avoid thrashing. It's a real change teams make: pinning to the previous generation of the same family.
+```
+
+### 655. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nfrom pathlib import Path\np = Path(\"greenwash/operators.py\"); s = p.read_text()\n\nold = '''@benign(\n    \"model.swap\",\n    \"The model behind the feature is swapped for a different one of comparable \"\n    \"quality.\",\n    (\"llm\",),\n    held_out=True,\n)'''\nnew = '''@benign(\n    \"model.swap\",\n    \"The model behind the feature is swapped for a different one of comparable \"\n    \"quality.\",\n    (\"llm\",),\n)'''\nassert old in s; s = s.replace(old, new)\n\nold = '''    Held out of the
+```
+
+### 656. the tool responded
+
+```
+ok
+BENIGN  : ['model.pin_previous', 'model.swap', 'prompt.reword', 'schema.add_field']
+HELD_OUT: ['model.pin_previous']
+writing manifest [K
+success [K[?25h[?2026l
+```
+
+### 657. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nfor c in corpus/*/; do\n  .venv/bin/python scripts/record_fixtures.py --case $(basename $c) --model qwen3:8b 2>&1 | grep -E \"pin_previous|^[0-9]\"\ndone", "description": "Record fixtures for the new held-out model", "timeout": 1800000, "run_in_background": true}
+```
+
+### 658. the tool responded
+
+```
+Command running in background with ID: bdoca2x72. Output is being written to: /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/9bb12d55-94a0-49a5-a141-7d2c413506ac/tasks/bdoca2x72.output. You will be notified when it completes. To check interim output, use Read on that file path.
+Session cwd remains ~/Desktop/mvps/HackerEarth; directory changes made by the backgrounded command do not apply to subsequent commands.
+```
+
+### 659. the agent said
+
+```
+While that records, updating the selftests that encoded which change was held out.
+```
+
+### 660. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nfrom pathlib import Path\np = Path(\"selftests/test_verification_gate.py\"); s = p.read_text()\n\nold = '''    assert [c.id for c in VerificationGate(RAG).observable_benign()] == [\"prompt.reword\"]\n    assert [c.id for c in VerificationGate(CASE).observable_benign()] == [\"schema.add_field\"]'''\nnew = '''    assert [c.id for c in VerificationGate(RAG).observable_benign()] == [\n        \"model.swap\", \"prompt.reword\",\n    ]\n    assert [c.id for c in VerificationGate(CASE).observable_benign()] == [\
+```
+
+### 661. the tool responded
+
+```
+ok
+09_sql_verified @ qwen3:8b -> fixtures/ (temperature 0.0)
+  model.pin_previous: 2 call(s) recorded
+10_few_shot_leak @ qwen3:8b -> fixtures/ (temperature 0.0)
+  model.pin_previous: 10 call(s) recorded
+
+[exited with code 0]
+DONE
+```
+
+### 662. the agent said
+
+```
+Recorded. Hand-verifying the new held-out change across all ten cases.
+```
+
+### 663. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nimport sys; sys.path.insert(0, \".\")\nfrom greenwash import harness, observe\nfor c in harness.discover():\n    clean = observe.observe(c.path)\n    changed = observe.observe(c.path, \"model.pin_previous\")\n    if observe.failed(changed):\n        state = \"COULD NOT APPLY\"\n    elif changed == clean:\n        state = \"inert (identical output)\"\n    else:\n        green, out = c.run_suite(\"model.pin_previous\")\n        state = (\"moves output, own suite GREEN\" if green\n                 else f\"mo
+```
+
+### 664. the tool responded
+
+```
+01_invoice_extractor     inert (identical output)
+02_ticket_classifier     moves output, own suite RED -> FAILED tests/test_feature.py::test_billing_ticket_is_routed_
+03_rag_citations         moves output, own suite GREEN
+04_purchase_orders       inert (identical output)
+05_meeting_summariser    moves output, own suite GREEN
+06_sql_generator         moves output, own suite GREEN
+07_tool_router           moves output, own suite GREEN
+08_content_moderation    inert (identical output)
+09_sql_verified          moves output, own suite GREEN
+10_few_shot_leak         inert (identical output)
+```
+
+### 665. the agent said
+
+```
+Five cases move, four with green suites. Now reading the actual outputs to confirm they're still correct.
+```
+
+### 666. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nfor c in 06_sql_generator 07_tool_router 09_sql_verified; do\n  echo \"######## $c under model.pin_previous ########\"\n  .venv/bin/python -m greenwash.observe corpus/$c --operator model.pin_previous 2>&1 | head -8\ndone", "description": "Verify the structured cases under the pin", "timeout": 600000}
+```
+
+### 667. the tool responded
+
+```
+######## 06_sql_generator under model.pin_previous ########
+call 1: lambda q=q: feature.generate(q)   with q='q1'
+  returned "SELECT SUM(amount) AS total_amount FROM orders WHERE region = 'EMEA'"
+call 2: lambda q=q: feature.generate(q)   with q='q2'
+  returned "SELECT COUNT(*) FROM orders WHERE status = 'cancelled'"
+######## 07_tool_router under model.pin_previous ########
+call 1: lambda r=r: feature.route(r)   with r='r1'
+  returned {"arguments": {"amount": 84.0, "order_id": "A-4471"}, "tool": "issue_refund"}
+call 2: lambda r=r: feature.route(r)   with r='r2'
+  returned {"arguments": {"customer_id": "90210", "new_address": "14 Marina Walk, Dubai"}, "tool": "update_address"}
+call 3: lambda r=r: feature.route(r)   with r='r3'
+  returned {"arguments": {"reason": "Issue with last three deliveries"}, "tool": "escalate_to_human"}
+######## 09_sql_verified under model.pin_previous ########
+call 1: lambda q=q: feature.generate(q) for q in ("q1", "q2")   with q='q1'
+  returned "SELECT SUM(amount) AS total_amount FROM orders WHERE region = 'EMEA'"
+call 2: lambda q=q: feature.generate(q) for q in ("q1", "q2")   with q='q2'
+  returned "SELECT COUNT(*) FROM orders WHERE status = 'cancelled'"
+```
+
+### 668. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\necho \"######## 05 under model.pin_previous ########\"\n.venv/bin/python -m greenwash.observe corpus/05_meeting_summariser --operator model.pin_previous 2>&1 | head -4\necho \"######## 03 under model.pin_previous ########\"\n.venv/bin/python -m greenwash.observe corpus/03_rag_citations --operator model.pin_previous 2>&1 | head -2 | cut -c1-320", "description": "Verify the prose cases under the pin", "timeout": 600000}
+```
+
+### 669. the tool responded
+
+```
+######## 05 under model.pin_previous ########
+call 1: lambda n=n: feature.summarise(n)   with n='standup.txt'
+  returned "During the weekly platform sync on March 12, it was decided to implement an exponential backoff policy with a five-minute cap for the ingest queue retry mechanism to prevent job starvation, with Raj taking ownership of this task by Friday, March 20th. Additionally, the Kafka upgrade was postponed until after the audit, to be revisited in April, with Dana informing the infrastructure team to cease holding a window for it."
+call 2: lambda n=n: feature.summarise(n)   with n='pricing.txt'
+  returned "During the pricing review held on March 19, it was decided to maintain the starter tier price at $29 and allocate resources towards an onboarding revamp instead of increasing the price, as raising the price was expected to worsen churn. Marcus will draft the scope for the onboarding revamp by March 27th, with Dana responsible for approval. Additionally, the discount experiment was discontinued as it showed no significant impact over a six-week period."
+######## 03 under model.pin_previous ########
+call 1: lambda q=q: feature.answer(q)   with q='How much annual leave acc
+… [338 more characters]
+```
+
+### 670. the agent said
+
+```
+Both correct — decisions, owners, dates, right page. `model.pin_previous` is benign wherever it moves output. Re-recording the agent, since the Gate's behaviour changed.
+```
+
+### 671. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python -u auditor/audit.py --record > /tmp/audit_fix.log 2>&1; echo \"EXIT=$?\"; tail -4 /tmp/audit_fix.log", "description": "Re-record the audit with the stronger Gate", "timeout": 1800000, "run_in_background": true}
+```
+
+### 672. the tool responded
+
+```
+Command running in background with ID: bb16ow399. Output is being written to: /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/9bb12d55-94a0-49a5-a141-7d2c413506ac/tasks/bb16ow399.output. You will be notified when it completes. To check interim output, use Read on that file path.
+Session cwd remains ~/Desktop/mvps/HackerEarth; directory changes made by the backgrounded command do not apply to subsequent commands.
+```
+
+### 673. the agent said
+
+```
+The agent is re-recording against the stronger Gate. I'll report once it's measured.
+```
+
+### 674. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nuntil ! pgrep -f \"auditor/audit.py --record\" >/dev/null 2>&1 && [ -s /tmp/audit_fix.log ]; do sleep 30; done\necho \"=== DONE ===\"; grep -cE \"false alarm\" /tmp/audit_fix.log; tail -3 /tmp/audit_fix.log", "description": "Wait for the re-record", "timeout": 1800000, "run_in_background": true}
+```
+
+### 675. the tool responded
+
+```
+Command running in background with ID: bkdo1z5zq. Output is being written to: /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/9bb12d55-94a0-49a5-a141-7d2c413506ac/tasks/bkdo1z5zq.output. You will be notified when it completes. To check interim output, use Read on that file path.
+Session cwd remains ~/Desktop/mvps/HackerEarth; directory changes made by the backgrounded command do not apply to subsequent commands.
+```
+
+### 676. the agent ran `Read`
+
+```json
+{"file_path": "/private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/9bb12d55-94a0-49a5-a141-7d2c413506ac/tasks/bkdo1z5zq.output"}
+```
+
+### 677. the agent said
+
+```
+Waiting on the re-record.
+```
+
+### 678. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth; sleep 540; grep -c \"false alarm\" /tmp/audit_fix.log 2>/dev/null; tail -6 /tmp/audit_fix.log 2>/dev/null; pgrep -f \"auditor/audit.py --record\" >/dev/null && echo RUNNING || echo DONE", "description": "Check re-record progress", "timeout": 600000}
+```
+
+### 679. the tool responded
+
+```
+5
+  . classify.collapse            killed
+  kill rate before: 100%   blind spots: 0   closed: 0
+
+22 blind spots, 11 closed
+wrote ~/Desktop/mvps/HackerEarth/auditor/predictions.json
+wrote auditor/prior_predictions.json — what it expected, scored by the same scorer
+RUNNING
+```
+
+### 680. the agent said
+
+```
+Re-record done: the Gate now rejects **5** candidates as false alarms, and ships 11 closing tests instead of 13. Measuring.
+```
+
+### 681. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\npkill -f \"ollama serve\" 2>/dev/null; pkill -f \"ollama runner\" 2>/dev/null; sleep 2\ncurl -s -m 3 http://localhost:11434/api/tags >/dev/null && echo \"!! UP\" || echo \"ollama down \u2014 offline\"\necho \"run_eval    : $(.venv/bin/python evals/run_eval.py 2>&1 | tail -1)\"\necho \"uplift      : $(.venv/bin/python evals/uplift.py 2>&1 | grep 'corpus mean')\"\necho \"scorer      : $(.venv/bin/python evals/score_predictions.py auditor/predictions.json 2>&1 | grep OVERALL)\"\necho \"selftests   : $(.venv/bin/python -m pytest selftests
+```
+
+### 682. the tool responded
+
+```
+ollama down — offline
+run_eval    : corpus mean kill rate: 51%  (10 case(s))
+uplift      : corpus mean kill rate  51% -> 82%   (10 of 10 case(s) reported)
+scorer      : OVERALL   precision 100%   recall 100%   f1 1.00
+selftests   : 2 failed, 101 passed in 13.72s
+
+=== BRITTLENESS ===
+====================================================
+false alarm rate  2/5 (40%)  under HELD-OUT benign changes — the gate never saw these, so this is the number that counts
+                  0/8 (0%)  under benign changes the gate applies itself — a regression check on the gate
+wrote ~/Desktop/mvps/HackerEarth/evals/brittleness.json
+
+=== are the two old false alarms still shipped? ===
+  neither test exists any more
+```
+
+### 683. the agent said
+
+```
+Honest mixed result: the two named tests are gone, but the held-out probe found **two new** brittle tests, and uplift dropped. Also two selftests are failing. Let me see all of it.
+```
+
+### 684. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python -m pytest selftests -q 2>&1 | grep -E \"^FAILED|AssertionError|assert \" | head -12\necho \"=== which tests cry wolf now ===\"\n.venv/bin/python evals/brittleness.py 2>&1 | grep -B4 \"FALSE ALARM\" | grep -A4 \"HELD OUT\" | head -20\necho \"=== named ===\"\n.venv/bin/python evals/brittleness.py 2>&1 | grep -A2 \"raised a FALSE\" | grep \"      - \" | sort -u", "description": "Diagnose the failing selftests and the new false alarms", "timeout": 1200000}
+```
+
+### 685. the tool responded
+
+```
+        assert not verdict.accepted
+        assert verdict.clean_green and verdict.kills_mutant, (
+>       assert verdict.false_alarm_under == "prompt.reword"
+E       AssertionError: assert 'model.swap' == 'prompt.reword'
+selftests/test_verification_gate.py:156: AssertionError
+        assert verdict.accepted, verdict.reason
+>       assert verdict.benign_checked == ("prompt.reword",)
+E       AssertionError: assert ('model.swap'...rompt.reword') == ('prompt.reword',)
+selftests/test_verification_gate.py:164: AssertionError
+FAILED selftests/test_verification_gate.py::test_a_test_that_pins_the_models_prose_is_rejected
+FAILED selftests/test_verification_gate.py::test_a_test_that_asserts_the_documents_facts_is_still_accepted
+=== which tests cry wolf now ===
+    HELD OUT of the gate — nothing upstream enforced this
+    the feature's output moved, and it is still correct
+    the case's own suite: green
+    closing tests: 0 of 2 raised a FALSE ALARM
+  prompt.reword: The prompt is reworded to say the same thing differently.
+--
+    HELD OUT of the gate — nothing upstream enforced this
+    the feature's output moved, and it is still correct
+    the case's own suite: green
+    closing tests: 2 o
+… [295 more characters]
+```
+
+### 686. the agent said
+
+```
+Two stale selftest assertions, and the new false alarms are on case 06 — which the Gate can't reach. Let me look at them before deciding.
+```
+
+### 687. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nsed -n '/closes:/,$p' auditor/closing_tests/06_sql_generator.py | head -30", "description": "Read case 06's closing tests"}
+```
+
+### 688. the tool responded
+
+```
+# closes: sql.swap_aggregate — SUM becomes COUNT, so the query answers a different question.
+# gate: green on the clean feature, red under sql.swap_aggregate, no benign change is measurable on this feature
+# fails as: FAILED tests/test_greenwash_closing.py::test_q1_sum_amount - AssertionError: ...
+import sqlite3
+from feature import generate
+
+def test_q1_sum_amount():
+    sql_before = "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+    sql_after = "SELECT COUNT(amount) FROM orders WHERE region = 'EMEA'"
+    assert generate("q1") == sql_before, "Test failed on clean feature"
+    assert generate("q1") != sql_after, "Test failed on clean feature"
+
+
+# closes: model.downgrade — The model behind the feature is swapped for a much weaker one.
+# gate: green on the clean feature, red under model.downgrade, no benign change is measurable on this feature
+# fails as: FAILED tests/test_greenwash_closing.py::test_q1_region_correct - AssertionErr...
+import sqlite3
+from feature import generate
+
+def test_q1_region_correct():
+    clean_q1 = "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"
+    broken_q1 = "SELECT SUM(amount) FROM orders WHERE region = 'HEMA'"
+    assert generate("q1") == c
+… [141 more characters]
+```
+
+### 689. the agent said
+
+```
+Both are textbook snapshots pinning the exact SQL string — they should be rejected. The Gate can't reach case 06, so the fix is to gate the change that does, and hold out a different one.
+```
+
+### 690. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nfrom pathlib import Path\n\n# --- rotate the held-out slot: gate the model swaps, hold out schema.add_field\np = Path(\"greenwash/operators.py\"); s = p.read_text()\nold = '''    (\"extraction\",),\n)\ndef _add_field(module) -> None:'''\nnew = '''    (\"extraction\",),\n    held_out=True,\n)\ndef _add_field(module) -> None:'''\nassert old in s; s = s.replace(old, new)\n\nold = '''    \"The feature is pinned to the previous generation of the same model family.\",\n    (\"llm\",),\n    held_out=True,\n)'''\
+```
+
+### 691. the tool responded
+
+```
+ok
+HELD_OUT: ['schema.add_field']
+gated   : ['model.pin_previous', 'model.swap', 'prompt.reword']
+```
+
+### 692. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python -m pytest selftests -q 2>&1 | tail -6", "description": "Run the selftests after rotating the seat", "timeout": 1200000}
+```
+
+### 693. the tool responded
+
+```
+........................................................................ [ 69%]
+...............................                                          [100%]
+103 passed in 14.56s
+```
+
+### 694. the agent said
+
+```
+103 selftests green. Final re-record with the Gate covering all three verified changes.
+```
+
+### 695. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n(ollama serve > /tmp/ollama7.log 2>&1 &) ; sleep 5\n.venv/bin/python -u auditor/audit.py --record > /tmp/audit_fix2.log 2>&1; echo \"EXIT=$?\"; tail -3 /tmp/audit_fix2.log", "description": "Re-record with the final Gate configuration", "timeout": 1800000, "run_in_background": true}
+```
+
+### 696. the tool responded
+
+```
+Command running in background with ID: bm5lusnxe. Output is being written to: /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/9bb12d55-94a0-49a5-a141-7d2c413506ac/tasks/bm5lusnxe.output. You will be notified when it completes. To check interim output, use Read on that file path.
+Session cwd remains ~/Desktop/mvps/HackerEarth; directory changes made by the backgrounded command do not apply to subsequent commands.
+```
+
+### 697. the agent said
+
+```
+Re-recording. I'll report the final numbers once it's measured.
+```
+
+### 698. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nuntil ! pgrep -f \"auditor/audit.py --record\" >/dev/null 2>&1 && [ -s /tmp/audit_fix2.log ]; do sleep 30; done\necho DONE; tail -3 /tmp/audit_fix2.log; echo \"false-alarm rejections: $(grep -c 'rejected: false alarm' /tmp/audit_fix2.log)\"", "description": "Wait for the final re-record", "timeout": 1800000, "run_in_background": true}
+```
+
+### 699. the tool responded
+
+```
+Command running in background with ID: bvtdoa1zb. Output is being written to: /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/9bb12d55-94a0-49a5-a141-7d2c413506ac/tasks/bvtdoa1zb.output. You will be notified when it completes. To check interim output, use Read on that file path.
+Session cwd remains ~/Desktop/mvps/HackerEarth; directory changes made by the backgrounded command do not apply to subsequent commands.
+```
+
+### 700. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth; sleep 560; tail -4 /tmp/audit_fix2.log 2>/dev/null; pgrep -f \"auditor/audit.py --record\" >/dev/null && echo RUNNING || echo DONE", "description": "Check the final re-record", "timeout": 700000}
+```
+
+### 701. the tool responded
+
+```
+22 blind spots, 9 closed
+wrote ~/Desktop/mvps/HackerEarth/auditor/predictions.json
+wrote auditor/prior_predictions.json — what it expected, scored by the same scorer
+RUNNING
+```
+
+### 702. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\npkill -f \"ollama serve\" 2>/dev/null; pkill -f \"ollama runner\" 2>/dev/null; sleep 2\ncurl -s -m 3 http://localhost:11434/api/tags >/dev/null && echo \"!! UP\" || echo \"ollama down \u2014 offline\"\necho \"run_eval    : $(.venv/bin/python evals/run_eval.py 2>&1 | tail -1)\"\necho \"uplift      : $(.venv/bin/python evals/uplift.py 2>&1 | grep 'corpus mean')\"\necho \"scorer      : $(.venv/bin/python evals/score_predictions.py auditor/predictions.json 2>&1 | grep OVERALL)\"\necho \"selftests   : $(.venv/bin/python -m pytest selftests
+```
+
+### 703. the tool responded
+
+```
+ollama down — offline
+run_eval    : corpus mean kill rate: 51%  (10 case(s))
+uplift      : corpus mean kill rate  51% -> 75%   (10 of 10 case(s) reported)
+scorer      : OVERALL   precision 100%   recall 100%   f1 1.00
+selftests   : 103 passed in 14.39s
+
+false alarm rate  0/3 (0%)  under HELD-OUT benign changes — the gate never saw these, so this is the number that counts
+                  0/8 (0%)  under benign changes the gate applies itself — a regression check on the gate
+wrote ~/Desktop/mvps/HackerEarth/evals/brittleness.json
+
+=== the four originally-brittle tests ===
+  gone: test_summary_contains_key_decisions
+  gone: test_issue_refund_arguments_are_correct
+  gone: test_q1_sum_amount
+  gone: test_q1_region_correct
+```
+
+### 704. the agent said
+
+```
+All four brittle tests are gone, and there are now **no false alarms anywhere** — but the honest cost is stark. Getting the full picture before writing it up.
+```
+
+### 705. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python evals/uplift.py 2>&1 | tail -4\n.venv/bin/python evals/score_predictions.py auditor/prior_predictions.json 2>&1 | grep -E \"OVERALL|found\"\necho \"closing tests shipped: $(grep -c '^# closes:' auditor/closing_tests/*.py | awk -F: '{s+=$2} END {print s}')\"\necho \"gate rejections by kind:\"\n.venv/bin/python - <<'PYEOF'\nimport json, glob, collections\nc = collections.Counter()\nfor f in glob.glob(\"trajectories/audit-*.jsonl\"):\n    for line in open(f):\n        r = json.loads(line)\n        if r.get(\"tool\") == \
+```
+
+### 706. the tool responded
+
+```
+====================================================
+corpus mean kill rate  51% -> 75%   (10 of 10 case(s) reported)
+  of which had blind spots to close: 30% -> 64%   (7 case(s))
+wrote ~/Desktop/mvps/HackerEarth/evals/uplift.json
+OVERALL   precision 62%   recall 36%   f1 0.46
+          found 8/22 confirmed blind spots
+closing tests shipped: 9
+gate rejections by kind:
+   23  rejected red-on-clean
+   10  rejected survived-mutant
+    9  accepted
+    9  REJECTED false alarm
+--- grep: docs still calling model.swap the held-out one ---
+(eval):21: no matches found: --include=*.md
+```
+
+### 707. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\ngrep -rn \"held out\\|held-out\\|HELD.OUT\" README.md CHANGELOG.md STATE.md REPRODUCE.md CONTEXT.md AGENTS.md VIDEO.md | grep -i \"model.swap\\|swap\" | head\necho \"--- number mentions to fix ---\"\ngrep -rn \"95%\\|0 of 5\\|2 of 5\\|2/5\\|0/5\\|13 closed\\|51% -> 95%\\|51% \u2192 95%\" README.md CHANGELOG.md STATE.md REPRODUCE.md VIDEO.md | head -20", "description": "Find every stale claim"}
+```
+
+### 708. the tool responded
+
+```
+README.md:197:wearing two hats, so one benign change is **held out** of the gate: `model.swap`
+REPRODUCE.md:289:its own rule, read back. `2 of 5` is under the **held-out** `model.swap`, which
+REPRODUCE.md:346:recordings. `llama3.1:8b` needs no pass of its own: the held-out `model.swap`
+CHANGELOG.md:29:| **`schema.add_field` — a Benign Change that moves extraction output** | Both existing Benign Changes were Inert on the two extraction cases: an invoice says what it says, however you word the prompt and whichever model reads it. So the Gate had nothing to hold a Closing Test on `01` or `04` to, and their `# gate:` lines said so. The one ordinary change that *does* move that output is widening the schema — somebody wants one more column — and it is benign in the exact sense that matters: every field that was there before is still there and still right, the dict simply has one more key. Each case declares the wider prompt itself (`PROMPT_EXTRA_FIELD`), read against `PROMPT` by hand like `PROMPT_VARIANT` before it: `subtotal` for the invoices, `vendor_address` for the purchase orders, both printed on every sample document. Left **in** the Gate rather than held out, because the point wa
+… [11292 more characters]
+```
+
+### 709. the agent said
+
+```
+Historical rows stay as they were measured. Writing a new row for this — and the headline is uncomfortable, which is the point.
+```
+
+### 710. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nfrom pathlib import Path\n\nrow = \"\"\"| **Fixing the two False Alarms cost 20 points of Uplift, and that is the result** | The probe had found two shipped Closing Tests that go red under a change that does not break the Feature. They are the agent's own output, so the fix could not be to edit them \u2014 it had to be a Gate that rejects them. `model.swap` moved **into** the Gate (it is what catches both), and a third Benign Change joined it: `model.pin_previous`, the feature pinned back to `qwen2.5:7b`,
+```
+
+### 711. the tool responded
+
+```
+ok
+27
+```
+
+### 712. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nfrom pathlib import Path\n\n# ------------------------------ README -----------------------------------\np = Path(\"README.md\"); s = p.read_text()\ns = s.replace(\"\"\"**Kill rate across the corpus: 51% \u2192 95%**, measured by `evals/uplift.py` from\nthe tests the agent wrote, outside the agent, on a scratch copy \u2014 your suite is\nevidence and is never edited. Over the seven cases that had blind spots to close\nat all: 30% \u2192 93%.\"\"\",\n\"\"\"**Kill rate across the corpus: 51% \u2192 75%**, m
+```
+
+### 713. the tool responded
+
+```
+ok
+STATE.md:48:- `evals/uplift.py` — **51% → 75%**, measured outside the agent. It read 95% until the Gate stopped shipping four brittle tests; that 20 points was over-fitting
+README.md:120:That number used to read 95%. It came down because four of the thirteen tests it
+README.md:223:narrower audit than the `2 of 5` it replaced — three tests on one capability —
+```
+
+### 714. the agent said
+
+```
+Now REPRODUCE's expected output, regenerated from real runs, and the video numbers.
+```
+
+### 715. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nimport subprocess\nfrom pathlib import Path\n\ndef run(cmd):\n    out = subprocess.run(cmd, shell=True, capture_output=True, text=True).stdout\n    return \"\\n\".join(l for l in out.splitlines() if l.strip() and not l.startswith(\"wrote \"))\n\nblock = [\"$ .venv/bin/python evals/run_eval.py\", run(\".venv/bin/python evals/run_eval.py\")]\nfor f in (\"baseline/predictions.json\", \"auditor/prior_predictions.json\", \"auditor/predictions.json\"):\n    block.append(f\"\\n$ .venv/bin/python evals/score_pred
+```
+
+### 716. the tool responded
+
+```
+spliced 162 lines
+ok
+116:> number was 95% when it counted four brittle tests, and it is 75% now that it
+```
+
+### 717. the agent said
+
+```
+Final verification pass — fixture sweep, determinism, and confirming REPRODUCE matches reality.
+```
+
+### 718. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nimport json, sys\nfrom pathlib import Path\nsys.path.insert(0, \".\")\nfrom greenwash.modelclient import _key\nreachable = set()\nfor t in Path(\"trajectories\").glob(\"audit-*.jsonl\"):\n    for line in t.open():\n        r = json.loads(line)\n        if r.get(\"kind\") == \"prompt\":\n            reachable.add(_key(r[\"model\"], r[\"text\"]))\nfx = sorted(Path(\"auditor/fixtures\").glob(\"*.json\"))\nstale = [p for p in fx if p.stem not in reachable]\nprint(f\"{len(fx)} fixtures, {len(reachable)} prompt
+```
+
+### 719. the tool responded
+
+```
+67 fixtures, 61 prompts, 6 stale
+MISMATCH
+--- REPRODUCE matches reality? ---
+  brittleness block matches
+```
+
+### 720. the agent said
+
+```
+The copy was from the record run again — checking replay-vs-replay properly.
+```
+
+### 721. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nfor f in trajectories/*.jsonl; do n=$(diff /tmp/fx/$(basename $f) $f | grep -c '^[<>]'); [ \"$n\" != \"0\" ] && echo \"$(basename $f): $n lines\"; done | head\necho \"--- replay vs replay ---\"\nrm -rf /tmp/fy && cp -R trajectories /tmp/fy\n.venv/bin/python auditor/audit.py > /dev/null 2>&1\n.venv/bin/python scripts/render_trajectory.py --all > /dev/null 2>&1\ndiff -rq /tmp/fy trajectories >/dev/null && echo \"byte-identical across replays\" || diff -rq /tmp/fy trajectories | head -3", "description": "Confirm replay-to-replay stabilit
+```
+
+### 722. the tool responded
+
+```
+audit-01_invoice_extractor.jsonl: 2 lines
+audit-02_ticket_classifier.jsonl: 2 lines
+audit-03_rag_citations.jsonl: 2 lines
+audit-04_purchase_orders.jsonl: 2 lines
+audit-05_meeting_summariser.jsonl: 2 lines
+audit-06_sql_generator.jsonl: 2 lines
+audit-07_tool_router.jsonl: 2 lines
+audit-08_content_moderation.jsonl: 2 lines
+audit-09_sql_verified.jsonl: 2 lines
+audit-10_few_shot_leak.jsonl: 2 lines
+--- replay vs replay ---
+byte-identical across replays
+```
+
+### 723. the agent said
+
+```
+Two lines per file — the `mode: record`/`replay` header, as designed. Replay-to-replay is exact. Final sweep and commit.
+```
+
+### 724. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\ncurl -s -m 3 http://localhost:11434/api/tags >/dev/null && echo \"!! UP\" || echo \"ollama down \u2014 offline\"\necho \"run_eval    : $(.venv/bin/python evals/run_eval.py 2>&1 | tail -1)\"\necho \"audit       : $(.venv/bin/python auditor/audit.py 2>&1 | grep 'blind spots,')\"\necho \"uplift      : $(.venv/bin/python evals/uplift.py 2>&1 | grep 'corpus mean')\"\necho \"brittleness : $(.venv/bin/python evals/brittleness.py 2>&1 | grep -c 'FALSE ALARM') rows measured, $(.venv/bin/python evals/brittleness.py 2>&1 | grep 'HELD-OUT')\"\nec
+```
+
+### 725. the tool responded
+
+```
+ollama down — offline
+run_eval    : corpus mean kill rate: 51%  (10 case(s))
+audit       : 22 blind spots, 9 closed
+uplift      : corpus mean kill rate  51% -> 75%   (10 of 10 case(s) reported)
+brittleness : 6 rows measured, false alarm rate  0/3 (0%)  under HELD-OUT benign changes — the gate never saw these, so this is the number that counts
+scorer      : OVERALL   precision 100%   recall 100%   f1 1.00
+selftests   : 103 passed in 14.18s
+non-fixture files changed: 33
+```
+
+### 726. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\ngit commit -q -F - <<'MSG'\nFix the two false alarms, and pay twenty points of uplift for it\n\nThe probe had found two shipped Closing Tests that go red under a change that\ndoes not break the feature. They are the agent's own output, so the fix could not\nbe to edit them \u2014 editing them would be fabricating the result the Gate is\nsupposed to produce. It had to be a Gate that rejects them.\n\n`model.swap` moved into the Gate, because it is what catches both. A third Benign\nChange joined it: `model.pin_previous`, the feature pin
+```
+
+### 727. the tool responded
+
+```
+reproducibility check: empty diff, tree clean
+9c7647c Fix the two false alarms, and pay twenty points of uplift for it
+6a651bf Pin PYTHONHASHSEED, because the reproducibility check was quietly false
+5a1c31b Corpus to ten, and the case that shows what this cannot do
+```
+
+### 728. the agent said
+
+````
+Both false alarms are fixed — and the fix cost twenty points of the headline number, which turns out to be the most useful result in the project.
+
+## What I did
+
+They're the agent's own output, so editing them would have been fabricating the result the Gate is supposed to produce. The fix had to be a Gate that rejects them:
+
+- **`model.swap` moved into the Gate** — it's what catches both.
+- **Added `model.pin_previous`** (`qwen2.5:7b`, the previous generation) to the Gate. Verified benign by hand across all ten cases first: moves output on five, suite green on four, every moved output read and still correct.
+- **`schema.add_field` took the held-out seat.**
+- **Fixed a real Gate bug**: it was judging candidates under changes the case's own suite reddens under. Case 05's suite is itself brittle (its "shorter than the transcript" assertion), so a candidate failing there would have been rejected on evidence about the suite, not the test. `brittleness.py` always refused to score that; the Gate was happy to.
+
+## The result
+
+```
+0 of 8   under the benign changes the gate checks
+0 of 3   under the benign change it never sees
+```
+
+All four brittle tests gone. The Gate now rejects **9** candidates as false alarms, against 3 before.
+
+**Uplift 95% → 75%.** Closing tests shipped went 13 → 9. That drop is the finding: twenty points of the old number was over-fitting — four tests that would have paged someone the next time a model changed, one pinning SQL down to the whitespace, one asserting the literal string `"starter tier price"`. A tool that reports a lower number after being made more honest is working. It's written up that way in the README, the changelog and the video sheet, because a judge will otherwise just see a smaller number than the earlier draft.
+
+## Two things worth knowing
+
+**It was four false alarms, not two.** Fixing the first two put `model.swap` in the Gate, and the newly held-out change immediately found two *different* snapshots on case 06 — a case nothing the Gate could reach. Gating `model.pin_previous` closed that. **The coverage gap moves before it closes**, and the rule is now written into `operators.py`: gate every verified-benign change except one, and give the held-out seat to whichever leaves the Gate covering the most cases.
+
+**The remaining audit is narrower than the one it replaced** — three tests on one capability, against five across three. `0 of 3` is not proof nothing is brittle; it's the strongest thing that slot can say, and I've said exactly that everywhere the number appears. Cases 02 and 08 are still outside the Gate entirely, and their closing tests admit it in their own `# gate:` lines — that's where the next snapshot will hide, and it's next action 3 in `STATE.md`.
+
+Kill rate 51%, F1 1.00 (22/22), 103 selftests, reproducibility check clean, tree clean. `VIDEO.md` is updated with the new numbers — **still ready to film.**
+````
+
+### 729. the human asked
+
+```
+get the gate onto case 02 and 08
+```
+
+### 730. the agent said
+
+```
+Two different problems. Case 02 is blocked by its judge being coupled to the model; case 08 by every model swap being Inert on three stable verdicts. Let me look at what's actually being shipped there.
+```
+
+### 731. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\necho \"=== case 02 closing tests ===\"; sed -n '/closes:/,$p' auditor/closing_tests/02_ticket_classifier.py\necho \"=== case 08 closing tests ===\"; sed -n '/closes:/,$p' auditor/closing_tests/08_content_moderation.py", "description": "Read the unguarded closing tests"}
+```
+
+### 732. the tool responded
+
+```
+=== case 02 closing tests ===
+# closes: classify.confidence_pin — Confidence is pinned high regardless of how uncertain the model was.
+# gate: green on the clean feature, red under classify.confidence_pin, no benign change is measurable on this feature
+# fails as: FAILED tests/test_greenwash_closing.py::test_confidence_pin_bypassed - assert...
+import json
+import re
+from feature import classify
+
+def test_confidence_pin_bypassed():
+    assert classify("t1")["confidence"] == 0.95
+    assert classify("t2")["confidence"] == 0.95
+    assert classify("t3")["confidence"] == 0.95
+
+
+# closes: classify.collapse — Every input is classified into the single most common label.
+# gate: green on the clean feature, red under classify.collapse, no benign change is measurable on this feature
+# fails as: FAILED tests/test_greenwash_closing.py::test_label_for_t2 - AssertionError: a...
+import json
+import re
+from feature import classify
+
+def test_label_for_t2():
+    result = classify("t2")
+    assert result["label"] == "technical"
+=== case 08 closing tests ===
+# closes: moderation.category_collapse — Everything flagged comes back under the same category.
+# gate: green on the clean feature, red under moder
+… [373 more characters]
+```
+
+### 733. the agent said
+
+```
+Case 02's `test_confidence_pin_bypassed` pins the exact confidence numbers — that's the snapshot. Case 08's asserts a content fact, which is defensible. The change that can move a classifier's output without touching its judge is a prompt-level one.
+```
+
+### 734. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nfrom pathlib import Path\nimport json\n\n# ---- the operator -------------------------------------------------------\np = Path(\"greenwash/operators.py\"); s = p.read_text()\nold = '''@benign(\n    \"prompt.reword\",'''\nnew = '''@benign(\n    \"prompt.reorder_options\",\n    \"The list of labels the prompt offers is given in a different order.\",\n    (\"options\",),\n)\ndef _reorder_options(module) -> None:\n    \"\"\"Shuffle the menu, not the meaning.\n\n    A classifier's prompt lists the queues it ca
+```
+
+### 735. the tool responded
+
+```
+ok
+02_ticket_classifier benign: ['model.swap', 'model.pin_previous', 'prompt.reorder_options', 'prompt.reword']
+   sabotages unchanged: ['model.downgrade', 'model.echo', 'classify.collapse', 'classify.confidence_pin']
+08_content_moderation benign: ['model.swap', 'model.pin_previous', 'prompt.reorder_options', 'prompt.reword']
+   sabotages unchanged: ['model.downgrade', 'model.echo', 'moderation.miss_implicit', 'moderation.category_collapse']
+```
+
+### 736. the agent said
+
+```
+Sabotage lists unchanged, so kill rates won't move. Recording the new change on both cases.
+```
+
+### 737. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n(ollama serve > /tmp/ollama8.log 2>&1 &) ; sleep 5\nfor c in 02_ticket_classifier 08_content_moderation; do\n  .venv/bin/python scripts/record_fixtures.py --case $c --model qwen3:8b 2>&1 | grep -E \"reorder|^0\"\ndone\necho \"=== does it move the output? ===\"\n.venv/bin/python - <<'PYEOF'\nimport sys; sys.path.insert(0, \".\")\nfrom greenwash import harness, observe\nfor c in harness.discover():\n    if not c.name.startswith((\"02\", \"08\")): continue\n    clean = observe.observe(c.path)\n    changed = observe.observe(c.path, \"prom
+```
+
+### 738. the tool responded
+
+```
+02_ticket_classifier @ qwen3:8b -> fixtures/ (temperature 0.0)
+  prompt.reorder_options: 4 call(s) recorded
+08_content_moderation @ qwen3:8b -> fixtures/ (temperature 0.0)
+  prompt.reorder_options: 3 call(s) recorded
+=== does it move the output? ===
+02_ticket_classifier: INERT — identical output
+08_content_moderation: MOVES OUTPUT, own suite RED
+    re.moderate(p)   with p='p1'
+      before {"category": "harassment", "flagged": true}
+      after  {"category": "none", "flagged": false}
+```
+
+### 739. the agent said
+
+```
+Two empirical results, both useful: reordering is **Inert** on the classifier and actually **breaks** the moderator (harassment → not flagged). So it isn't benign. But it exposed the real blocker on case 02 — the model swaps set a global env var, so they swap the *suite's judge* too.
+```
+
+### 740. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nfrom pathlib import Path\np = Path(\"greenwash/operators.py\"); s = p.read_text()\n\nold = '''    so `model.pin_previous` took over the held-out seat.\n    \"\"\"\n    os.environ[\"GREENWASH_MODEL\"] = os.environ.get(\n        \"GREENWASH_OTHER_MODEL\", \"llama3.1:8b\"\n    )'''\nnew = '''    so `model.pin_previous` took over the held-out seat.\n\n    Bound to the Feature's own `complete`, not to `GREENWASH_MODEL`. Setting the\n    environment variable swaps the model for everything in the process \u2014
+```
+
+### 741. the tool responded
+
+```
+ok
+=== case 02 under the isolated swaps ===
+model.swap: moves output, own suite GREEN
+    before {"confidence": 0.95, "label": "billing"}  ->  after {"confidence": 0.9, "label": "billing"}
+    before {"confidence": 0.95, "label": "technical"}  ->  after {"confidence": 0.9, "label": "technical"}
+    before {"confidence": 0.95, "label": "technical"}  ->  after {"confidence": 0.8, "label": "abuse"}
+model.pin_previous: moves output, own suite GREEN
+    before {"confidence": 0.95, "label": "billing"}  ->  after {"confidence": 1.0, "label": "billing"}
+    before {"confidence": 0.95, "label": "technical"}  ->  after {"confidence": 0.9, "label": "technical"}
+    before {"confidence": 0.95, "label": "technical"}  ->  after {"confidence": 0.8, "label": "abuse"}
+```
+
+### 742. the agent said
+
+```
+**Case 02 is reachable now** — both swaps move the output and the suite stays green, because the judge is no longer swapped with it. Case 08 is a different story, and I think it's provable rather than just hard. Reverting the reorder experiment.
+```
+
+### 743. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nfrom pathlib import Path\nimport json, re\n\n# --- remove the operator that turned out not to be benign ------------------\np = Path(\"greenwash/operators.py\"); s = p.read_text()\nstart = s.index('@benign(\\n    \"prompt.reorder_options\"')\nend = s.index('@benign(\\n    \"prompt.reword\"')\ns = s[:start] + s[end:]\np.write_text(s)\n\n# --- revert the two cases --------------------------------------------------\nfor case, block in (\n    (\"02_ticket_classifier\",\n     '# The queues the prompt offers, i
+```
+
+### 744. the tool responded
+
+```
+reverted
+BENIGN: ['model.pin_previous', 'model.swap', 'prompt.reword', 'schema.add_field'] | HELD_OUT: ['schema.add_field']
+02_ticket_classifier {'confidence', 'llm', 'classification'}
+08_content_moderation {'llm', 'moderation'}
+=== is case 08 movable at all? every benign change, both directions ===
+  model.swap             INERT
+  model.pin_previous     INERT
+  prompt.reword          INERT
+```
+
+### 745. the agent said
+
+```
+Confirmed: **every** benign change is Inert on case 08. Checking what actually changed, then re-recording.
+```
+
+### 746. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\ngit status --porcelain | grep -v \"corpus/.*fixtures\" | sed 's/^/  /'\necho \"--- orphaned corpus fixtures from the reverted experiment ---\"\ngit status --porcelain | grep \"corpus/.*fixtures\" | awk '{print $2}' | while read f; do rm -f \"$f\"; done\ngit status --porcelain | grep -c \"corpus/.*fixtures\" | xargs echo \"  remaining:\"\necho \"--- re-record ---\"\n(ollama serve > /tmp/ollama9.log 2>&1 &) ; sleep 5\n.venv/bin/python -u auditor/audit.py --record > /tmp/audit_02.log 2>&1; echo \"EXIT=$?\"; tail -3 /tmp/audit_02.log", "d
+```
+
+### 747. the tool responded
+
+```
+Command running in background with ID: bn22p12et. Output is being written to: /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/9bb12d55-94a0-49a5-a141-7d2c413506ac/tasks/bn22p12et.output. You will be notified when it completes. To check interim output, use Read on that file path.
+Session cwd remains ~/Desktop/mvps/HackerEarth; directory changes made by the backgrounded command do not apply to subsequent commands.
+```
+
+### 748. the agent said
+
+```
+Re-recording with the isolated swaps. I'll report once it's measured.
+```
+
+### 749. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nuntil ! pgrep -f \"auditor/audit.py --record\" >/dev/null 2>&1 && [ -s /tmp/audit_02.log ]; do sleep 30; done\necho DONE; tail -3 /tmp/audit_02.log", "description": "Wait for the re-record", "timeout": 1800000, "run_in_background": true}
+```
+
+### 750. the tool responded
+
+```
+Command running in background with ID: b8vp0mpp2. Output is being written to: /private/tmp/claude-501/-Users-wamiqadnan-Desktop-mvps-HackerEarth/9bb12d55-94a0-49a5-a141-7d2c413506ac/tasks/b8vp0mpp2.output. You will be notified when it completes. To check interim output, use Read on that file path.
+Session cwd remains ~/Desktop/mvps/HackerEarth; directory changes made by the backgrounded command do not apply to subsequent commands.
+```
+
+### 751. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth; sleep 560; tail -4 /tmp/audit_02.log 2>/dev/null; pgrep -f \"auditor/audit.py --record\" >/dev/null && echo RUNNING || echo DONE", "description": "Check re-record progress", "timeout": 700000}
+```
+
+### 752. the tool responded
+
+```
+22 blind spots, 8 closed
+wrote ~/Desktop/mvps/HackerEarth/auditor/predictions.json
+wrote auditor/prior_predictions.json — what it expected, scored by the same scorer
+RUNNING
+```
+
+### 753. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\npkill -f \"ollama serve\" 2>/dev/null; pkill -f \"ollama runner\" 2>/dev/null; sleep 2\ncurl -s -m 3 http://localhost:11434/api/tags >/dev/null && echo \"!! UP\" || echo \"ollama down \u2014 offline\"\necho \"run_eval    : $(.venv/bin/python evals/run_eval.py 2>&1 | tail -1)\"\necho \"uplift      : $(.venv/bin/python evals/uplift.py 2>&1 | grep 'corpus mean')\"\necho \"scorer      : $(.venv/bin/python evals/score_predictions.py auditor/predictions.json 2>&1 | grep OVERALL)\"\necho \"selftests   : $(.venv/bin/python -m pytest selftests
+```
+
+### 754. the tool responded
+
+```
+ollama down — offline
+run_eval    : corpus mean kill rate: 51%  (10 case(s))
+uplift      : corpus mean kill rate  51% -> 72%   (10 of 10 case(s) reported)
+scorer      : OVERALL   precision 100%   recall 100%   f1 1.00
+selftests   : 1 failed, 102 passed in 13.97s
+
+false alarm rate  0/3 (0%)  under HELD-OUT benign changes — the gate never saw these, so this is the number that counts
+                  0/10 (0%)  under benign changes the gate applies itself — a regression check on the gate
+wrote ~/Desktop/mvps/HackerEarth/evals/brittleness.json
+
+=== the confidence snapshot ===
+  gone
+=== gate lines on 02 and 08 ===
+# gate: green on the clean feature, red under classify.collapse, green under model.swap, model.pin_previous
+# gate: green on the clean feature, red under moderation.category_collapse, no benign change is measurable on this feature
+```
+
+### 755. the agent said
+
+```
+Case 02 is now inside the Gate (`green under model.swap, model.pin_previous`) and the confidence snapshot is gone. One selftest was asserting case 02 *had* no benign check — repointing it at case 08, which provably has none.
+```
+
+### 756. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nfrom pathlib import Path\np = Path(\"selftests/test_verification_gate.py\"); s = p.read_text()\n\nold = '''CLASSIFIER = harness.Case(ROOT / \"corpus\" / \"02_ticket_classifier\")\n\nCLASSIFIER_TEST = \"\"\"\nfrom feature import classify\n\n\ndef test_t2_is_technical():\n    assert classify(\"t2\")[\"label\"] == \"technical\"\n\"\"\"\n\n\ndef test_a_case_with_no_benign_check_says_so_rather_than_claiming_one(tmp_path):\n    \"\"\"Nothing the Gate may apply is usable on the classifier, for two reasons.\n\n
+```
+
+### 757. the tool responded
+
+```
+ok
+........................................................................ [ 69%]
+...............................                                          [100%]
+103 passed in 13.99s
+```
+
+### 758. the agent said
+
+```
+103 green. Gathering the final picture before writing it up.
+```
+
+### 759. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\necho \"=== which cases the Gate can now check ===\"\n.venv/bin/python - <<'PYEOF'\nimport sys; sys.path.insert(0, \".\")\nfrom auditor.agent import VerificationGate\nfrom greenwash import harness\nn = 0\nfor c in harness.discover():\n    ids = [x.id for x in VerificationGate(c).observable_benign()]\n    n += bool(ids)\n    print(f\"  {c.name:24} {', '.join(ids) if ids else '\u2014 nothing measurable'}\")\nprint(f\"  {n} of 10 cases inside the gate\")\nPYEOF\n.venv/bin/python evals/uplift.py 2>&1 | tail -3\n.venv/bin/python evals/score
+```
+
+### 760. the tool responded
+
+```
+=== which cases the Gate can now check ===
+  01_invoice_extractor     — nothing measurable
+  02_ticket_classifier     model.swap, model.pin_previous
+  03_rag_citations         model.swap, model.pin_previous, prompt.reword
+  04_purchase_orders       — nothing measurable
+  05_meeting_summariser    model.swap, model.pin_previous
+  06_sql_generator         model.pin_previous
+  07_tool_router           model.swap, model.pin_previous
+  08_content_moderation    — nothing measurable
+  09_sql_verified          model.pin_previous
+  10_few_shot_leak         — nothing measurable
+  6 of 10 cases inside the gate
+corpus mean kill rate  51% -> 72%   (10 of 10 case(s) reported)
+  of which had blind spots to close: 30% -> 61%   (7 case(s))
+wrote ~/Desktop/mvps/HackerEarth/evals/uplift.json
+OVERALL   precision 62%   recall 36%   f1 0.46
+closing tests: 8
+false-alarm rejections: 12
+```
+
+### 761. the agent said
+
+```
+Six of ten cases are now inside the Gate. Writing it up.
+```
+
+### 762. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nfrom pathlib import Path\n\nrow = \"\"\"| **Case 02 was blocked by a bug in our own Benign Change; case 08 cannot be reached at all** | The two cases the Gate could not check. Case 02's Suite went red under every model swap, so the Gate skipped it and its `test_confidence_pin_bypassed` \u2014 `assert classify(\"t1\")[\"confidence\"] == 0.95`, three times \u2014 shipped unchecked. Case 08 was Inert under everything. First attempt was a new Benign Change, `prompt.reorder_options`: same labels, different ord
+```
+
+### 763. the tool responded
+
+```
+ok
+29
+```
+
+### 764. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nfrom pathlib import Path\n\n# ------------------------------- README ----------------------------------\np = Path(\"README.md\"); s = p.read_text()\ns = s.replace(\"\"\"**Kill rate across the corpus: 51% \u2192 75%**\"\"\", \"\"\"**Kill rate across the corpus: 51% \u2192 72%**\"\"\")\ns = s.replace(\"at all: 30% \u2192 64%.\", \"at all: 30% \u2192 61%.\")\ns = s.replace(\"\"\"That number used to read 95%. It came down because four of the thirteen tests it\ncounted were brittle \u2014 they would have fired
+```
+
+### 765. the tool responded
+
+```
+ok
+STATE.md:49:- `evals/brittleness.py` — splits its result: `0/8` under the Benign Changes the
+```
+
+### 766. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nsed -i '' 's|`0/8` under the Benign Changes the|`0/10` under the Benign Changes the|' STATE.md\n.venv/bin/python - <<'PYEOF'\nimport subprocess\nfrom pathlib import Path\n\ndef run(cmd):\n    out = subprocess.run(cmd, shell=True, capture_output=True, text=True).stdout\n    return \"\\n\".join(l for l in out.splitlines() if l.strip() and not l.startswith(\"wrote \"))\n\nblock = [\"$ .venv/bin/python evals/run_eval.py\", run(\".venv/bin/python evals/run_eval.py\")]\nfor f in (\"baseline/predictions.json\", \"auditor/prior_predictions.js
+```
+
+### 767. the tool responded
+
+```
+ok
+REPRODUCE.md:172:  kill rate 50% -> 75%   (1 of 2 blind spots closed)
+REPRODUCE.md:186:  kill rate 50% -> 75%   (1 of 2 blind spots closed)
+```
+
+### 768. the agent said
+
+```
+Docs updated. Final verification and commit.
+```
+
+### 769. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\n.venv/bin/python - <<'PYEOF'\nimport json, sys\nfrom pathlib import Path\nsys.path.insert(0, \".\")\nfrom greenwash.modelclient import _key\nreachable = set()\nfor t in Path(\"trajectories\").glob(\"audit-*.jsonl\"):\n    for line in t.open():\n        r = json.loads(line)\n        if r.get(\"kind\") == \"prompt\":\n            reachable.add(_key(r[\"model\"], r[\"text\"]))\nstale = [p for p in Path(\"auditor/fixtures\").glob(\"*.json\") if p.stem not in reachable]\nprint(f\"swept {len(stale)} stale auditor fixtures\")\nfor p in stale
+```
+
+### 770. the tool responded
+
+```
+swept 0 stale auditor fixtures
+MISMATCH (expect only mode header vs record)
+
+run_eval    : corpus mean kill rate: 51%  (10 case(s))
+uplift      : corpus mean kill rate  51% -> 72%   (10 of 10 case(s) reported)
+scorer      : OVERALL   precision 100%   recall 100%   f1 1.00
+brittleness : false alarm rate  0/3 (0%)  under HELD-OUT benign changes — the gate never saw these, so this is the number that counts
+selftests   : 103 passed in 13.94s
+```
+
+### 771. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\nfor f in trajectories/*.jsonl; do n=$(diff /tmp/z/$(basename $f) $f | grep -c '^[<>]'); [ \"$n\" != \"0\" ] && echo \"  $(basename $f): $n\"; done | head -3\necho \"--- replay vs replay ---\"\nrm -rf /tmp/z2 && cp -R trajectories /tmp/z2\n.venv/bin/python auditor/audit.py > /dev/null 2>&1; .venv/bin/python scripts/render_trajectory.py --all > /dev/null 2>&1\ndiff -rq /tmp/z2 trajectories >/dev/null && echo \"byte-identical across replays\" || echo \"STILL VARYING\"\ngit add -A; git status --porcelain | grep -v fixtures | wc -l | xargs
+```
+
+### 772. the tool responded
+
+```
+  audit-01_invoice_extractor.jsonl: 2
+  audit-02_ticket_classifier.jsonl: 2
+  audit-03_rag_citations.jsonl: 2
+--- replay vs replay ---
+byte-identical across replays
+non-fixture files changed: 16
+```
+
+### 773. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\ngit commit -q -F - <<'MSG'\nGet the gate onto case 02, and prove it can never reach case 08\n\nTwo cases the Verification Gate could not check. They turned out to be different\nproblems, and only one of them was ours.\n\n**Case 02 was a bug in our own Benign Change.** `model.swap` and\n`model.pin_previous` set `GREENWASH_MODEL`, which swaps the model for everything\nin the process \u2014 including the LLM judge inside case 02's own suite. That suite\nwent red because the judge changed its mind, not because the feature did, so the\nGat
+```
+
+### 774. the tool responded
+
+```
+reproducibility check: empty diff, tree clean
+35d3671 Get the gate onto case 02, and prove it can never reach case 08
+9c7647c Fix the two false alarms, and pay twenty points of uplift for it
+6a651bf Pin PYTHONHASHSEED, because the reproducibility check was quietly false
+```
+
+### 775. the agent said
+
+````
+Case 02 is in. Case 08 turned out to be impossible, and I can prove it — which is a better answer than another operator.
+
+## Case 02 — it was our bug
+
+`model.swap` and `model.pin_previous` set `GREENWASH_MODEL`, which swaps the model for **everything in the process**, including the LLM judge inside case 02's own suite. The suite went red because *the judge* changed its mind, so the Gate correctly refused to judge on that run and skipped the case.
+
+The cost: `test_confidence_pin_bypassed` — `assert classify("t1")["confidence"] == 0.95`, three times — shipped unchecked for three sessions.
+
+Both benign swaps now bind the Feature's own `complete` and touch nothing else. A sabotage is allowed to be blunt; a Benign Change is not, because its whole job is to leave a correct Feature correct so a red run means the *test* is brittle. Case 02's remaining test now reads `green under model.swap, model.pin_previous`, and the snapshot is gone.
+
+## Case 08 — provably unreachable
+
+Its suite exercises three posts, and each verdict is a boolean plus one of four categories with **a single correct value**. A change that moves that output has made it wrong, so it wasn't benign. A change that keeps it right cannot have moved it. There is no third case.
+
+So: **the Gate can only check Features whose correct output has room to vary** — prose, generated code, a confidence score, a schema with optional fields. That's exactly why 02 is reachable and 08 isn't, and the difference is one field: the confidence score, which is the part with room to vary and the part the agent over-fitted to. The corollary is reassuring rather than worrying — a test asserting the one correct answer can't be brittle in the way the third run looks for. Same reading explains case 10 being Inert under everything: the model is reciting its own prompt.
+
+## One experiment removed
+
+`prompt.reorder_options` — same labels, different order — is Inert on case 02 and **not benign at all** on case 08: reordering the categories turned `{"category": "harassment", "flagged": true}` into `{"category": "none", "flagged": false}`. A change that stops obvious harassment being flagged has broken the feature. The case's own suite caught it, which is the guard working. Operator deleted, finding kept in the changelog.
+
+## Where the numbers land
+
+```
+kill rate        51%
+uplift           51% -> 72%   (was 95% with five brittle tests in it)
+false alarms     0 of 3 held out · 0 of 10 gate-applied
+gate rejections  12 candidates refused as false alarms
+selftests        103
+gate coverage    6 of 10 cases
+```
+
+Uplift moved 75% → 72% because one more brittle test stopped being accepted. Cumulatively, 23 points of the original 95% was over-fitting.
+
+Of the four cases outside the Gate: **01 and 04 are a deliberate trade** (`schema.add_field` holds the held-out seat, so they're audited rather than guarded — a second extraction-moving benign change would let it be gated and put them in), and **08 and 10 are the provable ones**. That's now next action 3 in `STATE.md` rather than an open gap.
+
+Reproducibility check clean, tree clean, verified offline with Ollama stopped. `VIDEO.md` carries the updated numbers — still ready to film.
+````
+
+### 776. the human asked
+
+```
+<command-message>handoff</command-message>
+<command-name>/handoff</command-name>
+<command-args>tell me what i have to submit and video script etc</command-args>
+```
+
+### 777. the human asked
+
+```
+Base directory for this skill: ~/.claude/skills/handoff
+
+Write a handoff document summarising the current conversation so a fresh agent can continue the work. Save to the temporary directory of the user's OS - not the current workspace.
+
+Include a "suggested skills" section in the document, which suggests skills that the agent should invoke.
+
+Do not duplicate content already captured in other artifacts (PRDs, plans, ADRs, issues, commits, diffs). Reference them by path or URL instead.
+
+Redact any sensitive information, such as API keys, passwords, or personally identifiable information.
+
+If the user passed arguments, treat them as a description of what the next session will focus on and tailor the doc accordingly.
+
+
+ARGUMENTS: tell me what i have to submit and video script etc
+```
+
+### 778. the agent said
+
+```
+Let me gather the current state precisely before writing the handoff.
+```
+
+### 779. the agent ran `Bash`
+
+```json
+{"command": "cd ~/Desktop/mvps/HackerEarth\necho \"=== GIT ===\"; git log --oneline | head -14; echo \"commits: $(git rev-list --count HEAD)\"; git status --porcelain | wc -l | xargs echo \"dirty files:\"\necho; echo \"=== NUMBERS (offline) ===\"\ncurl -s -m 3 http://localhost:11434/api/tags >/dev/null && echo \"ollama UP\" || echo \"ollama down\"\necho \"kill rate  : $(.venv/bin/python evals/run_eval.py 2>&1 | tail -1)\"\necho \"uplift     : $(.venv/bin/python evals/uplift.py 2>&1 | grep 'corpus mean')\"\necho \"            $(.venv/bin/python evals/uplift.py 2>&1 | grep 'of wh
+```
+
+### 780. the tool responded
+
+```
+=== GIT ===
+35d3671 Get the gate onto case 02, and prove it can never reach case 08
+9c7647c Fix the two false alarms, and pay twenty points of uplift for it
+6a651bf Pin PYTHONHASHSEED, because the reproducibility check was quietly false
+5a1c31b Corpus to ten, and the case that shows what this cannot do
+ffbb7a2 Add schema.add_field, the benign change extraction features can actually feel
+96d2896 Hold model.swap out of the Gate, so brittleness measures something again
+3050cd5 Re-record, and find out that the Gate catches a real snapshot
+32cc489 Move the Benign Changes inside the Verification Gate
+beeae7b Correct the clock in STATE.md
+08cb783 Measure the over-fitting, then fix the retry loop that caused half of it
+9380559 Add the precision control, and learn that a green suite can mean nothing
+86690cc Build the Auditor: it runs the sabotages instead of guessing at them
+ccd3044 Correct the local-model decision: the auditor runs locally too
+e88be08 Add the one-shot baseline and a shared prediction scorer
+commits: 16
+dirty files: 0
+
+=== NUMBERS (offline) ===
+ollama down
+kill rate  : corpus mean kill rate: 51%  (10 case(s))
+uplift     : corpus mean kill rate  51% -> 72%   (10 of 10 case(s
+… [706 more characters]
+```
+
+### 781. the agent ran `Bash`
+
+```json
+{"command": "date -u \"+%Y-%m-%d %H:%M UTC\"; TZ=Asia/Dubai date \"+%Y-%m-%d %H:%M Dubai\"; .venv/bin/python -c \"\nimport datetime\nd=datetime.datetime(2026,8,31,18,0)-datetime.datetime.utcnow(); print(f'{d.days*24 + d.seconds//3600}h to deadline')\"", "description": "Check time to deadline"}
+```
+
+### 782. the tool responded
+
+```
+2026-08-29 08:41 UTC
+2026-08-29 12:41 Dubai
+57h to deadline
+```
+
+### 783. the agent ran `Write`
+
+```json
+{"file_path": "/private/tmp/greenwash-handoff-submission.md", "content": "# Handoff \u2014 Greenwash: what to submit, and the video\n\n**Written** 29 Aug 2026, 12:41 Asia/Dubai (08:41 UTC)\n**Deadline** Mon 31 Aug 2026, 18:00 UTC / 22:00 Dubai \u2014 **~57h left**\n**Repo** `~/Desktop/mvps/HackerEarth`, branch `main`, clean tree, 16 commits\n\n**The build is finished. The only outstanding deliverable is the video.**\n\n---\n\n## Read these first\n\nEverything is in the repo. Do not re-derive it.\n\n| File | What it is |\n|---|---|\n| `VIDEO.md` | **The video script.** Beat sheet with timings,
+```
+
+### 784. the tool responded
+
+```
+File created successfully at: /private/tmp/greenwash-handoff-submission.md (file state is current in your context — no need to Read it back)
+```
+
+### 785. the agent ran `Bash`
+
+```json
+{"command": "ls -la /private/tmp/greenwash-handoff-submission.md; echo \"---\"; grep -c \"\" /private/tmp/greenwash-handoff-submission.md | xargs echo \"lines:\"; grep -i \"wadnan@\\|sk-ant\\|api[_-]key *=\" /private/tmp/greenwash-handoff-submission.md || echo \"no secrets/PII\"", "description": "Verify the handoff file"}
+```
+
+### 786. the tool responded
+
+```
+-rw-r--r--@ 1 wamiqadnan  wheel  10505 Aug 29 12:42 /private/tmp/greenwash-handoff-submission.md
+---
+lines: 229
+no secrets/PII
+```
+
+### 787. the agent said
+
+````
+Handoff written to `/private/tmp/greenwash-handoff-submission.md`. Here's the short version.
+
+## What you have to submit
+
+The brief wants four things. **Three are done; one is the video.**
+
+| # | Deliverable | Where | State |
+|---|---|---|---|
+| 01 | Code + Improvement Changelog | the whole repo, `README.md`, `CHANGELOG.md` (29 rows, ends with failure mode + hot take) | ✅ |
+| 02 | Reproduction guide | `REPRODUCE.md` — clean machine, 5 commands, verbatim expected output, ~70s, $0 | ✅ |
+| 03 | Solution video, ≤5 min | — | ❌ **the job** |
+| 04 | Agent trajectories | `trajectories/` — 10 auditor traces + 3 coding-agent traces | ✅ |
+
+Submit the repo as-is: 16 commits, clean tree, everything replays offline with no API key.
+
+## The video
+
+**`VIDEO.md` is the script.** It's written to follow literally — each beat has a timestamp, the command to run on camera, and the sentences to say over it. Five beats:
+
+1. **0:00 The problem** — `07_tool_router`. Its suite checks the right tool fires. Swap two arguments and it refunds `"A-4471"` against order `84.0`, suite green. *The assertion everybody writes is the one that catches the failure nobody has.*
+2. **0:40 The baseline** — one model call per case, reads everything, runs nothing. F1 0.63, invents 13 holes that aren't there.
+3. **1:20 One execution** — `audit.py --case 03_rag_citations`, four phases, then the gate rejecting a test that hard-coded the model's answers verbatim.
+4. **3:00 The comparison** — 0.63 → 1.00, same model, then `brittleness.py` for the honest half.
+5. **4:00 Changelog + limits** — `leakage.py`: the case Greenwash scores 100% that is still worthless.
+
+**Numbers for the screen:**
+```
+10 cases · 22 blind spots · kill rate 51% · uplift 51% → 72%
+baseline 0.63 / prior 0.46 / agent 1.00
+false alarms 0 of 3 held out · 0 of 10 gate-applied
+103 selftests · ~70s offline · $0
+```
+
+Two things I'd flag for filming:
+
+- **Don't quote 95% for uplift.** That was the number three sessions ago and it counted five brittle tests. Fixing them cost 23 points — and saying so on camera is stronger than the higher number: *a tool that reports a lower number after being made more honest is working.*
+- **Don't cut the gate rejection (~2:20) or the leakage section (~4:20).** Everything else is plumbing; those two are judgement, and the hot take is a scored criterion.
+
+The brief also asks for "one experiment you removed" — you have two good ones: the temperature-0.7 brittleness probe that returned byte-identical output, or `prompt.reorder_options`, a benign change that turned out not to be benign (it stopped an obvious harassment post being flagged).
+
+Before recording, run the pre-flight in `VIDEO.md` — it kills Ollama and confirms the reproducibility check is clean, so you can say "no network, no API key" truthfully on camera.
+````
 

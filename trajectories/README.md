@@ -29,4 +29,16 @@ a reproduction run is empty if the reproduction is faithful.
 
 `building-greenwash-*.md` are traces of the coding agent used to build this
 repository, with the same structure: what it was asked, what it ran, what came
-back, and what it did next.
+back, and what it did next. Four sessions, in order:
+
+| Session | What was built |
+|---|---|
+| 1 — the rig | the Harness, the Operator library, the record/replay seam, the first Corpus Cases |
+| 2 — the auditor | the Auditor's four phases, its tools, and the Verification Gate |
+| 3 — the corpus | the corpus to ten, the held-out Benign Change, and the twenty points of Uplift that fixing the false alarms cost |
+| 4 — gate and corpus | `schema.add_confidence`, which let the Gate reach every case it can, and the corpus to twelve |
+
+They are rendered from the session logs by `scripts/render_coding_trajectory.py`,
+which drops harness plumbing, redacts email addresses and home paths, and
+truncates tool results. Re-render the newest one **last**, after the final
+commit — the moment anybody works in the repo again, it is out of date.

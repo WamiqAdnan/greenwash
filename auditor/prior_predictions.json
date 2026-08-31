@@ -4,8 +4,7 @@
   "verified": false,
   "predictions": {
     "01_invoice_extractor": [
-      "schema.drop_field",
-      "model.downgrade"
+      "schema.drop_field"
     ],
     "02_ticket_classifier": [
       "classify.confidence_pin"
@@ -14,7 +13,8 @@
       "citation.fabricate"
     ],
     "04_purchase_orders": [
-      "schema.drop_field"
+      "schema.drop_field",
+      "model.downgrade"
     ],
     "05_meeting_summariser": [
       "summary.drop_decisions",
@@ -35,6 +35,14 @@
     ],
     "10_few_shot_leak": [
       "classify.collapse"
+    ],
+    "11_document_reranker": [
+      "rerank.identity",
+      "rerank.reverse"
+    ],
+    "12_agent_loop": [
+      "agent.answer_ignores_tools",
+      "agent.gives_up_quietly"
     ]
   },
   "hallucinated_ids": {
@@ -47,7 +55,9 @@
     "07_tool_router": [],
     "08_content_moderation": [],
     "09_sql_verified": [],
-    "10_few_shot_leak": []
+    "10_few_shot_leak": [],
+    "11_document_reranker": [],
+    "12_agent_loop": []
   },
   "note": "what the auditor expected before it ran anything. Evidence, never a finding \u2014 see docs/adr/0001."
 }

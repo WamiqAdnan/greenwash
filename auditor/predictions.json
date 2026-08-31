@@ -4,10 +4,10 @@
   "verified": true,
   "predictions": {
     "01_invoice_extractor": [
-      "model.downgrade",
       "value.zero_amounts",
       "value.null_fields",
-      "value.transpose_digits"
+      "value.transpose_digits",
+      "model.downgrade"
     ],
     "02_ticket_classifier": [
       "classify.confidence_pin",
@@ -41,7 +41,16 @@
       "moderation.category_collapse"
     ],
     "09_sql_verified": [],
-    "10_few_shot_leak": []
+    "10_few_shot_leak": [],
+    "11_document_reranker": [
+      "rerank.identity",
+      "rerank.reverse",
+      "rerank.demote_best"
+    ],
+    "12_agent_loop": [
+      "agent.answer_ignores_tools",
+      "agent.gives_up_quietly"
+    ]
   },
   "hallucinated_ids": {
     "01_invoice_extractor": [],
@@ -53,13 +62,15 @@
     "07_tool_router": [],
     "08_content_moderation": [],
     "09_sql_verified": [],
-    "10_few_shot_leak": []
+    "10_few_shot_leak": [],
+    "11_document_reranker": [],
+    "12_agent_loop": []
   },
   "closed": {
     "01_invoice_extractor": [
-      "model.downgrade",
       "value.zero_amounts",
-      "value.transpose_digits"
+      "value.transpose_digits",
+      "model.downgrade"
     ],
     "02_ticket_classifier": [
       "classify.collapse"
@@ -78,22 +89,26 @@
       "moderation.category_collapse"
     ],
     "09_sql_verified": [],
-    "10_few_shot_leak": []
+    "10_few_shot_leak": [],
+    "11_document_reranker": [
+      "rerank.identity",
+      "rerank.reverse"
+    ],
+    "12_agent_loop": []
   },
   "prior": {
     "01_invoice_extractor": {
       "order": [
         "schema.drop_field",
-        "model.downgrade",
         "value.zero_amounts",
         "value.null_fields",
-        "value.transpose_digits"
-      ],
-      "expect_missed": [
-        "schema.drop_field",
+        "value.transpose_digits",
         "model.downgrade"
       ],
-      "why": "The suite lacks checks for field presence and model behavior, making schema changes and model degradation the most likely to slip through undetected.",
+      "expect_missed": [
+        "schema.drop_field"
+      ],
+      "why": "The suite does not check for the presence of all expected fields, so a dropped field would go undetected.",
       "invented_ids": []
     },
     "02_ticket_classifier": {
@@ -132,9 +147,10 @@
         "model.downgrade"
       ],
       "expect_missed": [
-        "schema.drop_field"
+        "schema.drop_field",
+        "model.downgrade"
       ],
-      "why": "The suite checks for presence of fields but does not verify that all required fields are present, making it blind to silently dropped fields.",
+      "why": "The suite checks for presence of fields and their types, but does not verify that all required fields are present. It also does not check for the presence of fields that might be silently dropped or that the model might be downgraded to a weaker version.",
       "invented_ids": []
     },
     "05_meeting_summariser": {
@@ -214,6 +230,36 @@
         "classify.collapse"
       ],
       "why": "The suite explicitly tests all labels and expected outcomes, making it most likely to catch echo and downgrade, but collapse is a structural change that the suite does not test.",
+      "invented_ids": []
+    },
+    "11_document_reranker": {
+      "order": [
+        "rerank.identity",
+        "rerank.reverse",
+        "rerank.demote_best",
+        "model.downgrade",
+        "model.echo"
+      ],
+      "expect_missed": [
+        "rerank.identity",
+        "rerank.reverse"
+      ],
+      "why": "The suite only checks for completeness, uniqueness, and correctness of document IDs, not their order, so it will miss any sabotage that changes the ranking order.",
+      "invented_ids": []
+    },
+    "12_agent_loop": {
+      "order": [
+        "agent.answer_ignores_tools",
+        "agent.gives_up_quietly",
+        "model.downgrade",
+        "model.echo",
+        "agent.empty_trace"
+      ],
+      "expect_missed": [
+        "agent.answer_ignores_tools",
+        "agent.gives_up_quietly"
+      ],
+      "why": "The suite does not verify the correctness of the final answer, only that an answer was provided and the loop terminated.",
       "invented_ids": []
     }
   }

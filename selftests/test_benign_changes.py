@@ -100,7 +100,7 @@ def test_a_case_missing_its_variant_is_a_harness_fault_not_a_detection():
     class Bare:
         __name__ = "feature"
 
-    for change in ("prompt.reword", "schema.add_field"):
+    for change in ("prompt.reword", "schema.add_field", "schema.add_confidence"):
         try:
             ops.get(change).patch(Bare())
         except ops.MissingVariant as exc:

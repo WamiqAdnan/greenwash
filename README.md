@@ -7,8 +7,8 @@ time — and reports every break your tests slept through, with the failing run
 attached.
 
 > Built for the micro1 Agentic Workflows Hackathon, 28–31 August 2026.
-> Ten corpus cases, 22 hand-confirmed blind spots, everything replayable
-> offline in about 70 seconds. See `STATE.md`.
+> Twelve corpus cases, 27 hand-confirmed blind spots, everything replayable
+> offline in about 80 seconds. See `STATE.md`.
 
 ## The user
 
@@ -98,24 +98,24 @@ harness's job, not the model's.
 
 | | precision | recall | F1 | blind spots found |
 |---|---|---|---|---|
-| the same model, predicting (baseline) | 55% | 73% | 0.63 | 16 / 22 |
-| the same model, predicting (inside the agent, before it ran anything) | 62% | 36% | 0.46 | 8 / 22 |
-| **the agent, after running them** | **100%** | **100%** | **1.00** | **22 / 22** |
+| the same model, predicting (baseline) | 60% | 78% | 0.68 | 21 / 27 |
+| the same model, predicting (inside the agent, before it ran anything) | 65% | 41% | 0.50 | 11 / 27 |
+| **the agent, after running them** | **100%** | **100%** | **1.00** | **27 / 27** |
 
-One scorer, one ground truth, three predictors. Reaching 22/22 is not cleverness
+One scorer, one ground truth, three predictors. Reaching 27/27 is not cleverness
 and is not claimed as any — it is what happens when you stop guessing and run
 the thing. The number that took work is the next one.
 
 The middle row is worth a second look: it is the *same model on the same cases*,
 and the only thing taken away from it is the ability to run anything. Across
-re-records it has scored 0.24, 0.35, 0.42, 0.46 and 0.47, moved by nothing but
+re-records it has scored 0.24, 0.35, 0.40, 0.42, 0.46, 0.47 and 0.50, moved by nothing but
 rewordings of the prompt that asks it the question. Prediction with this model
 lands somewhere in that band. Verification lands on 1.00 every time.
 
-**Kill rate across the corpus: 51% → 72%**, measured by `evals/uplift.py` from
+**Kill rate across the corpus: 51% → 74%**, measured by `evals/uplift.py` from
 the tests the agent wrote, outside the agent, on a scratch copy — your suite is
-evidence and is never edited. Over the seven cases that had blind spots to close
-at all: 30% → 61%.
+evidence and is never edited. Over the nine cases that had blind spots to close
+at all: 34% → 65%.
 
 That number used to read 95%. It came down because five of the thirteen tests it
 counted were brittle — they would have fired the next time somebody changed a
@@ -126,21 +126,21 @@ model — and the gate now rejects tests like that instead of shipping them.
 
 | metric | simple baseline | agent solution | change |
 |---|---|---|---|
-| blind spots found (F1 against hand-confirmed truth) | 0.63 | **1.00** | +0.37 |
-| — of 22 real ones | 16, plus 13 false alarms | **22, and no false alarms** | |
-| kill rate after the run | 51% — it writes no tests | **72%** | +21 pts |
-| false alarms in the tests it ships | n/a — ships none | **0 of 3 held out, 0 of 10 checked** | measured, not assumed |
+| blind spots found (F1 against hand-confirmed truth) | 0.68 | **1.00** | +0.32 |
+| — of 27 real ones | 21, plus 14 false alarms | **27, and no false alarms** | |
+| kill rate after the run | 51% — it writes no tests | **74%** | +23 pts |
+| false alarms in the tests it ships | n/a — ships none | **0 of 3 held out, 0 of 13 checked** | measured, not assumed |
 | human time per case | — | 7 s replayed, one pass to record | see below |
 | API cost per case | $0 | $0 | runs on a laptop |
 
-Both rows are `qwen3:8b`, on the same ten cases, scored by the same scorer. The
+Both rows are `qwen3:8b`, on the same twelve cases, scored by the same scorer. The
 only variable is whether the model is allowed to run anything.
 
 *Human time* is the row without a measured baseline, so it is marked as an
 estimate and not claimed as a result: auditing one suite by hand — reading every
 assertion, imagining every silent failure, writing the adversarial cases — is
 half a day of senior time in our experience, against 7 seconds of replay. What
-*is* measured is that the whole pipeline runs offline in about 70 seconds, and
+*is* measured is that the whole pipeline runs offline in about 80 seconds, and
 that recording every fixture from scratch against Ollama takes under an hour on
 an M1 Pro, once.
 
@@ -209,7 +209,7 @@ So the gate got the change that catches them, and a third one besides. Both are
 gone now, along with two more the next held-out change turned up:
 
 ```
-0 of 10  under the benign changes the gate checks
+0 of 13  under the benign changes the gate checks
 0 of 3   under the benign change it never sees
 ```
 
@@ -217,10 +217,12 @@ That took twenty-three points off the headline, because five of the thirteen
 tests the agent used to ship were the brittle ones. **A tool that reports a lower
 number after being made more honest is working.**
 
-The gate now rejects twelve candidates as false alarms across the corpus, and
-covers six of the ten cases. Of the four it does not: two are a deliberate trade,
-since the held-out change is the one that would cover them, and two cannot be
-reached at all.
+The gate now rejects thirteen candidates as false alarms across the corpus, and
+covers nine of the twelve cases. Of the three it does not: two cannot be reached
+at all, and one — the re-ranker — is outside on evidence, because every benign
+change available to it breaks that feature's contract and turns its own suite
+red. Where the suite is right and the change is not benign, the gate declines to
+judge rather than counting the result against the test.
 
 That last part is worth a sentence, because it is a real limit rather than a
 to-do. **A benign change can only exist where the correct output has room to
@@ -274,7 +276,7 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 ```
 
 No network, no GPU, no API key — every model answer replays from `fixtures/`,
-the agent's own answers included. The whole pipeline is about **70 seconds** and
+the agent's own answers included. The whole pipeline is about **80 seconds** and
 was verified with Ollama stopped. Step-by-step from a clean machine, with the
 output you should see: `REPRODUCE.md`.
 

@@ -1,0 +1,5 @@
+{
+  "model": "qwen2.5:7b",
+  "prompt": "Rank every document below by how well it answers the question.\nMost relevant first, least relevant last. Include every document exactly once.\n\nDocuments:\nd1: Refunds are returned to the original payment method within five working days of approval.\nd2: Visitor parking is on level B2. Register the plate at reception on arrival.\nd3: To return an item, request a returns label from the orders page and attach it to the parcel.\nd4: The office is closed on public holidays announced by the ministry.\nd5: Refund requests above AED 5,000 need finance approval before they can be processed.\n\nQuestion: Where do visitors park?\n\nReply with JSON only, a list of document ids in order:",
+  "response": "[\"d2\"]"
+}

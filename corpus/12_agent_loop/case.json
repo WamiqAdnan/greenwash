@@ -1,0 +1,8 @@
+{
+  "description": "Answers a customer question by calling tools in a loop until it has an answer.",
+  "tags": [
+    "llm",
+    "agent"
+  ],
+  "suite_looks_like": "Checks the loop terminates, stays inside its step budget, calls at least one tool and returns a non-empty answer. Never checks that the answer follows from what the tools returned."
+}

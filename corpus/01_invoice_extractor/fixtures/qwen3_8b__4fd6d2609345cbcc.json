@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:8b",
+  "prompt": "Extract these fields from the invoice below and reply with JSON only:\nvendor (string), invoice_number (string), date (YYYY-MM-DD string), total (number),\nconfidence (a single top-level number between 0 and 1 \u2014 how sure you are of the\nfields above; do not attach a confidence to each field).\n\nInvoice:\nAL RAYYAN OFFICE SUPPLIES\nShop 12, Al Quoz, Dubai\n\nTax Invoice #ARO-8821\nDated 02 April 2026\n\nItem                        Qty     Rate      Total\n-----------------------------------------------------\nA4 paper, box of 5           4     46.00     184.00\nWhiteboard markers          12      7.25      87.00\nDesk organiser               3     29.00      87.00\n-----------------------------------------------------\n                         Subtotal            358.00\n                         VAT 5%               17.90\n                         AMOUNT DUE          375.90\n\n\nJSON:",
+  "response": "{\n  \"vendor\": \"AL RAYYAN OFFICE SUPPLIES\",\n  \"invoice_number\": \"ARO-8821\",\n  \"date\": \"2026-04-02\",\n  \"total\": 375.9,\n  \"confidence\": 0.95\n}"
+}

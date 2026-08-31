@@ -4,23 +4,13 @@
     "kill_rate_before": 0.3333,
     "findings": [
       {
-        "operator": "model.downgrade",
-        "summary": "The model behind the feature is swapped for a much weaker one.",
-        "receipt": "suite stayed green",
-        "closing_test": "from feature import extract\n\ndef test_date_format_consistency():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"date\"] == \"2026-03-14\"\n    assert result2[\"date\"] == \"2026-04-02\"\n",
-        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_date_format_consistency - Assert...",
-        "attempts": 1,
-        "gate": "green on the clean feature, red under model.downgrade, no benign change is measurable on this feature",
-        "rejections": []
-      },
-      {
         "operator": "value.zero_amounts",
         "summary": "Every monetary amount comes back as zero.",
         "receipt": "suite stayed green",
         "closing_test": "from feature import extract\n\ndef test_total_amount_not_zero():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"total\"] != 0 and result2[\"total\"] != 0\n",
         "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_total_amount_not_zero - assert (...",
         "attempts": 1,
-        "gate": "green on the clean feature, red under value.zero_amounts, no benign change is measurable on this feature",
+        "gate": "green on the clean feature, red under value.zero_amounts, green under schema.add_field",
         "rejections": []
       },
       {
@@ -41,10 +31,20 @@
         "operator": "value.transpose_digits",
         "summary": "Digits inside extracted numbers are transposed \u2014 1284.50 becomes 1248.50.",
         "receipt": "suite stayed green",
-        "closing_test": "from feature import extract\n\ndef test_total_amount_is_correct():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"total\"] == 1284.5 and result2[\"total\"] == 375.9\n",
+        "closing_test": "from feature import extract\n\ndef test_total_amount_is_correct():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"total\"] == 1284.5\n    assert result2[\"total\"] == 375.9\n",
         "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_total_amount_is_correct - assert...",
         "attempts": 1,
-        "gate": "green on the clean feature, red under value.transpose_digits, no benign change is measurable on this feature",
+        "gate": "green on the clean feature, red under value.transpose_digits, green under schema.add_field",
+        "rejections": []
+      },
+      {
+        "operator": "model.downgrade",
+        "summary": "The model behind the feature is swapped for a much weaker one.",
+        "receipt": "suite stayed green",
+        "closing_test": "from feature import extract\n\ndef test_date_format_consistency():\n    result1 = extract(\"invoice_1.txt\")\n    result2 = extract(\"invoice_2.txt\")\n    assert result1[\"date\"] == \"2026-03-14\"\n    assert result2[\"date\"] == \"2026-04-02\"\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_date_format_consistency - Assert...",
+        "attempts": 1,
+        "gate": "green on the clean feature, red under model.downgrade, green under schema.add_field",
         "rejections": []
       }
     ],
@@ -56,16 +56,15 @@
     "prior": {
       "order": [
         "schema.drop_field",
-        "model.downgrade",
         "value.zero_amounts",
         "value.null_fields",
-        "value.transpose_digits"
-      ],
-      "expect_missed": [
-        "schema.drop_field",
+        "value.transpose_digits",
         "model.downgrade"
       ],
-      "why": "The suite lacks checks for field presence and model behavior, making schema changes and model degradation the most likely to slip through undetected.",
+      "expect_missed": [
+        "schema.drop_field"
+      ],
+      "why": "The suite does not check for the presence of all expected fields, so a dropped field would go undetected.",
       "invented_ids": []
     },
     "skipped": [],
@@ -248,9 +247,10 @@
         "model.downgrade"
       ],
       "expect_missed": [
-        "schema.drop_field"
+        "schema.drop_field",
+        "model.downgrade"
       ],
-      "why": "The suite checks for presence of fields but does not verify that all required fields are present, making it blind to silently dropped fields.",
+      "why": "The suite checks for presence of fields and their types, but does not verify that all required fields are present. It also does not check for the presence of fields that might be silently dropped or that the model might be downgraded to a weaker version.",
       "invented_ids": []
     },
     "skipped": [],
@@ -546,5 +546,124 @@
     "inert": [
       "model.downgrade"
     ]
+  },
+  {
+    "case": "11_document_reranker",
+    "kill_rate_before": 0.4,
+    "findings": [
+      {
+        "operator": "rerank.identity",
+        "summary": "The ranker hands back the corpus in its original order, whatever was asked.",
+        "receipt": "suite stayed green",
+        "closing_test": "from feature import rank, QUERIES\n\ndef test_q1_order_after_identity():\n    clean_q1 = [\"d1\", \"d5\", \"d3\", \"d2\", \"d4\"]\n    identity_q1 = [\"d1\", \"d2\", \"d3\", \"d4\", \"d5\"]\n    assert rank(\"q1\") == clean_q1\n    assert rank(\"q1\") != identity_q1\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_q1_order_after_identity - Assert...",
+        "attempts": 1,
+        "gate": "green on the clean feature, red under rerank.identity, no benign change is measurable on this feature",
+        "rejections": []
+      },
+      {
+        "operator": "rerank.reverse",
+        "summary": "The ranking is returned worst-first.",
+        "receipt": "suite stayed green",
+        "closing_test": "from feature import rank, QUERIES\n\n\ndef test_ranking_order_for_q1():\n    expected = [\"d1\", \"d5\", \"d3\", \"d2\", \"d4\"]\n    actual = rank(\"q1\")\n    assert actual == expected, f\"Expected {expected}, got {actual}\"\n",
+        "closing_test_failure": "FAILED tests/test_greenwash_closing.py::test_ranking_order_for_q1 - Assertion...",
+        "attempts": 1,
+        "gate": "green on the clean feature, red under rerank.reverse, no benign change is measurable on this feature",
+        "rejections": []
+      },
+      {
+        "operator": "rerank.demote_best",
+        "summary": "The document ranked first is moved to last; the rest keep their order.",
+        "receipt": "suite stayed green",
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "rerank.demote_best was applied and the test still passed",
+        "rejections": [
+          "rerank.demote_best was applied and the test still passed",
+          "red on the clean feature (assertion failed)",
+          "rerank.demote_best was applied and the test still passed"
+        ]
+      }
+    ],
+    "killed": [
+      "model.downgrade",
+      "model.echo"
+    ],
+    "invalid": [],
+    "prior": {
+      "order": [
+        "rerank.identity",
+        "rerank.reverse",
+        "rerank.demote_best",
+        "model.downgrade",
+        "model.echo"
+      ],
+      "expect_missed": [
+        "rerank.identity",
+        "rerank.reverse"
+      ],
+      "why": "The suite only checks for completeness, uniqueness, and correctness of document IDs, not their order, so it will miss any sabotage that changes the ranking order.",
+      "invented_ids": []
+    },
+    "skipped": [],
+    "inert": []
+  },
+  {
+    "case": "12_agent_loop",
+    "kill_rate_before": 0.6,
+    "findings": [
+      {
+        "operator": "agent.answer_ignores_tools",
+        "summary": "The agent replies with a confident summary that does not use what the tools returned.",
+        "receipt": "suite stayed green",
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "red on the clean feature (assertion failed)",
+        "rejections": [
+          "red on the clean feature (assertion failed)",
+          "red on the clean feature (assertion failed)",
+          "red on the clean feature (assertion failed)"
+        ]
+      },
+      {
+        "operator": "agent.gives_up_quietly",
+        "summary": "The agent stops after its first step and returns a holding reply.",
+        "receipt": "suite stayed green",
+        "closing_test": "",
+        "closing_test_failure": "",
+        "attempts": 3,
+        "gate": "red on the clean feature (assertion failed)",
+        "rejections": [
+          "red on the clean feature (assertion failed)",
+          "false alarm: the feature still works under model.pin_previous and the test went red anyway",
+          "red on the clean feature (assertion failed)"
+        ]
+      }
+    ],
+    "killed": [
+      "model.downgrade",
+      "model.echo",
+      "agent.empty_trace"
+    ],
+    "invalid": [],
+    "prior": {
+      "order": [
+        "agent.answer_ignores_tools",
+        "agent.gives_up_quietly",
+        "model.downgrade",
+        "model.echo",
+        "agent.empty_trace"
+      ],
+      "expect_missed": [
+        "agent.answer_ignores_tools",
+        "agent.gives_up_quietly"
+      ],
+      "why": "The suite does not verify the correctness of the final answer, only that an answer was provided and the loop terminated.",
+      "invented_ids": []
+    },
+    "skipped": [],
+    "inert": []
   }
 ]

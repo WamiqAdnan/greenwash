@@ -12,7 +12,7 @@ notices. Hackathon submission, deadline **Mon 31 Aug 2026, 18:00 UTC**
 ## Run it
 
 ```bash
-.venv/bin/python evals/run_eval.py -v            # kill rate per case, ~3s
+.venv/bin/python evals/run_eval.py -v            # kill rate per case, ~13s
 .venv/bin/python auditor/audit.py                # the agent, replayed, ~20s
 .venv/bin/python evals/score_predictions.py auditor/predictions.json
 .venv/bin/python evals/uplift.py                 # kill rate before -> after
@@ -22,8 +22,8 @@ notices. Hackathon submission, deadline **Mon 31 Aug 2026, 18:00 UTC**
 ```
 
 Needs no network and no GPU: every model answer is replayed from `fixtures/`,
-the Auditor's own answers included. A full sweep of the current three cases
-takes about 3 seconds.
+the Auditor's own answers included. A full sweep of the current twelve cases
+takes about 13 seconds, and the whole pipeline about 80.
 
 Re-running the Auditor against Ollama, which rewrites `auditor/fixtures/` and
 the Trajectories:
@@ -121,10 +121,15 @@ prompts is how the Changelog once reported the wrong number of model calls.
 6. The alternative prompts in `feature.py`, one per Benign Change whose tags the
    case declares. `PROMPT_VARIANT` is the same instruction worded differently
    (`prompt.reword`); `PROMPT_EXTRA_FIELD` asks for one more field the source
-   document really carries (`schema.add_field`, extraction cases only). Read
-   each against `PROMPT` and satisfy yourself the Feature is still correct under
-   it — that judgement is the whole basis of the False Alarm number, and a
-   missing one is a `MissingVariant` fault rather than a silent red suite
+   document really carries (`schema.add_field`, extraction cases only);
+   `PROMPT_CONFIDENCE` asks for a self-reported confidence alongside the fields
+   that were already there (`schema.add_confidence`, extraction cases only, and
+   currently the held-out seat). Keep it flat and ask for it once — a per-field
+   confidence wraps the values that were already there, which changes them and
+   is not benign. Read each against `PROMPT` and satisfy yourself the Feature is
+   still correct under it — that judgement is the whole basis of the False Alarm
+   number, and a missing one is a `MissingVariant` fault rather than a silent
+   red suite
 7. Record fixtures for **both** models
 8. Run the eval, look at each Survivor by hand, then write `blindspots.json`.
    A Survivor is only a Blind Spot if the sabotage actually changed what the

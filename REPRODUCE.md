@@ -13,10 +13,10 @@ agent's own — is replayed from recorded fixtures committed in this repository.
 | Dependencies | `pytest>=8.0`, and nothing else |
 | Models | `qwen3:8b`, `qwen3:0.6b` and `llama3.1:8b`, via Ollama — **only needed to re-record** |
 | Machine the numbers were measured on | Apple M1 Pro, 16 GB |
-| Runtime, replayed | about **70 seconds** for everything below |
+| Runtime, replayed | about **80 seconds** for everything below |
 | Runtime, re-recording from scratch | under an hour, once, with Ollama running |
 | Cost to reproduce | $0.00 — no API key, nothing leaves the machine |
-| Corpus | 10 cases, 22 hand-confirmed blind spots |
+| Corpus | 12 cases, 27 hand-confirmed blind spots |
 
 ## Setup
 
@@ -27,7 +27,7 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 ## The five commands
 
-### 1. How blind are the suites? (~11 s)
+### 1. How blind are the suites? (~13 s)
 
 ```bash
 .venv/bin/python evals/run_eval.py -v
@@ -51,7 +51,7 @@ Scores the committed one-shot predictions. To regenerate them you need Ollama
 .venv/bin/python baseline/predict.py --model qwen3:8b
 ```
 
-### 3. The agent: the same model, allowed to run things (~25 s)
+### 3. The agent: the same model, allowed to run things (~38 s)
 
 ```bash
 .venv/bin/python auditor/audit.py
@@ -71,7 +71,7 @@ The third command is the control: the *same model on the same cases*, scored on
 what it expected **before** it ran anything. Prediction versus verification,
 one scorer, no other variable.
 
-### 4. The number the user cares about: kill rate before and after (~17 s)
+### 4. The number the user cares about: kill rate before and after (~20 s)
 
 ```bash
 .venv/bin/python evals/uplift.py
@@ -80,7 +80,7 @@ one scorer, no other variable.
 Merges the agent's closing tests onto a scratch copy of each case — the suites
 themselves are never edited — and re-measures.
 
-### 5. What mutation testing cannot see (~4 s)
+### 5. What mutation testing cannot see (~5 s)
 
 ```bash
 .venv/bin/python evals/brittleness.py
@@ -107,99 +107,145 @@ examples? See `corpus/10_few_shot_leak`.
 
 ```
 $ .venv/bin/python evals/run_eval.py
+
 01_invoice_extractor  [amounts, extraction, llm, structured_output]
   kill rate: 33% (2/6 mutants killed)
   blind spots: model.downgrade, value.zero_amounts, value.null_fields, value.transpose_digits
   ground truth: matches
+
 02_ticket_classifier  [classification, confidence, llm]
   kill rate: 50% (2/4 mutants killed)
   blind spots: classify.collapse, classify.confidence_pin
   ground truth: matches
+
 03_rag_citations  [citations, llm, retrieval]
   kill rate: 0% (0/6 mutants killed)
   blind spots: model.downgrade, model.echo, citation.wrong_page, citation.fabricate, retrieval.truncate, retrieval.shuffle
   ground truth: matches
+
 04_purchase_orders  [amounts, extraction, llm, structured_output]
   kill rate: 100% (5/5 mutants killed)
   - INERT (the sabotage changed nothing the suite could see, not scored): model.downgrade
   ground truth: matches — confirmed clean, no blind spots
+
 05_meeting_summariser  [llm, summarization]
   kill rate: 0% (0/4 mutants killed)
   blind spots: model.downgrade, model.echo, summary.extractive, summary.drop_decisions
   ground truth: matches
+
 06_sql_generator  [llm, sql]
   kill rate: 25% (1/4 mutants killed)
   blind spots: model.downgrade, sql.drop_where, sql.swap_aggregate
   ground truth: matches
+
 07_tool_router  [llm, tool_use]
   kill rate: 50% (2/4 mutants killed)
   blind spots: tool.blank_args, tool.swap_args
   ground truth: matches
+
 08_content_moderation  [llm, moderation]
   kill rate: 50% (1/2 mutants killed)
   - INERT (the sabotage changed nothing the suite could see, not scored): model.downgrade, moderation.miss_implicit
   blind spots: moderation.category_collapse
   ground truth: matches
+
 09_sql_verified  [llm, sql]
   kill rate: 100% (4/4 mutants killed)
   ground truth: matches — confirmed clean, no blind spots
+
 10_few_shot_leak  [classification, llm]
   kill rate: 100% (2/2 mutants killed)
   - INERT (the sabotage changed nothing the suite could see, not scored): model.downgrade
   ground truth: matches — confirmed clean, no blind spots
-corpus mean kill rate: 51%  (10 case(s))
+
+11_document_reranker  [llm, reranking]
+  kill rate: 40% (2/5 mutants killed)
+  blind spots: rerank.identity, rerank.reverse, rerank.demote_best
+  ground truth: matches
+
+12_agent_loop  [agent, llm]
+  kill rate: 60% (3/5 mutants killed)
+  blind spots: agent.answer_ignores_tools, agent.gives_up_quietly
+  ground truth: matches
+
+corpus mean kill rate: 51%  (12 case(s))
 
 $ .venv/bin/python evals/score_predictions.py baseline/predictions.json
 baseline-oneshot  model=qwen3:8b  verified=False
-OVERALL   precision 55%   recall 73%   f1 0.63
-          found 16/22 confirmed blind spots
+OVERALL   precision 60%   recall 78%   f1 0.68
+          found 21/27 confirmed blind spots
 
 $ .venv/bin/python evals/score_predictions.py auditor/prior_predictions.json
 auditor-v1-prior  model=qwen3:8b  verified=False
-OVERALL   precision 62%   recall 36%   f1 0.46
-          found 8/22 confirmed blind spots
+OVERALL   precision 65%   recall 41%   f1 0.50
+          found 11/27 confirmed blind spots
 
 $ .venv/bin/python evals/score_predictions.py auditor/predictions.json
 auditor-v1  model=qwen3:8b  verified=True
 OVERALL   precision 100%   recall 100%   f1 1.00
-          found 22/22 confirmed blind spots
+          found 27/27 confirmed blind spots
 
 $ .venv/bin/python evals/uplift.py
+
 01_invoice_extractor
   kill rate 33% -> 100%   (4 of 4 blind spots closed)
   closed: model.downgrade, value.null_fields, value.transpose_digits, value.zero_amounts
+
 02_ticket_classifier
   kill rate 50% -> 75%   (1 of 2 blind spots closed)
   closed: classify.collapse
   still blind: classify.confidence_pin
+
 03_rag_citations
   kill rate 0% -> 50%   (3 of 6 blind spots closed)
   closed: citation.fabricate, citation.wrong_page, retrieval.shuffle
   still blind: model.downgrade, model.echo, retrieval.truncate
+
 04_purchase_orders
   no closing tests — nothing to merge
+
 05_meeting_summariser
   no closing tests — nothing to merge
+
 06_sql_generator
   no closing tests — nothing to merge
+
 07_tool_router
   kill rate 50% -> 75%   (1 of 2 blind spots closed)
   closed: tool.blank_args
   still blind: tool.swap_args
+
 08_content_moderation
   kill rate 50% -> 100%   (1 of 1 blind spots closed)
   closed: moderation.category_collapse
+
 09_sql_verified
   no closing tests — nothing to merge
+
 10_few_shot_leak
   no closing tests — nothing to merge
+
+11_document_reranker
+  kill rate 40% -> 100%   (3 of 3 blind spots closed)
+  closed: rerank.demote_best, rerank.identity, rerank.reverse
+
+12_agent_loop
+  no closing tests — nothing to merge
+
 ====================================================
-corpus mean kill rate  51% -> 72%   (10 of 10 case(s) reported)
-  of which had blind spots to close: 30% -> 61%   (7 case(s))
+corpus mean kill rate  51% -> 74%   (12 of 12 case(s) reported)
+  of which had blind spots to close: 34% -> 65%   (9 case(s))
+wrote /Users/wamiqadnan/Desktop/mvps/HackerEarth/evals/uplift.json
 
 $ .venv/bin/python evals/brittleness.py
+
 01_invoice_extractor
   schema.add_field: The feature is asked for one more field than it used to return.
+    the gate applies this too — a regression check, not a second opinion
+    the feature's output moved, and it is still correct
+    the case's own suite: green
+    closing tests: 0 of 3 raised a FALSE ALARM
+  schema.add_confidence: The feature is asked to report how sure it is, alongside the fields it already returned.
     HELD OUT of the gate — nothing upstream enforced this
     the feature's output moved, and it is still correct
     the case's own suite: green
@@ -207,6 +253,7 @@ $ .venv/bin/python evals/brittleness.py
   model.swap: the feature returned exactly the same thing — no variation to probe, not measured
   model.pin_previous: the feature returned exactly the same thing — no variation to probe, not measured
   prompt.reword: the feature returned exactly the same thing — no variation to probe, not measured
+
 02_ticket_classifier
   model.swap: The model behind the feature is swapped for a different one of comparable quality.
     the gate applies this too — a regression check, not a second opinion
@@ -219,6 +266,7 @@ $ .venv/bin/python evals/brittleness.py
     the case's own suite: green
     closing tests: 0 of 1 raised a FALSE ALARM
   prompt.reword: the feature returned exactly the same thing — no variation to probe, not measured
+
 03_rag_citations
   model.swap: The model behind the feature is swapped for a different one of comparable quality.
     the gate applies this too — a regression check, not a second opinion
@@ -235,12 +283,16 @@ $ .venv/bin/python evals/brittleness.py
     the feature's output moved, and it is still correct
     the case's own suite: green
     closing tests: 0 of 2 raised a FALSE ALARM
+
 04_purchase_orders
   no closing tests — nothing to probe
+
 05_meeting_summariser
   no closing tests — nothing to probe
+
 06_sql_generator
   no closing tests — nothing to probe
+
 07_tool_router
   model.swap: The model behind the feature is swapped for a different one of comparable quality.
     the gate applies this too — a regression check, not a second opinion
@@ -253,19 +305,33 @@ $ .venv/bin/python evals/brittleness.py
     the case's own suite: green
     closing tests: 0 of 1 raised a FALSE ALARM
   prompt.reword: the feature returned exactly the same thing — no variation to probe, not measured
+
 08_content_moderation
   model.swap: the feature returned exactly the same thing — no variation to probe, not measured
   model.pin_previous: the feature returned exactly the same thing — no variation to probe, not measured
   prompt.reword: the feature returned exactly the same thing — no variation to probe, not measured
+
 09_sql_verified
   no closing tests — nothing to probe
+
 10_few_shot_leak
   no closing tests — nothing to probe
+
+11_document_reranker
+  ! model.swap: the case's OWN suite goes red under this. Either the change is not benign or that suite is brittle too — not scored.
+  ! model.pin_previous: the case's OWN suite goes red under this. Either the change is not benign or that suite is brittle too — not scored.
+  ! prompt.reword: the case's OWN suite goes red under this. Either the change is not benign or that suite is brittle too — not scored.
+
+12_agent_loop
+  no closing tests — nothing to probe
+
 ====================================================
 false alarm rate  0/3 (0%)  under HELD-OUT benign changes — the gate never saw these, so this is the number that counts
-                  0/10 (0%)  under benign changes the gate applies itself — a regression check on the gate
+                  0/13 (0%)  under benign changes the gate applies itself — a regression check on the gate
+wrote /Users/wamiqadnan/Desktop/mvps/HackerEarth/evals/brittleness.json
 
 $ .venv/bin/python evals/leakage.py
+
 10_few_shot_leak
   as shipped
     in the prompt : 5/5   — these are the suite's test cases, so this is what it scores
@@ -274,18 +340,21 @@ $ .venv/bin/python evals/leakage.py
     in the prompt : 5/5   — these are the suite's test cases, so this is what it scores
     held out      : 4/5   — the suite has never seen these
       h4: expected 'account', got 'billing'
+
 ====================================================
 10_few_shot_leak: the suite scores 5/5 as shipped and 5/5 with the model swapped for one 13x smaller, so it cannot tell them apart. On tickets it has never seen, the small model gets 4/5.
 Kill Rate cannot find this. Every sabotage breaks the in-prompt examples too, so the suite goes red and looks healthy.
+wrote /Users/wamiqadnan/Desktop/mvps/HackerEarth/evals/leakage.json
 ```
 
-Three predictors, one scorer, one ground truth: the baseline predicting (0.63),
-the *same model* predicting inside the agent before it ran anything (0.46), and
-the agent after verification (1.00) — 22 of 22 confirmed blind spots, and nothing
+Three predictors, one scorer, one ground truth: the baseline predicting (0.68),
+the *same model* predicting inside the agent before it ran anything (0.50), and
+the agent after verification (1.00) — 27 of 27 confirmed blind spots, and nothing
 invented on either control. The gap between the first two and the third is the
 harness, not the model. The prior's score is unstable across re-recordings — it
-has been 0.24, 0.35, 0.42, 0.46 and 0.47 on identical cases, moved by nothing but
-rewordings of the prompt that asks for it, which is itself part of the argument.
+has been 0.24, 0.35, 0.40, 0.42, 0.46, 0.47 and 0.50 on identical cases, moved by
+nothing but rewordings of the prompt that asks for it, which is itself part of
+the argument.
 
 `04_purchase_orders` and `09_sql_verified` are the **precision controls** — suites
 that catch everything, on deliberately different capabilities. The agent reports
@@ -307,15 +376,21 @@ Both are zero now, and getting there took twenty-three points off Uplift. The
 probe first reported **2 of 5**: two shipped tests that go red on output that is
 still correct. Fixing them meant giving the Gate the changes that catch them, and
 five of the thirteen Closing Tests the agent used to ship stopped being accepted.
-`51% -> 95%` became `51% -> 72%`. That difference was over-fitting.
+`51% -> 95%` became `51% -> 72%`, both measured on the ten-case corpus of the
+time. That difference was over-fitting. On the twelve-case corpus it reads
+`51% -> 74%`.
 
-The Gate reaches six of the ten cases. Two of the others are a deliberate trade —
-the held-out change is the one that would cover them. The other two cannot be
-reached by any Benign Change, because their Features have no room to vary
-correctly: `08_content_moderation` returns a boolean and one of four categories
-with a single right answer per post, so moving that output makes it wrong. Their
-Closing Tests say `no benign change is measurable on this feature` in their own
-`# gate:` line.
+The Gate reaches nine of the twelve cases, and the three it does not are outside
+for two different reasons. Two cannot be reached by any Benign Change, because
+their Features have no room to vary correctly: `08_content_moderation` returns a
+boolean and one of four categories with a single right answer per post, so moving
+that output makes it wrong. The third, `11_document_reranker`, is outside on
+evidence — every Benign Change available to it makes the model return only the
+documents it judges relevant instead of the whole ranking, which breaks the
+Feature's contract and turns its own suite red. The suite is right and the change
+is not benign there, so the Gate declines to judge rather than counting it
+against the test. All three say `no benign change is measurable on this feature`
+in their own `# gate:` line.
 
 The Gate does work where it can see. During the recorded run it rejected a
 candidate on case 03 that had hard-coded both of the model's answers verbatim —
@@ -354,7 +429,7 @@ Only necessary if you want to regenerate the fixtures rather than replay them.
 ollama serve &
 ollama pull qwen3:8b && ollama pull qwen3:0.6b && ollama pull llama3.1:8b
 
-# corpus fixtures — two passes per case, one per model, for all ten cases
+# corpus fixtures — two passes per case, one per model, for all twelve cases
 for c in corpus/*/; do
   .venv/bin/python scripts/record_fixtures.py --case $(basename $c) --model qwen3:8b
   .venv/bin/python scripts/record_fixtures.py --case $(basename $c) --model qwen3:0.6b

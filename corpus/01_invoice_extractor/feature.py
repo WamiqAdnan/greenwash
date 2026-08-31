@@ -49,6 +49,24 @@ Invoice:
 JSON:"""
 
 
+# The same instruction asking the model to say how sure it is — what
+# `schema.add_confidence` swaps in. The other widening asks for a field the
+# invoice prints; this one asks for a number the model makes up about its own
+# work, which is the other half of how teams widen an extraction schema: you add
+# a confidence so you can route the low ones to a human. Kept flat and asked for
+# once, because a per-field confidence would nest the values that are already
+# there and that would not be benign.
+PROMPT_CONFIDENCE = """Extract these fields from the invoice below and reply with JSON only:
+vendor (string), invoice_number (string), date (YYYY-MM-DD string), total (number),
+confidence (a single top-level number between 0 and 1 — how sure you are of the
+fields above; do not attach a confidence to each field).
+
+Invoice:
+{text}
+
+JSON:"""
+
+
 def read_invoice(name: str) -> str:
     return (Path(__file__).parent / "samples" / name).read_text()
 

@@ -51,6 +51,16 @@
       "model.downgrade",
       "model.echo",
       "classify.collapse"
+    ],
+    "11_document_reranker": [
+      "rerank.identity",
+      "rerank.reverse",
+      "rerank.demote_best"
+    ],
+    "12_agent_loop": [
+      "agent.answer_ignores_tools",
+      "agent.gives_up_quietly",
+      "agent.empty_trace"
     ]
   },
   "hallucinated_ids": {
@@ -63,7 +73,9 @@
     "07_tool_router": [],
     "08_content_moderation": [],
     "09_sql_verified": [],
-    "10_few_shot_leak": []
+    "10_few_shot_leak": [],
+    "11_document_reranker": [],
+    "12_agent_loop": []
   },
   "raw": {
     "01_invoice_extractor": "{\"missed\": [\"model.downgrade\", \"model.echo\", \"value.zero_amounts\", \"value.null_fields\", \"value.transpose_digits\", \"schema.drop_field\"]}",
@@ -75,6 +87,8 @@
     "07_tool_router": "{\"missed\": [\"tool.blank_args\", \"tool.swap_args\"]}",
     "08_content_moderation": "{\"missed\": [\"moderation.miss_implicit\", \"moderation.category_collapse\"]}",
     "09_sql_verified": "{\"missed\": [\"sql.drop_where\", \"sql.swap_aggregate\"]}",
-    "10_few_shot_leak": "{\"missed\": [\"model.downgrade\", \"model.echo\", \"classify.collapse\"]}"
+    "10_few_shot_leak": "{\"missed\": [\"model.downgrade\", \"model.echo\", \"classify.collapse\"]}",
+    "11_document_reranker": "{\"missed\": [\"rerank.identity\", \"rerank.reverse\", \"rerank.demote_best\"]}",
+    "12_agent_loop": "{\"missed\": [\"agent.answer_ignores_tools\", \"agent.gives_up_quietly\", \"agent.empty_trace\"]}"
   }
 }

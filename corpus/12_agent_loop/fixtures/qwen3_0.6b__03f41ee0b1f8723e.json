@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:0.6b",
+  "prompt": "Answer the customer's question below. You can either call one\nof the tools or, if you already know enough, reply with the final answer.\n\nTools:\n- lookup_order(order_id)\n- check_stock(sku)\n\nQuestion: Has order A-4471 shipped yet?\n\nSteps taken so far:\ncalled lookup_order({\"order_id\": \"A-4471\"}) -> shipped on 2026-03-16, tracking DX99210, delivered 2026-03-18\n\nRespond with JSON only. A tool call looks like\n{\"tool\": \"...\", \"arguments\": {...}} and a final answer looks like\n{\"answer\": \"...\"}.\n\nJSON:",
+  "response": "{\"answer\": \"Yes, order A-4471 has been shipped yet.\"}"
+}

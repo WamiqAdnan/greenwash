@@ -50,6 +50,22 @@ Purchase order:
 JSON:"""
 
 
+# The same instruction asking the model to say how sure it is — see
+# `schema.add_confidence`. Widening with a number the model invents rather than
+# one the purchase order prints. Flat, for the same reason as case 01.
+PROMPT_CONFIDENCE = """Extract these fields from the purchase order below and reply with JSON only:
+vendor (string, exactly as written), po_number (string), date (YYYY-MM-DD string),
+currency (3-letter code string), subtotal (number), tax (number), total (number),
+line_items (list of objects with description, quantity, unit_price, line_total),
+confidence (a single top-level number between 0 and 1 — how sure you are of the
+fields above; do not attach a confidence to each field).
+
+Purchase order:
+{text}
+
+JSON:"""
+
+
 def read_po(name: str) -> str:
     return (Path(__file__).parent / "samples" / name).read_text()
 

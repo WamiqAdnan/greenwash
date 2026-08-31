@@ -1,0 +1,5 @@
+{
+  "model": "qwen3:0.6b",
+  "prompt": "You are answering a customer question. You may call a tool, or give\nthe final answer if you already have what you need.\n\nTools:\n- lookup_order(order_id)\n- check_stock(sku)\n\nQuestion: Do we have SKU DM-12 in stock right now?\n\nWhat has happened so far:\ncalled check_stock({\"sku\": \"DM-12\"}) -> 0 units on hand, next delivery expected 2026-04-09\n\nReply with JSON only. To call a tool: {\"tool\": \"...\", \"arguments\": {...}}\nTo finish: {\"answer\": \"...\"}\n\nJSON:",
+  "response": "{\"tool\": \"check_stock\", \"arguments\": {\"sku\": \"DM-12\"}}"
+}

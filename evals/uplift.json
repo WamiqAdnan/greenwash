@@ -102,6 +102,26 @@
       "closed": [],
       "reported": true,
       "note": "no closing tests"
+    },
+    {
+      "case": "11_document_reranker",
+      "before": 0.4,
+      "after": 1.0,
+      "closed": [
+        "rerank.demote_best",
+        "rerank.identity",
+        "rerank.reverse"
+      ],
+      "still_open": [],
+      "reported": true
+    },
+    {
+      "case": "12_agent_loop",
+      "before": 0.6,
+      "after": 0.6,
+      "closed": [],
+      "reported": true,
+      "note": "no closing tests"
     }
   ]
 }

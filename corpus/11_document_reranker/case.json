@@ -1,0 +1,8 @@
+{
+  "description": "Ranks every help-centre article by how well it answers a question.",
+  "tags": [
+    "llm",
+    "reranking"
+  ],
+  "suite_looks_like": "Checks the ranking is a permutation of the corpus — everything present, nothing repeated, nothing invented. Never checks that the order is any good, which is the entire product."
+}

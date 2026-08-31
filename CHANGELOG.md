@@ -35,6 +35,8 @@ Measurement is always `python evals/run_eval.py`, corpus mean Kill Rate.
 | **Fixing the two False Alarms cost 20 points of Uplift, and that is the result** | The probe had found two shipped Closing Tests that go red under a change that does not break the Feature. They are the agent's own output, so the fix could not be to edit them — it had to be a Gate that rejects them. `model.swap` moved **into** the Gate (it is what catches both), and a third Benign Change joined it: `model.pin_previous`, the feature pinned back to `qwen2.5:7b`, the most boring change any team makes. `schema.add_field` took the held-out seat. Verified benign by hand on all ten cases first: it moves output on five, the Suite stays green on four of those, and every moved output was read and is still correct. | **All four brittle tests are gone and there are no False Alarms anywhere: 0 of 3 held out, 0 of 8 gate-applied.** The Gate now rejects **9** candidates as False Alarms, against 3 before. And the price is on the headline: **Uplift 95% → 75%** (over the cases with holes, 93% → 64%), because Closing Tests shipped went 13 → 9. Kill Rate 51%, F1 1.00, 103 selftests. | Kept, and the drop *is* the finding. **20 points of that 95% was over-fitting.** The old number counted four tests that would have paged somebody the next time a model changed; the new one does not count them, because they no longer exist. A tool that reports a lower number after being made more honest is behaving correctly, and this is the row to point at when someone asks why Uplift is not higher. Two things learned on the way. **The coverage gap moves before it closes**: putting `model.swap` in the Gate fixed cases 05 and 07, and the newly held-out change immediately found two *different* snapshots on case 06 — `assert generate("q1") == "SELECT SUM(amount) FROM orders WHERE region = 'EMEA'"`, pinned SQL down to the whitespace — because nothing the Gate could apply moved that Feature. Gating `model.pin_previous` closed it. The rule is now written down: **gate every Benign Change verified benign, except one, and give the held-out seat to whichever leaves the Gate covering the most cases.** And the honest cost: the held-out population is now three tests on one capability, weaker evidence than the five it replaced. `0 of 3` is not proof that nothing is brittle; it is the strongest statement the remaining slot can make. |
 | **Case 02 was blocked by a bug in our own Benign Change; case 08 cannot be reached at all** | The two cases the Gate could not check. Case 02's Suite went red under every model swap, so the Gate skipped it and its `test_confidence_pin_bypassed` — `assert classify("t1")["confidence"] == 0.95`, three times — shipped unchecked. Case 08 was Inert under everything. First attempt was a new Benign Change, `prompt.reorder_options`: same labels, different order, which is a change every team makes. | **Removed. It is Inert on case 02 — `qwen3:8b` returns identical JSON whichever order the queues are listed in — and on case 08 it is not benign at all: reordering the categories turned `{"category": "harassment", "flagged": true}` into `{"category": "none", "flagged": false}`.** A change that stops an obvious harassment post being flagged has broken the Feature, whatever it was meant to demonstrate. The case's own Suite caught it, which is the guard working. | Removed, and it pointed at the real bug. `model.swap` and `model.pin_previous` set `GREENWASH_MODEL`, which swaps the model for **everything in the process** — including the LLM judge inside case 02's own suite. The suite went red because the judge changed its mind, not because the Feature did, and the Gate correctly refused to judge on that run. A sabotage is allowed to be that blunt; a Benign Change is not, because its entire job is to leave a correct Feature correct. Both now bind the Feature's own `complete` and touch nothing else. **Case 02 is inside the Gate, its confidence snapshot is rejected, and its remaining Closing Test reads `green under model.swap, model.pin_previous`.** Uplift 75% → 72%; Closing Tests 9 → 8; the Gate now rejects **12** candidates as False Alarms. |
 | **Case 08 is unreachable, and provably so** | Every Benign Change is Inert on it. Rather than keep inventing changes, work out whether one can exist. | Its Suite exercises three posts, and each verdict is a boolean plus one of four categories with a **single correct value**. A change that moves that output has made it wrong, so it was not benign. A change that keeps it right cannot have moved it. There is no third case. | Kept as a documented limit, not a gap. **The Gate can only check Features whose correct output has room to vary** — prose, generated code, a confidence score, a schema with optional fields. A boolean and an enum have none, so no third run is possible and none is needed: the reassuring corollary is that a test asserting the one correct answer cannot be brittle in the way the third run looks for. This is why case 02 *is* reachable and case 08 is not, and the difference is one field — the confidence score, which is exactly the part with room to vary and exactly what the agent over-fitted to. Note the same reading explains `10_few_shot_leak`: every Benign Change is Inert there too, because the model is reciting its own prompt rather than responding to it. **Six of the ten cases are inside the Gate.** Of the four outside, 01 and 04 are outside only because `schema.add_field` currently holds the held-out seat. |
+| **`schema.add_confidence` — a second extraction Benign Change, so the first one can be gated** | The held-out seat was held by `schema.add_field`, the only Benign Change that moves an extraction Feature. That bought an independent probe on case 01 and cost the Gate any hold over it: its three Closing Tests read `no benign change is measurable on this feature`. The fix is a second change with the same reach, so one can guard while the other probes. This one widens the schema with a number the model invents rather than one the document prints — a self-reported confidence, which is what a team adds the day somebody asks to route the doubtful extractions to a human. `schema.add_field` moved into the Gate and this took the seat, on the rule that the seat goes to whichever change asks the harder question of the tests it can reach. | Benign, confirmed by reading all four observations: every previously returned field **byte-identical**, case 04's nested `line_items` included, and exactly one key added. Both suites stay green. **Case 01's three Closing Tests now read `green under schema.add_field`**, and the Gate reaches **8 of 10** cases where it reached 6 — which is every case it can possibly reach, 08 and 10 being provably out. Gate-applied False Alarms 0/10 → **0/13**; held out still **0/3**. Kill Rate 51%, F1 1.00 and Uplift 51% → 72% all unchanged. The Prior moved 0.46 → 0.40 on the re-record. | Kept, and the honest summary is that it bought **coverage, not evidence**. The held-out population is the same three tests it always was; the seat swapped which change guards them and which probes them. What changed is that they are guarded at all. One finding worth keeping on its own: `qwen3:8b` answers 0.95 on every document and `qwen3:0.6b` answers 1.0 on every one of them, so **the 13x smaller model is the more confident one**. Anybody planning to route on a self-reported confidence should know that first. |
+| **Corpus to twelve — a re-ranker and an agent loop** | Ten cases covered extraction, classification, retrieval, summarisation, SQL, tool calling and moderation, and none covered the two shapes most AI features are being built into now: something that *orders* results, and something that *loops* over tools. `11_document_reranker` ranks a help-centre corpus, and its suite checks the ranking is a permutation — everything present, nothing repeated, nothing invented — which is what a team writes when relevance needs labels it does not have. `12_agent_loop` answers a customer question by calling tools until it can reply, and its suite checks liveness: it terminated, it stayed inside its step budget, it called something, a string came back. Six new Operators, all post-processing, so each still makes the Feature's model call and needs no fixtures of its own. | **Corpus mean Kill Rate 51% over 12 cases, 27 confirmed Blind Spots**, ground truth matching on all twelve. The mean did not move: the re-ranker kills 40%, the agent loop 60%. Baseline **0.68** (21/27), the Prior **0.50** (11/27), the Auditor **1.00** (27/27). Uplift **51% → 74%**, and 34% → 65% over the nine cases with holes. 121 selftests, 95 of them Operator × Case pairs. | Kept, and the two cases earn their place differently. The re-ranker's three sabotages all return a permutation, so the suite sees none of them: under `rerank.identity` all three queries come back in identical corpus order and "Where do visitors park?" leads with the refunds article. The agent loop is the more interesting one, because **the Auditor finds both of its Blind Spots and closes neither.** The assertion it needs is that the answer follows from the observation, and the small model cannot write it — three attempts on each, one of them refused by the Gate as a False Alarm. That is the first case where finding and fixing come apart, and it is the honest edge of the claim: verification beats prediction at *locating* holes, and locating is not closing. Two more things worth recording. `agent.empty_trace` is **killed**, by `assert result["steps"]` — which is what makes that suite a real one rather than a strawman. And case 11 sits **outside the Gate on evidence**, a third reason distinct from the other two: every applicable Benign Change makes the other models return only the documents they judge relevant instead of the whole ranking, which breaks the Feature's contract and turns its own suite red. The suite is right and the change is not benign there, so the Gate drops it — for exactly the reason `brittleness.py` refuses to score it. |
 
 ## Main failure mode: mutation testing rewards over-fitting
 
@@ -46,20 +48,23 @@ nothing, and after two of those they stop believing the tool.
 
 **Fixed, and the fix has a price tag.** The Verification Gate runs a Closing Test
 three ways — green on the clean Feature, red under its Mutant, and green again
-under every Benign Change that moves that Feature's output. It rejects **9**
+under every Benign Change that moves that Feature's output. It rejects **13**
 candidates across the corpus on that third run alone.
 
 ```
-0 of 10  under the benign changes the gate checks      <- its own rule
+0 of 13  under the benign changes the gate checks      <- its own rule
 0 of 3   under the benign change it never sees         <- the honest one
 ```
 
-Both are zero now. Getting there cost twenty-three points of the headline:
+Both are zero now. Getting there cost twenty-three points of the headline, both
+figures measured on the ten-case corpus of the time:
 
 ```
 Uplift 51% -> 95%    with five brittle tests shipped
 Uplift 51% -> 72%    without them
 ```
+
+On the twelve-case corpus it now reads **51% -> 74%**.
 
 **That 23 points was over-fitting.** The 95% counted five Closing Tests that
 would have paged somebody the next time a model changed — one pinned SQL down to
@@ -68,10 +73,13 @@ asserted that three confidence scores were all exactly `0.95`. They do not exist
 any more, so the number they were inflating went down. A tool that reports a
 lower number after being made more honest is working.
 
-Six of the ten cases are inside the Gate. Of the four that are not, two are a
-deliberate trade — `schema.add_field` is the held-out change, so the extraction
-cases it would cover are audited rather than guarded — and two cannot be reached
-at all, because their Features have no room to vary correctly. See the last two
+Nine of the twelve cases are inside the Gate, and the three that are not are
+outside for two different reasons. Cases 08 and 10 cannot be reached at all,
+because their Features have no room to vary correctly. Case 11 is outside on
+**evidence**: every applicable Benign Change makes the other models return only
+the documents they judge relevant instead of the whole ranking, which breaks the
+Feature's contract and turns its own suite red — the suite is right, the change
+is not benign there, and the Gate declines to judge on it. See the last three
 changelog rows.
 
 Read the `0 of 3` for what it is. The held-out population is three tests on one
@@ -84,14 +92,14 @@ slot can make, and saying so is the difference between this and greenwashing.
 A green suite makes two claims, and they fail in opposite directions.
 
 **"My assertions would notice if this broke."** Mutation testing audits this one
-directly and cheaply, and the answer is usually no. Across ten ordinary suites
-the mean Kill Rate is **51%** — half the ways these features can break quietly,
+directly and cheaply, and the answer is usually no. Across twelve ordinary
+suites the mean Kill Rate is **51%** — half the ways these features can break quietly,
 nothing goes red. The suites are not lazy. The tool router checks that
 `issue_refund` fires, because firing the wrong tool is what went wrong in early
 testing; nobody wrote an assertion for the arguments, so swapping `order_id` and
 `amount` sails through. **The assertion everybody writes is the one that catches
 the failure nobody has.** Verification, not intelligence, is what finds these: a
-local 8B model asked to *predict* which sabotages survive scores F1 0.46, and the
+local 8B model asked to *predict* which sabotages survive scores F1 0.50, and the
 same model allowed to *run* them scores 1.00.
 
 **"My test cases are the right ones."** Mutation testing cannot audit this at
@@ -116,11 +124,11 @@ in the flattering direction.
 ## Caveat on the baseline number
 
 
-The baseline is a **qwen3:8b** one — 55/73/**0.63** over the ten-case corpus —
+The baseline is a **qwen3:8b** one — 60/78/**0.68** over the twelve-case corpus —
 because no frontier API key was configured. A frontier model would almost
 certainly score higher at prediction, and this project does not claim otherwise.
 What it claims is narrower and is what the table actually supports: **the same
-model, on the same cases, scored by the same scorer, goes from 0.46–0.63 when it
+model, on the same cases, scored by the same scorer, goes from 0.50–0.68 when it
 predicts to 1.00 when it is allowed to run things.** The variable is the harness,
 not the model, and that comparison is airtight because both rows are the same
 weights. `baseline/predict.py` takes `--model` if you want to re-run it against

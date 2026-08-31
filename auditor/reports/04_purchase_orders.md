@@ -16,10 +16,10 @@ These sabotages were applied and your feature returned exactly what it returned 
 
 ## What the auditor expected, before it ran anything
 
-Predicted misses: `schema.drop_field`
+Predicted misses: `schema.drop_field`, `model.downgrade`
 
 Actually missed: (none)
 
-> The suite checks for presence of fields but does not verify that all required fields are present, making it blind to silently dropped fields.
+> The suite checks for presence of fields and their types, but does not verify that all required fields are present. It also does not check for the presence of fields that might be silently dropped or that the model might be downgraded to a weaker version.
 
 The prediction is kept as evidence and never reported as a finding. Findings come from runs.

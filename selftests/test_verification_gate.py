@@ -205,10 +205,13 @@ def test_an_inert_benign_change_is_not_run_at_all():
     rag = {c.id for c in VerificationGate(RAG).observable_benign()}
     assert "prompt.reword" in rag and "schema.add_field" not in rag
     assert not (rag & ops.HELD_OUT)
-    # Every benign change is Inert on the invoice extractor except the one that
-    # widens its schema — and that one is currently the held-out seat, so the
-    # Gate has nothing here at all.
-    assert VerificationGate(CASE).observable_benign() == []
+    # Every Benign Change is Inert on the invoice extractor except the two that
+    # widen its schema. They sit on opposite sides of the Gate on purpose:
+    # `schema.add_field` guards case 01 from inside it, and the held-out
+    # `schema.add_confidence` probes the tests that survive from outside.
+    invoice = {c.id for c in VerificationGate(CASE).observable_benign()}
+    assert invoice == {"schema.add_field"}
+    assert not (invoice & ops.HELD_OUT)
 
 
 MODERATOR = harness.Case(ROOT / "corpus" / "08_content_moderation")
