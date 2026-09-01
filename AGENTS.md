@@ -7,7 +7,7 @@ code. Read `STATE.md` second — it says where the work actually is.
 
 Greenwash breaks the code an eval suite guards and checks whether the suite
 notices. Hackathon submission, deadline **Mon 31 Aug 2026, 18:00 UTC**
-(22:00 Asia/Dubai). Requirements are in `micro1-instructions.pdf`.
+(22:00 Asia/Dubai). The brief itself is kept outside the repo, not redistributed here.
 
 ## Run it
 
