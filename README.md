@@ -8,7 +8,7 @@ attached.
 
 > Built for the micro1 Agentic Workflows Hackathon, 28–31 August 2026.
 > Twelve corpus cases, 27 hand-confirmed blind spots, everything replayable
-> offline in about 80 seconds. See `STATE.md`.
+> offline in about 80 seconds. See `REPRODUCE.md`.
 
 ## The user
 
@@ -282,7 +282,7 @@ output you should see: `REPRODUCE.md`.
 
 ## Reading order
 
-`CONTEXT.md` for the vocabulary · `REPRODUCE.md` to run it · `STATE.md` for
-where the work is · `CHANGELOG.md` for how it got here, including the main
-failure mode · `auditor/reports/` for what the user actually reads ·
-`trajectories/` for what both agents did, step by step.
+`CONTEXT.md` for the vocabulary · `REPRODUCE.md` to run it · `CHANGELOG.md`
+for how it got here, including the main failure mode · `auditor/reports/` for
+what the user actually reads · `trajectories/` for what both agents did, step
+by step.

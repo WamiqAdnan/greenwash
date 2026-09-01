@@ -1,7 +1,7 @@
 # Working on Greenwash
 
 Read `CONTEXT.md` first — it defines every capitalised term used here and in the
-code. Read `STATE.md` second — it says where the work actually is.
+code. `CHANGELOG.md` second — it says how the work got to where it is.
 
 ## What this is
 
